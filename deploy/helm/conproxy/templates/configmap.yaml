@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "conproxy.fullname" . }}
+  labels:
+    {{- include "conproxy.labels" . | nindent 4 }}
+data:
+  conproxy.toml: |-
+    [server]
+    listen = {{ .Values.listen | quote }}
+
+    {{- range $name, $up := .Values.upstreams }}
+    [upstreams.{{ $name }}]
+    {{- range $key, $val := $up }}
+    {{- if eq $key "url" }}
+    {{ $key }} = {{ tpl $val $ | quote }}
+    {{- else }}
+    {{ $key }} = {{ $val | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+
+    {{- range $cname, $ctx := .Values.contexts }}
+    [contexts.{{ $cname }}]
+    {{- if $ctx.default }}
+    default = true
+    {{- end }}
+    {{- range $ctx.upstreams }}
+    [[contexts.{{ $cname }}.upstreams]]
+    ref = {{ .ref | quote }}
+    {{- if hasKey . "priority" }}
+    priority = {{ .priority }}
+    {{- end }}
+    {{- end }}
+    {{- with $ctx.cache }}
+    [contexts.{{ $cname }}.cache]
+    {{- if hasKey . "fresh_secs" }}
+    fresh_secs = {{ .fresh_secs }}
+    {{- end }}
+    {{- if hasKey . "stale_secs" }}
+    stale_secs = {{ .stale_secs }}
+    {{- end }}
+    {{- if hasKey . "max_entries" }}
+    max_entries = {{ .max_entries }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+
+    {{- if .Values.webUi }}
+    {{- if .Values.webUi.enabled }}
+    [proxy.web_ui]
+    enabled = true
+    {{- end }}
+    {{- end }}

@@ -1,0 +1,20 @@
+# kind cluster config for conproxy dev.
+#
+# Create cluster:
+#   kind create cluster --name conproxy --config deploy/tilt/kind-config.yaml
+#
+# Port access: Tilt port-forwards 9999/10000 automatically (see Tiltfile).
+# extraPortMappings intentionally omitted — both Tilt PFs and kind hostPort
+# try to bind the same host ports and "address already in use" results. Tilt
+# owns 9999/10000; if you want a different host port, change Tiltfile's
+# port_forwards, not this file. (kind can't drop hostPort maps in place —
+# delete + recreate the cluster to change this.)
+#
+# Delete:
+#   kind delete cluster --name conproxy
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: conproxy
+nodes:
+  - role: control-plane

@@ -1,0 +1,14 @@
+[server]
+listen = "127.0.0.1:8080"
+
+[upstreams.qdrant]
+url = "http://localhost:6333"
+type = "qdrant"
+index = "conproxy_test"
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "qdrant"
+priority = 0

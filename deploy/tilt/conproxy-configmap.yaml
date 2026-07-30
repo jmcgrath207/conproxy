@@ -1,0 +1,20 @@
+# Used by Tilt with K8s + kind.
+# llama-server runs on host (not in pod); reachable via host.docker.internal.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: conproxy
+data:
+  conproxy.toml: |
+    id = "llama"
+    provider = "openai"
+    base_url = "http://host.docker.internal:8081"
+    api_key = "sk-local"
+    timeout_secs = 120
+
+    default_timeout_secs = 120
+    cache_enabled = true
+    cache_ttl_secs = 120
+    max_body_bytes = 4194304
+    max_cache_entries = 500

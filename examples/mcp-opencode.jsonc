@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "conproxy": {
+      "type": "local",
+      "command": ["conproxy", "mcp"],
+      // If conproxy is not on your PATH:
+      // "command": ["/path/to/conproxy", "mcp"],
+      "enabled": true
+    }
+  }
+}

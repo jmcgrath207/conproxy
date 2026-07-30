@@ -1,0 +1,40 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+  --text: #e1e4eb; --text-dim: #8b8fa3; --accent: #6c9cfc;
+  --green: #4ade80; --red: #f87171; --yellow: #fbbf24;
+  --font: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+}
+html { font-family: var(--font); font-size: 14px; background: var(--bg); color: var(--text); }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+
+header { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+header h1 { font-size: 1.1rem; font-weight: 600; white-space: nowrap; }
+nav { display: flex; gap: 0.15rem; flex-wrap: wrap; }
+nav a { padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; color: var(--text-dim); font-size: 0.85rem; transition: background 0.15s; }
+nav a:hover, nav a.active { background: var(--border); color: var(--text); }
+#status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); margin-left: auto; flex-shrink: 0; }
+#status-dot.ok { background: var(--green); }
+#status-dot.err { background: var(--red); }
+
+main { flex: 1; padding: 1rem; overflow-y: auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+h2 { font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); }
+h3 { font-size: 0.9rem; margin: 1rem 0 0.5rem; color: var(--text-dim); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; }
+.card .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.card .value { font-size: 1.4rem; font-weight: 600; margin-top: 0.2rem; }
+.card .value.green { color: var(--green); }
+.card .value.red { color: var(--red); }
+.card .value.yellow { color: var(--yellow); }
+
+table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; background: var(--surface); }
+th, td { padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+th { color: var(--text-dim); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+
+pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
+
+footer { text-align: center; padding: 0.5rem; color: var(--text-dim); font-size: 0.75rem; border-top: 1px solid var(--border); }

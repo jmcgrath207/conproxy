@@ -1,0 +1,187 @@
+{
+  "comparison": {
+    "best_confidence": "0.000",
+    "best_confidence_vertical": "none",
+    "best_time_avg_ms": 0,
+    "best_time_vertical": "none",
+    "worst_vertical": "no_context"
+  },
+  "duration_secs": 0,
+  "model": "default",
+  "seed_routing": [
+    {
+      "local_name": "zephyr-query-protocol",
+      "query": "Zephyr Query Protocol",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "conpackdb-ring-buffer",
+      "query": "ConpackDB ring-buffer sharding",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "conpack-cluster-terraform",
+      "query": "conpack-cluster Terraform",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "prismoid-cache-coherence",
+      "query": "Prismoid cache coherence",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "vortex-ingestion-pipeline",
+      "query": "Vortex ingestion pipeline",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "helix-embedder-training",
+      "query": "Helix Embedder training",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "obsidian-vault-sync",
+      "query": "Obsidian Vault Sync",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "crystalline-tensor-decomposition",
+      "query": "Crystalline Tensor Decomposition",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "nexara-meridian-consensus",
+      "query": "Nexara Meridian consensus",
+      "strategy": "cascade",
+      "upstream_id": null
+    },
+    {
+      "local_name": "auralis-service-mesh",
+      "query": "Auralis service mesh",
+      "strategy": "cascade",
+      "upstream_id": null
+    },
+    {
+      "local_name": "spectral-query-analyzer",
+      "query": "Spectral Query Analyzer",
+      "strategy": "cascade",
+      "upstream_id": null
+    },
+    {
+      "local_name": "solaris-event-mesh",
+      "query": "Solaris Event Mesh",
+      "strategy": "cascade",
+      "upstream_id": null
+    }
+  ],
+  "strategy_matrix": {
+    "cascade": {
+      "no_ctx": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      }
+    },
+    "fts": {
+      "no_ctx": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      }
+    },
+    "vector": {
+      "no_ctx": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      }
+    }
+  },
+  "timestamp": "1772164344s-since-epoch",
+  "type": "eval",
+  "verticals": [
+    {
+      "avg_confidence": "0.000",
+      "avg_response_time_ms": 176,
+      "failed_queries": 3,
+      "name": "no_context",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 169,
+          "strategy": "fts",
+          "success": false,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-004",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 180,
+          "strategy": "vector",
+          "success": false,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 180,
+          "strategy": "cascade",
+          "success": false,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 0,
+      "time_best_secs": "0.17",
+      "time_p95_secs": "0.18",
+      "time_p97_secs": "0.18",
+      "time_p99_secs": "0.18",
+      "timed_out_queries": 0,
+      "total_recall": "0.000"
+    }
+  ]
+}

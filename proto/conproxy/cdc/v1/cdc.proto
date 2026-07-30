@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package conproxy.cdc.v1;
+
+// =============================================================================
+// CdcService — Subscribe to cache change events (generic CDC feed)
+// =============================================================================
+
+service CdcService {
+  // Subscribe to cache change events. Server-streaming, live from current point.
+  rpc Subscribe(CdcSubscribeRequest) returns (stream CdcEvent);
+}
+
+message CdcSubscribeRequest {
+  // Identifies this consumer (for logging/metrics).
+  string consumer_id = 1;
+  // Filter: ["insert","remove","clear"] or empty = all event types.
+  repeated string event_types = 2;
+}
+
+// A single cache change event.
+message CdcEvent {
+  // Per-node monotonic sequence (for gap detection within one source).
+  uint64 sequence = 1;
+  // Wall-clock epoch ms (used for last-write-wins across nodes).
+  uint64 timestamp_ms = 2;
+  // Type of cache mutation.
+  CdcEventType event_type = 3;
+  // Cache key (blake3 hash hex or query text).
+  string query_key = 4;
+  // JSON-serialized QueryResponse (INSERT only).
+  bytes payload = 5;
+  // Which upstream produced this result.
+  string upstream_id = 6;
+  // Context ID for multi-context isolation.
+  string context_id = 7;
+  // Node that originated this event (echo-loop prevention).
+  string origin_node_id = 8;
+  // Wall-clock expiry (0 = no expiry). All peers expire at same time.
+  uint64 absolute_expiry_ms = 9;
+}
+
+enum CdcEventType {
+  CDC_UNSPECIFIED = 0;
+  // Cache entry inserted (miss → upstream → store).
+  CDC_INSERT = 1;
+  // Cache entry removed (admin remove, evict, or clear with context_id).
+  CDC_REMOVE = 2;
+  // Distributed singleflight: "I'm fetching this key".
+  CDC_FETCH_START = 3;
+  // Distributed singleflight: "My fetch failed/cancelled".
+  CDC_FETCH_CANCEL = 4;
+}
+
+// =============================================================================
+// PeerService — Status and snapshot for peer-to-peer replication
+// =============================================================================
+
+service PeerService {
+  // Get this peer's current status (node_id, state, cache size, sequence).
+  rpc GetStatus(PeerStatusRequest) returns (PeerStatusResponse);
+  // Stream a full cache snapshot as CdcEvent(INSERT) messages.
+  rpc Snapshot(SnapshotRequest) returns (stream CdcEvent);
+}
+
+message PeerStatusRequest {}
+
+message PeerStatusResponse {
+  // This peer's unique node identifier.
+  string node_id = 1;
+  // Current state: "warming" or "ready".
+  string state = 2;
+  // Number of entries in the local cache.
+  uint64 cache_entry_count = 3;
+  // Current sequence number (monotonic).
+  uint64 sequence = 4;
+}
+
+message SnapshotRequest {
+  // Node ID of the requester (for logging).
+  string requester_node_id = 1;
+  // Context to snapshot (empty = all contexts).
+  string context_id = 2;
+}

@@ -1,0 +1,15 @@
+apiVersion: v2
+name: conproxy
+description: Cache proxy for heterogeneous RAG/vector search backends
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/jmcgrath207/conproxy
+maintainers:
+  - name: conproxy
+keywords:
+  - rag
+  - cache
+  - mcp
+  - vector
+  - retrieval

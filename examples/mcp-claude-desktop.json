@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "conproxy": {
+      "command": "conproxy",
+      "args": ["mcp"]
+    }
+  }
+}

@@ -1,0 +1,25 @@
+# Min config: 1 Qdrant upstream, default context + cache.
+# Copy to .conproxy/conproxy.toml, adjust url/type.
+# Requires: running Qdrant (docker run -d -p 6333:6333 qdrant/qdrant)
+#
+# Context-rooted shape (plan 10). Legacy [proxy] + [[proxy.upstreams]] still
+# loads via one-release shim (deprecation warning).
+
+[server]
+listen = "127.0.0.1:9090"
+
+[upstreams.my-qdrant]
+url = "http://localhost:6333"
+type = "qdrant"
+timeout_secs = 30
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "my-qdrant"
+
+[contexts.default.cache]
+fresh_secs = 300
+stale_secs = 600
+max_entries = 10000

@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conpack E2E Eval Results</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --fg: #e6edf3;
+          --fg2: #8b949e; --green: #3fb950; --red: #f85149; --yellow: #d29922;
+          --blue: #58a6ff; --purple: #bc8cff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+         background: var(--bg); color: var(--fg); padding: 2rem; line-height: 1.5; }
+  h1 { font-size: 1.6rem; margin-bottom: .3rem; }
+  .subtitle { color: var(--fg2); font-size: .85rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.15rem; margin: 1.8rem 0 .8rem; color: var(--blue); }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.2rem; }
+  th, td { padding: .55rem .75rem; text-align: left; border: 1px solid var(--border); }
+  th { background: var(--surface); font-weight: 600; font-size: .85rem; color: var(--fg2); }
+  td { font-size: .85rem; }
+  tr:hover td { background: #1c2333; }
+  .best { background: #0d2818; }
+  .worst { background: #2d1114; }
+  .pass { color: var(--green); font-weight: 600; }
+  .fail { color: var(--red); font-weight: 600; }
+  .timeout { color: var(--yellow); font-weight: 600; }
+  .conf-high { color: var(--green); }
+  .conf-mid { color: var(--yellow); }
+  .conf-low { color: var(--red); }
+  .badge { display: inline-block; padding: .15rem .5rem; border-radius: 3px;
+           font-size: .75rem; font-weight: 600; }
+  .badge-best { background: #0d2818; color: var(--green); border: 1px solid var(--green); }
+  .badge-worst { background: #2d1114; color: var(--red); border: 1px solid var(--red); }
+  .bar-cell { position: relative; }
+  .bar { position: absolute; top: 0; left: 0; bottom: 0; opacity: .15; border-radius: 2px; }
+  .bar-green { background: var(--green); }
+  .bar-red { background: var(--red); }
+  .bar-yellow { background: var(--yellow); }
+  .bar-label { position: relative; z-index: 1; }
+  details { margin: .4rem 0; }
+  summary { cursor: pointer; font-size: .8rem; color: var(--fg2); padding: .2rem 0; }
+  summary:hover { color: var(--fg); }
+  .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+  .tag { font-size: .7rem; padding: .1rem .4rem; border-radius: 3px;
+         background: var(--surface); border: 1px solid var(--border); color: var(--fg2); }
+  .tag-phrase { border-color: var(--purple); color: var(--purple); }
+  .tag-title { border-color: var(--blue); color: var(--blue); }
+  .tag-tag { border-color: var(--green); color: var(--green); }
+  .query-text { color: var(--fg2); font-size: .8rem; font-style: italic; display: block;
+                margin-top: .2rem; max-width: 60ch; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+          padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .metric-val { font-size: 1.8rem; font-weight: 700; }
+  .metric-label { font-size: .75rem; color: var(--fg2); text-transform: uppercase; letter-spacing: .05em; }
+  .response-section { margin-top: .6rem; }
+  .response-label { font-size: .75rem; font-weight: 600; color: var(--fg2); text-transform: uppercase;
+                     letter-spacing: .05em; margin-bottom: .3rem; }
+  .response-box { background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+                  padding: .6rem .8rem; font-size: .8rem; white-space: pre-wrap; word-break: break-word;
+                  max-height: 20rem; overflow-y: auto; line-height: 1.5; }
+  .response-box.expected { border-left: 3px solid var(--green); }
+  .response-box.agent { border-left: 3px solid var(--blue); }
+  .response-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .5rem; }
+  @media (max-width: 900px) { .response-grid { grid-template-columns: 1fr; } }
+  .no-response { color: var(--fg2); font-style: italic; font-size: .8rem; }
+</style>
+</head>
+<body>
+<h1>Conpack E2E Eval Results</h1>
+<p class="subtitle">Generated: 1771902830s-since-epoch</p>
+<h2>Summary</h2>
+<div class="grid-2">
+<div class="card"><div class="metric-label">Baseline</div><div class="metric-val conf-low">44%</div><div class="metric-label">recall &nbsp;|&nbsp; 27.3s avg &nbsp;|&nbsp; 9/10 ok &nbsp;|&nbsp; 1 timeouts</div></div>
+<div class="card"><div class="metric-label">Ctx+CLI <span class="badge badge-best">BEST</span></div><div class="metric-val conf-high">100%</div><div class="metric-label">recall &nbsp;|&nbsp; 19.2s avg &nbsp;|&nbsp; 10/10 ok &nbsp;|&nbsp; 0 timeouts</div></div>
+<div class="card"><div class="metric-label">MCP+Tools <span class="badge badge-worst">WORST</span></div><div class="metric-val conf-low">30%</div><div class="metric-label">recall &nbsp;|&nbsp; 21.7s avg &nbsp;|&nbsp; 10/10 ok &nbsp;|&nbsp; 0 timeouts</div></div>
+<div class="card"><div class="metric-label">MCPOnly</div><div class="metric-val conf-low">40%</div><div class="metric-label">recall &nbsp;|&nbsp; 16.8s avg &nbsp;|&nbsp; 10/10 ok &nbsp;|&nbsp; 0 timeouts</div></div>
+</div>
+<h2>Comparison</h2>
+<table>
+<tr><th>Metric</th><th>Baseline</th><th>Ctx+CLI</th><th>MCP+Tools</th><th>MCPOnly</th></tr>
+<tr><td>Total Recall</td><td class="bar-cell"><span class="bar bar-green" style="width:44%"></span><span class="bar-label">44.4%</span></td><td class="best" class="bar-cell"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100.0%</span></td><td class="worst" class="bar-cell"><span class="bar bar-green" style="width:30%"></span><span class="bar-label">30.0%</span></td><td class="bar-cell"><span class="bar bar-green" style="width:40%"></span><span class="bar-label">40.0%</span></td></tr>
+<tr><td>Avg Response Time</td><td>27.3s</td><td>19.2s</td><td>21.7s</td><td>16.8s</td></tr>
+<tr><td>Success Rate</td><td>9/10</td><td>10/10</td><td>10/10</td><td>10/10</td></tr>
+<tr><td>Timeouts</td><td class="timeout">1</td><td class="">0</td><td class="">0</td><td class="">0</td></tr>
+</table>
+<h2>Per-Query Recall</h2>
+<table>
+<tr><th>Query</th><th>Baseline</th><th>Ctx+CLI</th><th>MCP+Tools</th><th>MCPOnly</th></tr>
+<tr><td><strong>q-001</strong><span class="query-text">What is the Zephyr Query Protocol and how does its three-phase handshake work?</span></td><td class="fail">0%</td><td class="pass">100%</td><td class="fail">0%</td><td class="fail">0%</td></tr>
+<tr><td><strong>q-002</strong><span class="query-text">How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?</span></td><td class="pass">100%</td><td class="pass">100%</td><td class="pass">100%</td><td class="pass">100%</td></tr>
+<tr><td><strong>q-003</strong><span class="query-text">Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach</span></td><td class="fail">0%</td><td class="pass">100%</td><td class="fail">0%</td><td class="fail">0%</td></tr>
+<tr><td><strong>q-004</strong><span class="query-text">How do you configure the Vortex ingestion pipeline stages and dead-letter handling?</span></td><td class="pass">100%</td><td class="pass">100%</td><td class="fail">0%</td><td class="pass">100%</td></tr>
+<tr><td><strong>q-005</strong><span class="query-text">What traffic shaping policies does the Auralis service mesh support?</span></td><td class="pass">100%</td><td class="pass">100%</td><td class="fail">0%</td><td class="pass">100%</td></tr>
+<tr><td><strong>q-006</strong><span class="query-text">How do you train custom embeddings with the Helix Embedder and export to ONNX?</span></td><td class="pass">100%</td><td class="pass">100%</td><td class="pass">100%</td><td class="fail">0%</td></tr>
+<tr><td><strong>q-007</strong><span class="query-text">Describe the Prismoid cache coherence protocol and its gossip-based invalidation</span></td><td class="fail">0%</td><td class="pass">100%</td><td class="fail">0%</td><td class="fail">0%</td></tr>
+<tr><td><strong>q-008</strong><span class="query-text">What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?</span></td><td class="fail">0%</td><td class="pass">100%</td><td class="fail">0%</td><td class="fail">0%</td></tr>
+<tr><td><strong>q-009</strong><span class="query-text">How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?</span></td><td class="fail">0%</td><td class="pass">100%</td><td class="fail">0%</td><td class="fail">0%</td></tr>
+<tr><td><strong>q-010</strong><span class="query-text">Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files</span></td><td class="timeout">TIMEOUT</td><td class="pass">100%</td><td class="pass">100%</td><td class="pass">100%</td></tr>
+</table>
+<h2>Query Details</h2>
+<details><summary><strong>q-001</strong> — What is the Zephyr Query Protocol and how does its three-phase handshake work?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-001 — Zephyr Query Protocol v3.2 Specification</div><div class="response-box expected">The Zephyr Query Protocol (ZQP) v3.2 introduces scatter-gather query routing with adaptive fan-out. ZQP uses a three-phase handshake: DISCOVER, NEGOTIATE, STREAM. The DISCOVER phase broadcasts topology probes to all registered shards using multicast group 239.17.42.0/24. NEGOTIATE selects optimal shards based on affinity scores computed via the Kessler-Huang ranking algorithm. STREAM delivers results using chunked transfer with backpressure signaling via ZQP-FlowControl headers. Configuration requires setting zqp.scatter_factor (default 3), zqp.negotiate_timeout_ms (default 150), and zqp.stream_window_size (default 64KB). The protocol supports both synchronous request-response and asynchronous push modes controlled by the zqp.mode parameter.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.250</td><td>10.8s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/5</span><span class="tag tag-tag">tag:zephyr</span><span class="tag tag-tag">tag:query-protocol</span><span class="tag">term:zephyr</span><span class="tag">term:phase</span><span class="tag">term:three-phase</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-001</td><td class="pass">YES</td><td class="conf-high">0.591</td><td>16.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/5</span><span class="tag tag-phrase">phrase:Kessler-Huang ranking</span><span class="tag tag-tag">tag:zephyr</span><span class="tag tag-tag">tag:query-protocol</span><span class="tag tag-tag">tag:scatter-gather</span><span class="tag tag-tag">tag:zqp</span><span class="tag">term:zephyr</span><span class="tag">term:discover</span><span class="tag">term:shards</span><span class="tag">term:group</span><span class="tag">term:probes</span><span class="tag">term:stream</span><span class="tag">term:optimal</span><span class="tag">term:phase</span><span class="tag">term:affinity</span><span class="tag">term:three-phase</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.250</td><td>18.7s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/5</span><span class="tag tag-tag">tag:zephyr</span><span class="tag tag-tag">tag:query-protocol</span><span class="tag">term:zephyr</span><span class="tag">term:phase</span><span class="tag">term:three-phase</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.250</td><td>14.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/5</span><span class="tag tag-tag">tag:zephyr</span><span class="tag tag-tag">tag:query-protocol</span><span class="tag">term:zephyr</span><span class="tag">term:phase</span><span class="tag">term:three-phase</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 0%</summary>
+<div class="response-box agent">I'm not aware of any established protocol called the &quot;Zephyr Query Protocol&quot; or a specific &quot;three-phase handshake&quot; associated with it. This doesn't match any widely recognized networking protocol, RFC, or standard in my knowledge.
+
+There is a **Zephyr Notification Service** from MIT's Project Athena (a campus-wide messaging/notification system), but it is not referred to as the &quot;Zephyr Query Protocol&quot; and is not primarily characterized by a three-phase handshake.
+
+If this is a term from a specific textbook, course, proprietary system, or newer specification, could you share the source? I'd be happy to look into it further with more context. Otherwise, I don't want to fabricate details about something I'm not confident exists.
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">## Zephyr Query Protocol (ZQP) v3.2
+
+The **Zephyr Query Protocol (ZQP)** is a scatter-gather query routing protocol with adaptive fan-out, designed for distributing queries across shards. Its core mechanism is a **three-phase handshake**:
+
+### Three-Phase Handshake: DISCOVER → NEGOTIATE → STREAM
+
+1. **DISCOVER** — Broadcasts topology probes to all registered shards using multicast group `239.17.42.0/24`. This phase identifies which shards are available and can participate in answering the query.
+
+2. **NEGOTIATE** — Selects the optimal shards based on **affinity scores** computed via the **Kessler-Huang ranking algorithm**. This narrows the fan-out to only the most relevant shards for the given query.
+
+3. **STREAM** — Delivers results using **chunked transfer** with backpressure signaling via `ZQP-FlowControl` headers. This ensures the consumer isn't overwhelmed by result data.
+
+### Key Configuration Parameters
+
+| Parameter | Default | Purpose |
+|---|---|---|
+| `zqp.scatter_factor` | `3` | Controls fan-out breadth |
+| `zqp.negotiate_timeout_ms` | `150` | Timeout for the NEGOTIATE phase |
+| `zqp.stream_window_size` | `64KB` | Chunked transfer window size |
+| `zqp.mode` | — | `sync` (request-response) or `async` (push mode) |
+
+The protocol supports both **synchronous request-response** and **asynchronous push** modes, controlled by the `zqp.mode` parameter.
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">No conpack packages or knowledge files are installed, and the search proxy is not running, so I have no documentation sources to query for this topic.
+
+I'm not aware of a protocol called the **&quot;Zephyr Query Protocol&quot;** with a three-phase handshake. This doesn't match any well-known networking or database protocol in my training data, and there are no conpack knowledge sources available to look it up.
+
+A few possibilities:
+
+1. **It may be a proprietary or internal protocol** specific to your organization or project. If so, could you point me to the relevant documentation or codebase?
+2. **It may be from a specific conpack package** that hasn't been installed yet. You can install packages with conpack and I can then search their documentation.
+3. **It may have been introduced after my knowledge cutoff** (May 2025). If you have a URL to the docs, I can fetch and read them.
+
+Could you provide more context on where you encountered this term, or share a link to the relevant documentation?
+</div>
+</details>
+<details><summary>MCPOnly — recall 0%</summary>
+<div class="response-box agent">I wasn't able to find any information about a &quot;Zephyr Query Protocol&quot; or its &quot;three-phase handshake&quot; through the available conpack tools. The search proxy is not running, there are no knowledge files stored locally, and no conpack packages are installed.
+
+Beyond the tooling, I'm also not aware of a protocol by this name from my own training data. This doesn't appear to be a widely known or standardized protocol.
+
+Could you provide more context about where you encountered this term? For example:
+
+- **A specific project or codebase** — I can search the local repo for references.
+- **A documentation link or paper** — I can look at it if you share the content.
+- **A proprietary/internal protocol** — it may not be in any public knowledge base.
+
+That would help me track down the right information for you.
+</div>
+</details>
+</details>
+<details><summary><strong>q-002</strong> — How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-002 — ConpackDB Ring-Buffer Sharding Architecture</div><div class="response-box expected">ConpackDB implements ring-buffer sharding using BLAKE3 partition keys for deterministic data distribution. Each shard is a fixed-size ring buffer (default 256MB) that overwrites oldest entries on capacity. The sharding algorithm computes shard_id = blake3(document_key) % num_shards. Hot shards are detected when write throughput exceeds the configurable threshold shard.hot_threshold_ops_sec (default 10000). Hot shard mitigation uses split-and-replicate: the hot shard is split into two sub-shards and the secondary is placed on a different node. The ring-buffer uses a cursor-based read model where consumers track their position via monotonic sequence numbers. ConpackDB's consistency model is eventual with a configurable convergence window of shard.convergence_ms (default 500).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-002</td><td class="pass">YES</td><td class="conf-mid">0.387</td><td>17.8s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:BLAKE3 partition</span><span class="tag tag-tag">tag:conpackdb</span><span class="tag tag-tag">tag:ring-buffer</span><span class="tag tag-tag">tag:sharding</span><span class="tag tag-tag">tag:blake3</span><span class="tag">term:shard</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-002</td><td class="pass">YES</td><td class="conf-high">0.773</td><td>17.8s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:BLAKE3 partition</span><span class="tag tag-phrase">phrase:ConpackDB implements</span><span class="tag tag-phrase">phrase:Each shard</span><span class="tag tag-tag">tag:conpackdb</span><span class="tag tag-tag">tag:ring-buffer</span><span class="tag tag-tag">tag:sharding</span><span class="tag tag-tag">tag:blake3</span><span class="tag">term:convergence_ms</span><span class="tag">term:capacity</span><span class="tag">term:consumers</span><span class="tag">term:entries</span><span class="tag">term:shards</span><span class="tag">term:window</span><span class="tag">term:distribution</span><span class="tag">term:shard</span><span class="tag">term:mitigation</span><span class="tag">term:shard_id</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-002</td><td class="pass">YES</td><td class="conf-mid">0.387</td><td>17.9s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:BLAKE3 partition</span><span class="tag tag-tag">tag:conpackdb</span><span class="tag tag-tag">tag:ring-buffer</span><span class="tag tag-tag">tag:sharding</span><span class="tag tag-tag">tag:blake3</span><span class="tag">term:shard</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-002</td><td class="pass">YES</td><td class="conf-mid">0.387</td><td>14.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:BLAKE3 partition</span><span class="tag tag-tag">tag:conpackdb</span><span class="tag tag-tag">tag:ring-buffer</span><span class="tag tag-tag">tag:sharding</span><span class="tag tag-tag">tag:blake3</span><span class="tag">term:shard</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 100%</summary>
+<div class="response-box agent">The working directory is an empty git repository with no source code or documentation.
+
+**I don't have any information about &quot;ConpackDB&quot; or an implementation of &quot;ring-buffer sharding with BLAKE3 partition keys.&quot;** This does not appear to be a real, well-known database system, and there is no code or documentation in this repository that describes one.
+
+I can't provide specific technical details about something I don't have knowledge of. If ConpackDB is:
+
+- **A project you're building** — please share the relevant source code or documentation and I can analyze it in detail.
+- **A term from a specific paper, blog post, or project** — please share a link and I can review it.
+
+I won't fabricate an answer about a system I can't verify exists.
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">Here's how ConpackDB implements ring-buffer sharding with BLAKE3 partition keys:
+
+## Sharding Algorithm
+
+The core distribution formula is:
+
+```
+shard_id = blake3(document_key) % num_shards
+```
+
+BLAKE3 hashes the document key to produce a deterministic partition assignment. This ensures uniform distribution across shards without coordination.
+
+## Ring-Buffer Structure
+
+Each shard is a **fixed-size ring buffer** (default **256 MB**) that operates in an overwrite-oldest model — when a shard reaches capacity, the oldest entries are overwritten. Consumers track their read position using **monotonic sequence numbers** in a cursor-based read model.
+
+## Hot Shard Mitigation
+
+ConpackDB detects hot shards when write throughput exceeds `shard.hot_threshold_ops_sec` (default **10,000 ops/sec**). When triggered, it uses a **split-and-replicate** strategy:
+
+1. The hot shard is split into two sub-shards.
+2. The secondary sub-shard is placed on a **different node** to distribute load.
+
+## Consistency Model
+
+ConpackDB uses **eventual consistency** with a configurable convergence window controlled by `shard.convergence_ms` (default **500 ms**).
+
+## Key Configuration Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| Ring-buffer size | 256 MB | Fixed size per shard |
+| `shard.hot_threshold_ops_sec` | 10,000 | Write ops/sec before hot-shard mitigation |
+| `shard.convergence_ms` | 500 ms | Eventual consistency convergence window |
+</div>
+</details>
+<details><summary>MCP+Tools — recall 100%</summary>
+<div class="response-box agent">I wasn't able to find any information about ConpackDB's ring-buffer sharding with BLAKE3 partition keys. Here's what I found:
+
+- **No conpack packages** are installed (`conpack_list` returned empty)
+- **No knowledge files** are available locally (`conpack_knowledge_list` returned empty)
+- **The proxy search server** is not running, so `conpack_search` failed to connect
+
+Without any indexed documentation or knowledge files, I don't have a source to answer this question from. I don't want to speculate or fabricate technical details.
+
+To get this working, you would need to either:
+
+1. **Install the relevant conpack package** that contains ConpackDB documentation
+2. **Start the proxy search server** (typically on `http://127.0.0.1:9999`) so semantic search can query the upstream vector database
+3. **Add knowledge files** to the conpack knowledge store
+
+Could you point me to the documentation source or install the relevant conpack package so I can look this up?
+</div>
+</details>
+<details><summary>MCPOnly — recall 100%</summary>
+<div class="response-box agent">I don't have any information to answer this question. Here's what I found:
+
+- **No conpack packages** are installed that would contain documentation about &quot;ConpackDB.&quot;
+- **No knowledge files** are available locally.
+- **The search proxy** is not running, so I can't query an upstream vector database.
+
+Additionally, &quot;ConpackDB&quot; with &quot;ring-buffer sharding&quot; and &quot;BLAKE3 partition keys&quot; doesn't match anything I'm aware of from my training data. This may be a proprietary or fictional system.
+
+**To get an answer, you could:**
+1. **Start the conpack proxy** so `conpack_search` can reach the upstream vector database.
+2. **Install the relevant conpack package** that contains ConpackDB documentation.
+3. **Provide documentation or context** directly so I can reason about the implementation.
+
+Would you like help with any of these steps?
+</div>
+</details>
+</details>
+<details><summary><strong>q-003</strong> — Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach</summary>
+<div class="response-section"><div class="response-label">Expected: eval-003 — Nexara Consensus: The Meridian Protocol</div><div class="response-box expected">Nexara implements the Meridian consensus protocol, a Byzantine fault-tolerant algorithm designed for geo-distributed clusters. Meridian operates in three rounds: PROPOSE, CERTIFY, COMMIT. Unlike traditional BFT protocols, Meridian uses a rotating committee of 2f+1 validators selected via verifiable random functions (VRFs). The protocol achieves 50,000 TPS in WAN configurations with 100ms finality. Key parameters include meridian.committee_size (default 7), meridian.vrf_threshold (0.67), and meridian.proposal_timeout_ms (default 200). Meridian introduces the concept of 'temporal sharding' where consensus rounds are partitioned across time slots to reduce message complexity from O(n^2) to O(n*log(n)). The Nexara implementation uses the Ed25519 signature scheme for vote signing.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.228</td><td>24.4s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-tag">tag:nexara</span><span class="tag tag-tag">tag:meridian</span><span class="tag tag-tag">tag:consensus</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-003</td><td class="pass">YES</td><td class="conf-high">0.523</td><td>20.1s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:Byzantine fault-tolerant</span><span class="tag tag-tag">tag:nexara</span><span class="tag tag-tag">tag:meridian</span><span class="tag tag-tag">tag:bft</span><span class="tag tag-tag">tag:consensus</span><span class="tag">term:slots</span><span class="tag">term:complexity</span><span class="tag">term:signature</span><span class="tag">term:committee_size</span><span class="tag">term:partitioned</span><span class="tag">term:clusters</span><span class="tag">term:parameters</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.228</td><td>18.7s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-tag">tag:nexara</span><span class="tag tag-tag">tag:meridian</span><span class="tag tag-tag">tag:consensus</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.228</td><td>18.8s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-tag">tag:nexara</span><span class="tag tag-tag">tag:meridian</span><span class="tag tag-tag">tag:consensus</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 0%</summary>
+<div class="response-box agent">**I cannot provide an answer because &quot;Nexara,&quot; the &quot;Meridian consensus protocol,&quot; and its &quot;temporal sharding approach&quot; do not appear to be real technologies.** My web search returned no results for these terms, and nothing matches in the local codebase either.
+
+These appear to be fabricated or fictional names. I don't want to generate a plausible-sounding but false explanation. If these are real and I'm simply not finding them, please share a link to documentation or a source, and I'll be happy to review and explain them.
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">## Meridian Consensus Protocol — Nexara
+
+### Overview
+
+Meridian is a **Byzantine fault-tolerant (BFT)** consensus algorithm purpose-built for **geo-distributed clusters**. It is the core consensus layer in Nexara.
+
+### Three-Round Structure
+
+Meridian operates in three distinct rounds:
+
+1. **PROPOSE** — A validator proposes a new block/state transition.
+2. **CERTIFY** — The committee validates and certifies the proposal.
+3. **COMMIT** — The certified proposal is committed to finalized state.
+
+### Rotating Committee via VRFs
+
+Unlike traditional BFT protocols (which typically use a fixed validator set), Meridian selects a **rotating committee of `2f+1` validators** using **Verifiable Random Functions (VRFs)**. This improves censorship resistance and reduces the attack surface on known leader nodes.
+
+- Votes are signed using the **Ed25519** signature scheme.
+
+### Performance
+
+- **50,000 TPS** in WAN (wide-area network) configurations
+- **100ms finality**
+
+### Temporal Sharding
+
+This is Meridian's key innovation. Consensus rounds are **partitioned across time slots**, meaning different subsets of transactions are processed in parallel within non-overlapping temporal windows. This reduces the **message complexity from O(n²) to O(n·log(n))**, a significant improvement for large validator sets, because validators only need to communicate within their assigned time slot rather than with every other validator.
+
+### Key Configuration Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `meridian.committee_size` | `7` | Number of validators in each rotating committee |
+| `meridian.vrf_threshold` | `0.67` | VRF selection threshold for committee membership |
+| `meridian.proposal_timeout_ms` | `200` | Timeout (in ms) before a proposal round is abandoned |
+
+### Summary
+
+Meridian combines rotating VRF-based committees, a three-phase commit protocol, and temporal sharding to deliver high-throughput BFT consensus with sub-second finality across geographically distributed nodes — all while keeping message overhead subquadratic.
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">The conpack knowledge base is empty — there are no installed packages or knowledge files available, and the search proxy is not running.
+
+I don't have any information about a &quot;Meridian consensus protocol&quot; used by &quot;Nexara&quot; or its &quot;temporal sharding approach.&quot; These terms don't appear in any available knowledge base, and they don't match anything within my training data either.
+
+Possible explanations:
+
+1. **These may be proprietary/internal concepts** from a specific project or organization that haven't been indexed into the conpack knowledge base yet.
+2. **The relevant conpack packages may not be installed.** You can install packages with conpack so their documentation becomes searchable.
+3. **The search proxy isn't running**, which prevents semantic search across any upstream vector database.
+
+**To get answers, you could:**
+- Install the relevant conpack package containing Nexara/Meridian documentation
+- Start the conpack search proxy if an upstream vector database is configured
+- Point me to specific documentation files or URLs about these topics
+
+Could you provide more context about where this documentation lives, or share a link/file I can review?
+</div>
+</details>
+<details><summary>MCPOnly — recall 0%</summary>
+<div class="response-box agent">I was unable to find any information on these topics. The conpack knowledge base has no stored documents, no packages are installed, and the search proxy is unavailable.
+
+More importantly, **&quot;Meridian consensus protocol,&quot; &quot;Nexara,&quot; and &quot;temporal sharding&quot;** (in this specific combination) do not correspond to any technology, protocol, or project that I'm aware of from my training data. These terms appear to be either:
+
+1. **Fictional/fabricated** — they don't match any known blockchain protocol, distributed systems project, or consensus mechanism.
+2. **Extremely niche or proprietary** — if this is a real project, it's not in any public documentation I have access to.
+
+I don't want to hallucinate an answer about something that doesn't appear to exist. If this is a real project, could you point me to its documentation, repository, or website? I'd be happy to analyze it from there.
+</div>
+</details>
+</details>
+<details><summary><strong>q-004</strong> — How do you configure the Vortex ingestion pipeline stages and dead-letter handling?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-004 — Vortex Ingestion Pipeline Configuration Guide</div><div class="response-box expected">The Vortex ingestion pipeline processes streaming data through configurable stages: PARSE, ENRICH, VALIDATE, ROUTE. Each stage runs as an isolated actor with bounded mailboxes (vortex.stage.mailbox_size, default 4096). The PARSE stage supports JSON, Avro, Protobuf, and custom formats via pluggable deserializers registered in vortex.parsers[]. ENRICH applies transformation rules defined in vortex.enrichment_rules[], supporting field mapping, regex extraction, and lookup joins against reference tables. VALIDATE enforces schema contracts using Vortex Schema Language (VSL) files referenced by vortex.schema_path. ROUTE distributes validated records to downstream sinks based on content-based routing rules in vortex.routing_table[]. Dead-letter handling sends invalid records to the vortex.dlq_topic (default 'vortex-dlq'). Backpressure propagates upstream when any stage's mailbox exceeds 80% capacity.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-004</td><td class="pass">YES</td><td class="conf-mid">0.341</td><td>19.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/5</span><span class="tag tag-phrase">phrase:Dead-letter handling</span><span class="tag tag-tag">tag:vortex</span><span class="tag tag-tag">tag:ingestion</span><span class="tag tag-tag">tag:pipeline</span><span class="tag">term:handling</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-004</td><td class="pass">YES</td><td class="conf-high">0.591</td><td>24.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/5</span><span class="tag tag-phrase">phrase:Dead-letter handling</span><span class="tag tag-tag">tag:vortex</span><span class="tag tag-tag">tag:ingestion</span><span class="tag tag-tag">tag:pipeline</span><span class="tag tag-tag">tag:streaming</span><span class="tag">term:extraction</span><span class="tag">term:language</span><span class="tag">term:configuration</span><span class="tag">term:handling</span><span class="tag">term:mailbox</span><span class="tag">term:mapping</span><span class="tag">term:4096</span><span class="tag">term:enrich</span><span class="tag">term:pluggable</span><span class="tag">term:rules</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-004</td><td class="fail">NO</td><td class="conf-low">0.250</td><td>21.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/5</span><span class="tag tag-tag">tag:vortex</span><span class="tag tag-tag">tag:ingestion</span><span class="tag tag-tag">tag:pipeline</span><span class="tag">term:configuration</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-004</td><td class="pass">YES</td><td class="conf-mid">0.341</td><td>18.2s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/5</span><span class="tag tag-phrase">phrase:Dead-letter handling</span><span class="tag tag-tag">tag:vortex</span><span class="tag tag-tag">tag:ingestion</span><span class="tag tag-tag">tag:pipeline</span><span class="tag">term:handling</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 100%</summary>
+<div class="response-box agent">I don't have any information about &quot;Vortex ingestion pipeline stages and dead-letter handling.&quot; The current repository is empty (only contains default git scaffolding), there's nothing in my memory files about this topic, and &quot;Vortex&quot; doesn't correspond to a well-known, widely-documented open-source project or standard technology that I can speak to with confidence.
+
+This could refer to:
+
+- A proprietary/internal system specific to your organization
+- A niche or newer tool released after my knowledge cutoff (May 2025)
+- A custom-named pipeline framework
+
+I don't want to fabricate an answer with made-up technical details. Could you provide more context about what &quot;Vortex&quot; refers to — such as documentation links, source code, or the vendor/project it belongs to — so I can give you an accurate and useful answer?
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">Here's how you configure the **Vortex ingestion pipeline stages** and **dead-letter handling**:
+
+## Pipeline Stages
+
+Vortex processes streaming data through **four configurable stages**, executed in order:
+
+| Stage | Purpose | Configuration |
+|---|---|---|
+| **PARSE** | Deserializes incoming records (JSON, Avro, Protobuf, custom formats) | Register deserializers in `vortex.parsers[]` |
+| **ENRICH** | Applies transformation rules — field mapping, regex extraction, lookup joins against reference tables | Define rules in `vortex.enrichment_rules[]` |
+| **VALIDATE** | Enforces schema contracts using Vortex Schema Language (VSL) files | Set the schema path via `vortex.schema_path` |
+| **ROUTE** | Distributes validated records to downstream sinks using content-based routing | Configure rules in `vortex.routing_table[]` |
+
+Each stage runs as an **isolated actor** with a bounded mailbox. The mailbox size is controlled by:
+
+```
+vortex.stage.mailbox_size = 4096   # default
+```
+
+## Backpressure
+
+Backpressure **propagates upstream** automatically when any stage's mailbox exceeds **80% capacity**, preventing downstream stages from being overwhelmed.
+
+## Dead-Letter Handling
+
+Records that fail validation are routed to a **dead-letter queue (DLQ)** topic, configured via:
+
+```
+vortex.dlq_topic = &quot;vortex-dlq&quot;   # default
+```
+
+Any record that doesn't pass the VSL schema contracts in the VALIDATE stage is sent to this topic instead of proceeding to ROUTE, allowing you to inspect and reprocess failed records separately.
+
+## Key Configuration Summary
+
+| Property | Purpose | Default |
+|---|---|---|
+| `vortex.stage.mailbox_size` | Bounded mailbox size per stage actor | `4096` |
+| `vortex.parsers[]` | Pluggable deserializer registry | — |
+| `vortex.enrichment_rules[]` | Transformation rule definitions | — |
+| `vortex.schema_path` | Path to VSL schema files | — |
+| `vortex.routing_table[]` | Content-based routing rules for sinks | — |
+| `vortex.dlq_topic` | Dead-letter queue topic name | `&quot;vortex-dlq&quot;` |
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">Unfortunately, I don't have any documentation available about **Vortex** in the current conpack configuration — there are no installed packages, no knowledge files, and the proxy search server isn't running.
+
+&quot;Vortex ingestion pipeline&quot; doesn't match a widely-known open-source project I can speak to with confidence. It may be:
+
+1. **An internal/proprietary system** — If this is specific to your organization, you'd need to point me to the relevant docs or codebase.
+2. **A less common open-source tool** — If so, could you share a link to its repository or documentation?
+
+**To get a useful answer, you could:**
+
+- **Add the relevant conpack package** so I can search its documentation (e.g., `conpack install &lt;package&gt;`).
+- **Share a link** to the Vortex docs or repo, and I can fetch and analyze them.
+- **Point me to local files** in your codebase (config files, README, etc.) that describe the pipeline configuration.
+
+Would you like to provide any of these so I can give you a detailed, accurate answer?
+</div>
+</details>
+<details><summary>MCPOnly — recall 100%</summary>
+<div class="response-box agent">Unfortunately, I wasn't able to find any documentation about **Vortex ingestion pipeline stages** or **dead-letter handling** through the available conpack tools. The search proxy is not running, and there are no knowledge files or packages installed that cover this topic.
+
+Here's what I checked:
+- **conpack_search** — proxy is unreachable (`127.0.0.1:9999`)
+- **conpack_knowledge_list** — no knowledge files available
+- **conpack_list** — no packages installed
+
+To help you, I'd need one of the following:
+
+1. **A running conpack proxy** — if this documentation lives in a vector database, the proxy server needs to be started first.
+2. **Installed conpack packages** — the relevant package containing Vortex docs needs to be added.
+3. **More context from you** — if you can share the project repository, documentation links, or config files related to Vortex, I can analyze them directly.
+
+Could you provide any of the above so I can give you a specific, accurate answer?
+</div>
+</details>
+</details>
+<details><summary><strong>q-005</strong> — What traffic shaping policies does the Auralis service mesh support?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-005 — Auralis Service Mesh: Traffic Shaping Policies</div><div class="response-box expected">Auralis service mesh provides traffic shaping through declarative policies defined in AuralisPolicy CRDs. Traffic splitting uses weighted backends specified as auralis.backends[].weight (0-100, must sum to 100). Circuit breaking triggers when error_rate exceeds auralis.circuit.threshold (default 0.5) over auralis.circuit.window_sec (default 30). The mesh supports canary deployments via header-based routing: requests with X-Auralis-Canary: true are routed to canary backends. Rate limiting is per-service with auralis.ratelimit.rps (default 1000) and auralis.ratelimit.burst (default 50). Auralis uses sidecar proxies based on the Luminex engine, which processes L4/L7 traffic with sub-millisecond overhead. Mutual TLS is enforced by default between all mesh services using SPIFFE identities (spiffe://auralis.local/service/&lt;name&gt;).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-005</td><td class="pass">YES</td><td class="conf-mid">0.364</td><td>8.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-phrase">phrase:Auralis service</span><span class="tag tag-tag">tag:auralis</span><span class="tag tag-tag">tag:service-mesh</span><span class="tag tag-tag">tag:traffic-shaping</span><span class="tag">term:name</span><span class="tag">term:service</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-005</td><td class="pass">YES</td><td class="conf-high">0.660</td><td>15.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-phrase">phrase:Auralis service</span><span class="tag tag-phrase">phrase:Auralis uses</span><span class="tag tag-tag">tag:auralis</span><span class="tag tag-tag">tag:service-mesh</span><span class="tag tag-tag">tag:traffic-shaping</span><span class="tag tag-tag">tag:luminex</span><span class="tag">term:requests</span><span class="tag">term:mutual</span><span class="tag">term:engine</span><span class="tag">term:true</span><span class="tag">term:auralispolicy</span><span class="tag">term:header-based</span><span class="tag">term:triggers</span><span class="tag">term:name</span><span class="tag">term:service</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-005</td><td class="fail">NO</td><td class="conf-low">0.205</td><td>17.3s</td><td><div class="tags"><span class="tag tag-phrase">phrase:Auralis service</span><span class="tag tag-tag">tag:auralis</span><span class="tag tag-tag">tag:service-mesh</span><span class="tag">term:service</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-005</td><td class="pass">YES</td><td class="conf-mid">0.341</td><td>16.9s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-phrase">phrase:Auralis service</span><span class="tag tag-tag">tag:auralis</span><span class="tag tag-tag">tag:service-mesh</span><span class="tag tag-tag">tag:traffic-shaping</span><span class="tag">term:service</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 100%</summary>
+<div class="response-box agent">I don't have any information about an &quot;Auralis service mesh.&quot; This doesn't appear to be a well-known or widely documented technology as of my knowledge cutoff (May 2025), and there's nothing related to it in the current working directory.
+
+It's possible that:
+
+- **It's a proprietary/internal tool** specific to an organization.
+- **It's a newer project** released after my knowledge cutoff.
+- **The name may be slightly different** — could you double-check the spelling?
+
+If you have documentation, a repository URL, or files related to Auralis, I'd be happy to review them and answer your question about its traffic shaping policies. Otherwise, I simply don't have enough information to give you an accurate technical answer, and I'd rather not fabricate details.
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">The Auralis service mesh supports the following traffic shaping policies, all defined as declarative **AuralisPolicy CRDs**:
+
+### Traffic Splitting
+- Weighted backends via `auralis.backends[].weight` (values 0–100, must sum to 100)
+
+### Circuit Breaking
+- Triggers when error rate exceeds `auralis.circuit.threshold` (default **0.5**)
+- Evaluated over a configurable window: `auralis.circuit.window_sec` (default **30 seconds**)
+
+### Canary Deployments
+- Header-based routing: requests with `X-Auralis-Canary: true` are routed to canary backends
+
+### Rate Limiting
+- Per-service configuration:
+  - `auralis.ratelimit.rps` — requests per second (default **1000**)
+  - `auralis.ratelimit.burst` — burst allowance (default **50**)
+
+### Mutual TLS
+- Enforced by default between all mesh services using **SPIFFE identities** in the format `spiffe://auralis.local/service/&lt;name&gt;`
+
+### Proxy Engine
+Under the hood, Auralis uses **sidecar proxies based on the Luminex engine**, which handles L4/L7 traffic with sub-millisecond overhead.
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">I wasn't able to find any information about the Auralis service mesh in the available conpack knowledge base. The search proxy is not running, there are no knowledge files stored locally, and no conpack packages are installed.
+
+&quot;Auralis service mesh&quot; does not appear to be a widely known or documented technology in my training data either.
+
+To help answer your question, I'd need one of the following:
+
+1. **A conpack package installed** that contains Auralis documentation — you can install one if a package exists for it.
+2. **The proxy server running** so I can perform semantic search against an upstream vector database.
+3. **A URL or local file** with Auralis documentation that I can read directly.
+
+Could you point me to the relevant documentation or set up the conpack data source?
+</div>
+</details>
+<details><summary>MCPOnly — recall 100%</summary>
+<div class="response-box agent">I wasn't able to find any information about &quot;Auralis service mesh&quot; or its traffic shaping policies. Here's what I checked:
+
+- **Proxy search** — the search proxy is not running, so semantic search is unavailable.
+- **Knowledge files** — no knowledge files are stored locally.
+- **Installed packages** — no conpack packages are installed.
+
+&quot;Auralis service mesh&quot; does not appear to be a product or project I have any documentation for, and it's not something I recognize from my training data either. It's possible this is an internal or proprietary system.
+
+**To get an answer, you could:**
+1. **Install the relevant conpack package** that contains Auralis documentation, then re-ask.
+2. **Start the conpack proxy server** so semantic search can query your upstream vector database.
+3. **Point me to local documentation** (files, URLs, or repos) that describe Auralis, and I can answer from those.
+
+Would you like help with any of these steps?
+</div>
+</details>
+</details>
+<details><summary><strong>q-006</strong> — How do you train custom embeddings with the Helix Embedder and export to ONNX?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-006 — Helix Embedder: Custom Model Training Workflow</div><div class="response-box expected">The Helix Embedder produces domain-specific text embeddings using a fine-tuned transformer architecture. Training requires a corpus file in Helix Format (.hxf) containing tab-separated (anchor, positive, negative) triplets. The training pipeline is: helix train --corpus data.hxf --model-dim 384 --epochs 20 --lr 1e-5 --loss contrastive-margin --margin 0.3. Evaluation uses helix eval --model checkpoint.hx --benchmark internal-retrieval --metrics ndcg@10,mrr. The Helix runtime exports models as ONNX for inference, supporting batch sizes up to helix.inference.max_batch (default 32). Quantization reduces model size via helix quantize --bits 8 --calibration cal.hxf. The Helix index format uses product quantization (PQ) with helix.index.pq_segments (default 48) and helix.index.pq_bits (default 8) for compressed vector storage.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-006</td><td class="pass">YES</td><td class="conf-mid">0.319</td><td>56.1s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/6</span><span class="tag tag-tag">tag:helix</span><span class="tag tag-tag">tag:embedder</span><span class="tag tag-tag">tag:training</span><span class="tag tag-tag">tag:onnx</span><span class="tag">term:workflow</span><span class="tag">term:helix</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-006</td><td class="pass">YES</td><td class="conf-high">0.864</td><td>17.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/6</span><span class="tag tag-phrase">phrase:--benchmark internal-retrieval</span><span class="tag tag-phrase">phrase:--calibration cal.hxf</span><span class="tag tag-phrase">phrase:--corpus data.hxf</span><span class="tag tag-phrase">phrase:--loss contrastive-margin</span><span class="tag tag-phrase">phrase:--lr 1e-5</span><span class="tag tag-tag">tag:helix</span><span class="tag tag-tag">tag:embedder</span><span class="tag tag-tag">tag:training</span><span class="tag tag-tag">tag:onnx</span><span class="tag">term:contrastive-margin</span><span class="tag">term:--bits</span><span class="tag">term:corpus</span><span class="tag">term:pq_segments</span><span class="tag">term:helix</span><span class="tag">term:--lr</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-006</td><td class="pass">YES</td><td class="conf-mid">0.319</td><td>34.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-tag">tag:helix</span><span class="tag tag-tag">tag:embedder</span><span class="tag tag-tag">tag:training</span><span class="tag tag-tag">tag:onnx</span><span class="tag">term:workflow</span><span class="tag">term:helix</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-006</td><td class="fail">NO</td><td class="conf-low">0.182</td><td>16.9s</td><td><div class="tags"><span class="tag tag-tag">tag:helix</span><span class="tag tag-tag">tag:embedder</span><span class="tag tag-tag">tag:training</span><span class="tag">term:workflow</span><span class="tag">term:helix</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 100%</summary>
+<div class="response-box agent">After extensive searching across the web and the local codebase, I was unable to find a specific tool or library called **&quot;Helix Embedder&quot;** that provides a workflow for training custom embeddings and exporting to ONNX.
+
+Here's what I found across several search iterations:
+
+- **[helix-py](https://pypi.org/project/helix-py/)** — A Python client for helix-db (a graph-vector database in Rust). It has embedder integrations for OpenAI, Gemini, and VoyageAI, but no custom training pipeline or ONNX export capability.
+- **[Helix ML](https://helix-ml.github.io/)** — An accelerated human-in-the-loop ML system. Its documentation does not mention an &quot;Embedder&quot; component or ONNX export.
+- **[helixml/helix](https://github.com/helixml/helix)** — A private GenAI stack with RAG/vector search via PGVector, but no dedicated embedding training or ONNX export tool called &quot;Helix Embedder.&quot;
+- **[HELIX datasets](https://helix-datasets.readthedocs.io/en/stable/tutorial/quick-install-guide.html)** — A dataset management library, unrelated to embedding training.
+
+**I don't have enough reliable information to provide specific technical details about training custom embeddings with a &quot;Helix Embedder&quot; and exporting to ONNX.** The term does not appear to correspond to a widely documented or publicly available tool as of my knowledge cutoff (May 2025) or in current web search results (February 2026).
+
+If this is a tool you've encountered, could you share:
+- A link to its documentation or repository?
+- The package name (e.g., on PyPI or npm)?
+- The organization or author behind it?
+
+That would let me give you a precise, accurate answer rather than speculating.
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">Here's how to train custom embeddings with the Helix Embedder and export to ONNX:
+
+## Training Custom Embeddings
+
+### 1. Prepare Your Corpus
+
+Create a corpus file in **Helix Format (`.hxf`)** containing **tab-separated triplets** of `(anchor, positive, negative)` examples.
+
+### 2. Train the Model
+
+```bash
+helix train \
+  --corpus data.hxf \
+  --model-dim 384 \
+  --epochs 20 \
+  --lr 1e-5 \
+  --loss contrastive-margin \
+  --margin 0.3
+```
+
+Key parameters:
+- **`--model-dim 384`** — dimensionality of the output embeddings
+- **`--loss contrastive-margin`** — uses contrastive loss with a configurable margin (`--margin 0.3`)
+- **`--lr 1e-5`** — learning rate
+- **`--epochs 20`** — number of training epochs
+
+### 3. Evaluate the Model
+
+```bash
+helix eval \
+  --model checkpoint.hx \
+  --benchmark internal-retrieval \
+  --metrics ndcg@10,mrr
+```
+
+This evaluates using **nDCG@10** and **MRR** on your retrieval benchmark.
+
+### 4. Export to ONNX
+
+The Helix runtime **natively exports models as ONNX** for inference. The exported model supports batch sizes up to `helix.inference.max_batch` (default **32**).
+
+### 5. (Optional) Quantize for Smaller Model Size
+
+```bash
+helix quantize --bits 8 --calibration cal.hxf
+```
+
+This applies **8-bit quantization** using a calibration dataset to reduce model size.
+
+### Index Configuration
+
+For compressed vector storage, Helix uses **Product Quantization (PQ)** with two tunable settings:
+
+| Setting | Default | Description |
+|---|---|---|
+| `helix.index.pq_segments` | 48 | Number of PQ sub-vector segments |
+| `helix.index.pq_bits` | 8 | Bits per sub-quantizer |
+</div>
+</details>
+<details><summary>MCP+Tools — recall 100%</summary>
+<div class="response-box agent">I wasn't able to find specific documentation about a &quot;Helix Embedder&quot; through the conpack tools (no packages are installed and the search proxy isn't running) or through web search. &quot;Helix Embedder&quot; doesn't appear to be a widely documented public project.
+
+Here's what I can offer:
+
+## General Approach: Training Custom Embeddings &amp; Exporting to ONNX
+
+If you're working with a PyTorch-based embedding model, the typical workflow is:
+
+### 1. Train your embeddings
+```python
+import torch
+import torch.nn as nn
+
+class CustomEmbedder(nn.Module):
+    def __init__(self, vocab_size, embed_dim):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+    
+    def forward(self, input_ids):
+        return self.embedding(input_ids)
+
+model = CustomEmbedder(vocab_size=30000, embed_dim=256)
+# ... training loop ...
+```
+
+### 2. Export to ONNX
+```python
+dummy_input = torch.randint(0, 30000, (1, 128))
+torch.onnx.export(
+    model,
+    dummy_input,
+    &quot;embedder.onnx&quot;,
+    input_names=[&quot;input_ids&quot;],
+    output_names=[&quot;embeddings&quot;],
+    dynamic_axes={&quot;input_ids&quot;: {0: &quot;batch&quot;, 1: &quot;seq_len&quot;},
+                  &quot;embeddings&quot;: {0: &quot;batch&quot;, 1: &quot;seq_len&quot;}},
+    opset_version=14
+)
+```
+
+### Related tools you might find useful:
+- **[onnx-convert](https://github.com/nixiesearch/onnx-convert)** — focused on converting embedding models to ONNX
+- **[onnx-embedding-models](https://pypi.org/project/onnx-embedding-models/)** — Python utility for running text embeddings via ONNX
+- **[neuml guide on ONNX export](https://neuml.hashnode.dev/export-and-run-models-with-onnx)** — walkthrough of exporting and running models with ONNX
+
+Could you share more details about the &quot;Helix Embedder&quot; — is it an internal library, a specific open-source project, or perhaps known by another name? That would help me give you a more targeted answer.
+
+Sources:
+- [nixiesearch/onnx-convert](https://github.com/nixiesearch/onnx-convert)
+- [onnx-embedding-models on PyPI](https://pypi.org/project/onnx-embedding-models/)
+- [Export and run models with ONNX](https://neuml.hashnode.dev/export-and-run-models-with-onnx)
+- [llm-embed-onnx](https://github.com/simonw/llm-embed-onnx)
+</div>
+</details>
+<details><summary>MCPOnly — recall 0%</summary>
+<div class="response-box agent">Unfortunately, I don't have any information available to answer your question. Here's what I found:
+
+- **No conpack packages** are installed that cover Helix Embedder documentation.
+- **No knowledge files** are stored locally on this topic.
+- **The proxy search service** is not running, so I can't query an upstream vector database.
+
+&quot;Helix Embedder&quot; does not match any well-known library or framework in my training data either, so I can't provide reliable details from general knowledge.
+
+**To get an answer, you could:**
+
+1. **Install the relevant conpack package** that contains Helix Embedder documentation, then re-ask.
+2. **Start the conpack proxy server** so I can perform semantic search against an upstream source.
+3. **Share a link or paste the relevant documentation** directly, and I can help interpret it and walk you through the training/export workflow.
+
+Would you like to try one of these approaches?
+</div>
+</details>
+</details>
+<details><summary><strong>q-007</strong> — Describe the Prismoid cache coherence protocol and its gossip-based invalidation</summary>
+<div class="response-section"><div class="response-label">Expected: eval-007 — Prismoid Cache Coherence Protocol</div><div class="response-box expected">The Prismoid protocol maintains cache coherence across distributed proxy nodes using a gossip-based invalidation scheme. Each cache entry carries a vector clock (prismoid.vclock) that tracks the last-write timestamp per node. On cache miss, Prismoid performs a quorum read: it queries prismoid.quorum_size (default 3) peer nodes and returns the entry with the highest vector clock. Invalidation messages are propagated via anti-entropy gossip every prismoid.gossip_interval_ms (default 100). Conflict resolution uses last-writer-wins (LWW) with tie-breaking on node_id. The protocol supports two consistency modes: 'strong' (synchronous quorum writes) and 'eventual' (async gossip propagation). Memory overhead per entry is 24 bytes (8-byte vclock + 8-byte hash + 8-byte expiry). Prismoid integrates with conpack's CacheProxy via the PrismoidAdapter trait.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.228</td><td>24.7s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/4</span><span class="tag tag-tag">tag:prismoid</span><span class="tag tag-tag">tag:cache-coherence</span><span class="tag tag-tag">tag:gossip</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-007</td><td class="pass">YES</td><td class="conf-high">0.909</td><td>26.9s</td><td><div class="tags"><span class="tag tag-title">title:Prismoid Cache Coherence Protocol</span><span class="tag tag-phrase">phrase:8-byte expiry</span><span class="tag tag-phrase">phrase:8-byte hash</span><span class="tag tag-phrase">phrase:8-byte vclock</span><span class="tag tag-phrase">phrase:Conflict resolution</span><span class="tag tag-tag">tag:prismoid</span><span class="tag tag-tag">tag:cache-coherence</span><span class="tag tag-tag">tag:gossip</span><span class="tag tag-tag">tag:vector-clock</span><span class="tag">term:node_id</span><span class="tag">term:performs</span><span class="tag">term:across</span><span class="tag">term:eventual</span><span class="tag">term:anti-entropy</span><span class="tag">term:vclock</span><span class="tag">term:bytes</span><span class="tag">term:consistency</span><span class="tag">term:last-write</span><span class="tag">term:writes</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.227</td><td>22.6s</td><td><div class="tags"><span class="tag tag-title">title:Prismoid Cache Coherence Protocol</span><span class="tag tag-tag">tag:prismoid</span><span class="tag tag-tag">tag:cache-coherence</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.273</td><td>12.7s</td><td><div class="tags"><span class="tag tag-title">title:Prismoid Cache Coherence Protocol</span><span class="tag tag-tag">tag:prismoid</span><span class="tag tag-tag">tag:cache-coherence</span><span class="tag tag-tag">tag:gossip</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 0%</summary>
+<div class="response-box agent">My search confirms that there is no known cache coherence protocol called &quot;Prismoid,&quot; nor an established gossip-based invalidation mechanism associated with that name. It does not appear in Wikipedia's [list of cache coherency protocols](https://en.wikipedia.org/wiki/List_of_cache_coherency_protocols), in academic lecture materials from CMU or UT Austin, or in any research papers I can find.
+
+**This appears to be a fabricated or non-existent concept.** I don't want to give you a made-up answer.
+
+What I can tell you is that real cache coherence protocols fall into well-established categories:
+
+- **Snooping-based**: MSI, MESI, MOESI, Dragon, Firefly — where caches monitor a shared bus for invalidations/updates.
+- **Directory-based**: Used in larger-scale systems (e.g., SGI Origin), where a directory tracks which caches hold copies of each line and sends targeted invalidations.
+- **Gossip protocols** do exist in distributed systems (e.g., Amazon Dynamo, Cassandra for membership/failure detection), but they are not a standard mechanism for hardware cache coherence.
+
+If you encountered &quot;Prismoid&quot; in a specific paper, course, or product, I'd be happy to look into it further if you can share the source.
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">The search service isn't available, but the pre-fetched knowledge file covers the protocol well. Here's a detailed breakdown:
+
+---
+
+## Prismoid Cache Coherence Protocol
+
+Prismoid is the protocol that maintains **cache coherence across distributed proxy nodes** in a ConPack cluster. Its core mechanism is **gossip-based invalidation**.
+
+### Key Components
+
+**Vector Clocks (`prismoid.vclock`)**
+Every cache entry carries a vector clock that tracks the last-write timestamp per node. This is the foundation for detecting stale data and resolving conflicts. The memory overhead per entry is **24 bytes** (8-byte vclock + 8-byte hash + 8-byte expiry).
+
+**Quorum Reads**
+On a cache miss, Prismoid performs a **quorum read** — it queries `prismoid.quorum_size` (default **3**) peer nodes and returns the entry with the highest vector clock. This ensures reads reflect the most recent known state.
+
+### Gossip-Based Invalidation
+
+Invalidation messages propagate via **anti-entropy gossip** at a configurable interval of `prismoid.gossip_interval_ms` (default **100 ms**). The mechanism works as follows:
+
+1. When a node writes/updates a cache entry, it increments its position in the entry's vector clock.
+2. Periodically (every `gossip_interval_ms`), each node exchanges state digests with a random subset of peers.
+3. Peers compare vector clocks — if a peer holds a stale entry, the gossip message triggers **invalidation** of that entry.
+4. This &quot;anti-entropy&quot; approach ensures that even if a direct invalidation message is lost, eventual convergence is guaranteed through repeated gossip rounds.
+
+### Conflict Resolution
+
+Prismoid uses **last-writer-wins (LWW)** semantics. When two nodes write concurrently and vector clocks are incomparable (true conflict), the tie is broken deterministically by **`node_id`**.
+
+### Consistency Modes
+
+| Mode | Behavior |
+|---|---|
+| **`strong`** | Synchronous quorum writes — the write is acknowledged only after a quorum of nodes confirm it. |
+| **`eventual`** | Asynchronous gossip propagation — writes are local-first and propagate in the background. |
+
+### Integration
+
+Prismoid integrates with ConPack's `CacheProxy` via the **`PrismoidAdapter` trait**, allowing it to plug into the broader caching infrastructure.
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">The conpack search proxy is not running and there are no knowledge files or packages installed, so I have no documentation source to query for this topic.
+
+I'm not familiar with a &quot;Prismoid cache coherence protocol&quot; from my training data. This does not appear to be a widely known or established protocol in the cache coherence literature (which includes well-documented protocols like MESI, MOESI, Dragon, Firefly, etc.).
+
+A few possibilities:
+
+1. **It may be a proprietary or internal protocol** specific to a particular organization or product that isn't in my training data.
+2. **It may be documented in your conpack knowledge base**, but the search proxy isn't currently running and no knowledge files are installed.
+3. **It may be a very recent development** beyond my knowledge cutoff.
+
+**To get an answer**, you could:
+- Start the conpack proxy server so I can search the vector database
+- Install the relevant conpack package containing documentation on Prismoid
+- Point me to a document or URL that describes the protocol
+
+Would you like help setting up the conpack tools, or can you provide a reference I can read?
+</div>
+</details>
+<details><summary>MCPOnly — recall 0%</summary>
+<div class="response-box agent">The search proxy is unavailable and there are no local knowledge files containing documentation on this topic.
+
+I don't have any information about a **&quot;Prismoid cache coherence protocol&quot;** or its gossip-based invalidation mechanism. This term does not appear in any documentation available to me, and it's not something I recognize from my training data either.
+
+A few possibilities:
+
+1. **It may be a proprietary or internal protocol** specific to a particular organization or product that isn't publicly documented.
+2. **It may be a very recent development** (after my knowledge cutoff) that I don't have information on.
+3. **The name may be slightly different** — if you can double-check the exact name or provide a source/reference, I can try to help further.
+
+If you have documentation or a paper on the Prismoid protocol, feel free to share it and I can help analyze and explain it.
+</div>
+</details>
+</details>
+<details><summary><strong>q-008</strong> — What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-008 — Terraform Module: ConpackCluster Deployment</div><div class="response-box expected">The conpack-cluster Terraform module deploys a production-ready conpack proxy cluster on AWS. Resources provisioned: ALB (conpack_alb), ECS Fargate tasks (conpack_proxy, 3 replicas), ElastiCache Redis (conpack_cache), and CloudWatch alarms. Required variables: cluster_name, vpc_id, subnet_ids[], conpack_image, upstream_urls[]. Optional variables: proxy_cpu (default 1024), proxy_memory (default 2048), cache_node_type (default 'cache.r6g.large'), min_tasks (default 3), max_tasks (default 12). Auto-scaling triggers on CloudWatch metric ConpackProxyCacheHitRate: scales out when hit rate drops below 70% for 5 minutes, scales in when above 90% for 15 minutes. Health checks use /ready endpoint with 30-second interval. The module outputs: alb_dns_name, ecs_cluster_arn, redis_endpoint, cloudwatch_dashboard_url.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.295</td><td>41.1s</td><td><div class="tags"><span class="tag tag-tag">tag:terraform</span><span class="tag tag-tag">tag:conpack-cluster</span><span class="tag tag-tag">tag:ecs-fargate</span><span class="tag">term:proxy_memory</span><span class="tag">term:subnet_ids</span><span class="tag">term:ecs_cluster_arn</span><span class="tag">term:triggers</span><span class="tag">term:proxy_cpu</span><span class="tag">term:alarms</span><span class="tag">term:conpackproxycachehitrate</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-008</td><td class="pass">YES</td><td class="conf-mid">0.477</td><td>19.1s</td><td><div class="tags"><span class="tag tag-phrase">phrase:30-second interval</span><span class="tag tag-tag">tag:terraform</span><span class="tag tag-tag">tag:conpack-cluster</span><span class="tag tag-tag">tag:aws</span><span class="tag tag-tag">tag:ecs-fargate</span><span class="tag">term:proxy_memory</span><span class="tag">term:production-ready</span><span class="tag">term:subnet_ids</span><span class="tag">term:ecs_cluster_arn</span><span class="tag">term:triggers</span><span class="tag">term:30-second</span><span class="tag">term:proxy_cpu</span><span class="tag">term:alarms</span><span class="tag">term:conpackproxycachehitrate</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.091</td><td>23.6s</td><td><div class="tags"><span class="tag tag-tag">tag:terraform</span><span class="tag tag-tag">tag:conpack-cluster</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.091</td><td>17.2s</td><td><div class="tags"><span class="tag tag-tag">tag:terraform</span><span class="tag tag-tag">tag:conpack-cluster</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 0%</summary>
+<div class="response-box agent">The **conpack-cluster** Terraform module provisions the following resources and auto-scaling configuration:
+
+## Resources Provisioned
+
+| Resource | Terraform Name | Description |
+|---|---|---|
+| **Application Load Balancer (ALB)** | `conpack_alb` | Front-end load balancer for the cluster |
+| **ECS Fargate Tasks** | `conpack_proxy` | Container tasks running the conpack proxy (default 3 replicas) |
+| **ElastiCache Redis Cluster** | `conpack_cache` | Redis cache layer (`cache.r6g.large` by default) |
+| **CloudWatch Alarms** | — | Metric alarms driving auto-scaling decisions |
+
+## Auto-Scaling Triggers
+
+The module uses **CloudWatch metric-based auto-scaling** keyed on the `ConpackProxyCacheHitRate` metric:
+
+- **Scale Out:** Cache hit rate drops **below 70%** for **5 minutes** — adds ECS tasks (up to `max_tasks`, default **12**)
+- **Scale In:** Cache hit rate exceeds **90%** for **15 minutes** — removes ECS tasks (down to `min_tasks`, default **3**)
+
+## Key Configuration
+
+- **Required variables:** `cluster_name`, `vpc_id`, `subnet_ids[]`, `conpack_image`, `upstream_urls[]`
+- **Defaults:** `proxy_cpu` = 1024, `proxy_memory` = 2048, `min_tasks` = 3, `max_tasks` = 12
+- **Health check:** `/ready` endpoint, polled every 30 seconds
+
+## Outputs
+
+- `alb_dns_name` — Load balancer DNS name
+- `ecs_cluster_arn` — ECS cluster ARN
+- `redis_endpoint` — ElastiCache Redis endpoint
+- `cloudwatch_dashboard_url` — Monitoring dashboard URL
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">## ConpackCluster Terraform Module
+
+### Resources Provisioned
+
+The `conpack-cluster` module deploys a production-ready conpack proxy cluster on AWS, consisting of:
+
+| Resource | Identifier | Details |
+|---|---|---|
+| **ALB** | `conpack_alb` | Application Load Balancer for traffic distribution |
+| **ECS Fargate Tasks** | `conpack_proxy` | 3 replicas by default |
+| **ElastiCache Redis** | `conpack_cache` | Default node type `cache.r6g.large` |
+| **CloudWatch Alarms** | — | Monitoring and auto-scaling triggers |
+
+### Variables
+
+**Required:** `cluster_name`, `vpc_id`, `subnet_ids[]`, `conpack_image`, `upstream_urls[]`
+
+**Optional (with defaults):**
+- `proxy_cpu` — `1024`
+- `proxy_memory` — `2048`
+- `cache_node_type` — `cache.r6g.large`
+- `min_tasks` — `3`
+- `max_tasks` — `12`
+
+### Auto-Scaling Triggers
+
+Scaling is driven by the CloudWatch metric **`ConpackProxyCacheHitRate`**:
+
+- **Scale out** — when the cache hit rate drops **below 70%** for **5 minutes**
+- **Scale in** — when the cache hit rate rises **above 90%** for **15 minutes**
+
+Task count ranges from `min_tasks` (default 3) to `max_tasks` (default 12).
+
+### Health Checks &amp; Outputs
+
+- Health checks use the `/ready` endpoint with a **30-second interval**
+- **Outputs:** `alb_dns_name`, `ecs_cluster_arn`, `redis_endpoint`, `cloudwatch_dashboard_url`
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">Unfortunately, I wasn't able to find any information about a &quot;conpack-cluster&quot; Terraform module. Here's what I checked:
+
+1. **conpack_search** — The proxy server isn't running, so semantic search is unavailable.
+2. **conpack_knowledge_list** — No knowledge files are stored locally.
+3. **conpack_list** — No conpack packages are installed.
+4. **Local repository** — No files or references to &quot;conpack-cluster&quot; exist in this repo.
+
+To get this information, you would need to either:
+
+- **Install the relevant conpack package** that contains the conpack-cluster Terraform module documentation.
+- **Start the conpack proxy** (`conpack proxy` or similar) so that `conpack_search` can query the upstream vector database.
+- **Point me to the documentation or source** directly (a URL, file path, or Git repository) and I can read and summarize it.
+
+Would you like to try one of these approaches?
+</div>
+</details>
+<details><summary>MCPOnly — recall 0%</summary>
+<div class="response-box agent">I wasn't able to find any information about a &quot;conpack-cluster&quot; Terraform module. Here's what I found:
+
+- **No conpack packages are installed** — `conpack_list` returned an empty list.
+- **No knowledge files are available** — `conpack_knowledge_list` returned nothing.
+- **The search proxy is not running** — `conpack_search` failed to connect to the proxy at `127.0.0.1:9999`.
+
+To answer your question, I'd need at least one of:
+
+1. **A running conpack proxy** — Start the proxy server so `conpack_search` can query the vector database for documentation about the conpack-cluster module.
+2. **Installed conpack packages or knowledge files** — Install the relevant package (e.g., `conpack install &lt;git-url&gt;`) so its documentation is available locally.
+3. **Local source files** — If the Terraform module exists in this repo or on disk, point me to it and I can read it directly.
+
+Could you check your conpack setup or provide more context on where the conpack-cluster Terraform module documentation lives?
+</div>
+</details>
+</details>
+<details><summary><strong>q-009</strong> — How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-009 — Spectral Query Analyzer: Execution Plan Optimization</div><div class="response-box expected">The Spectral Query Analyzer optimizes query execution plans for multi-upstream searches. It decomposes queries into sub-plans using cost-based optimization with the Spectral cost model. Cost factors include: upstream_latency_p99 (measured), result_cardinality (estimated via histogram sketches), and network_hop_count. The analyzer supports three plan strategies: spectral.strategy = 'parallel' (fan-out all upstreams simultaneously), 'sequential' (try upstreams in cost order, stop on threshold), or 'adaptive' (start parallel, switch to sequential after first result). Plan caching uses spectral.plan_cache_size (default 1000) with LRU eviction. The EXPLAIN command outputs the chosen plan: EXPLAIN QUERY 'search terms' shows estimated costs per upstream, chosen strategy, and predicted latency. Statistics are refreshed every spectral.stats_refresh_interval_sec (default 300).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.091</td><td>9.7s</td><td><div class="tags"><span class="tag tag-tag">tag:spectral</span><span class="tag tag-tag">tag:query-analyzer</span></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-009</td><td class="pass">YES</td><td class="conf-high">0.773</td><td>16.3s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-phrase">phrase:Cost factors</span><span class="tag tag-phrase">phrase:EXPLAIN QUERY</span><span class="tag tag-phrase">phrase:Plan caching</span><span class="tag tag-tag">tag:spectral</span><span class="tag tag-tag">tag:query-analyzer</span><span class="tag tag-tag">tag:cost-based</span><span class="tag tag-tag">tag:execution-plan</span><span class="tag">term:adaptive</span><span class="tag">term:multi-upstream</span><span class="tag">term:plans</span><span class="tag">term:estimated</span><span class="tag">term:optimization</span><span class="tag">term:histogram</span><span class="tag">term:predicted</span><span class="tag">term:outputs</span><span class="tag">term:network_hop_count</span><span class="tag">term:decomposes</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.091</td><td>19.5s</td><td><div class="tags"><span class="tag tag-tag">tag:spectral</span><span class="tag tag-tag">tag:query-analyzer</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.091</td><td>19.9s</td><td><div class="tags"><span class="tag tag-tag">tag:spectral</span><span class="tag tag-tag">tag:query-analyzer</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — recall 0%</summary>
+<div class="response-box agent">I don't have specific knowledge of a &quot;Spectral Query Analyzer&quot; as a recognized technology or concept. This term doesn't correspond to any well-known database engine, query optimizer, or search framework that I'm aware of.
+
+A few possibilities:
+
+1. **It may be a proprietary/internal tool** — If this is part of your codebase or organization, I can search the repository for relevant code and documentation.
+2. **It may be a fictional or hypothetical concept** — used in an exam, interview, or assessment context.
+3. **It may be a very recent or niche project** — released after my knowledge cutoff or with limited public documentation.
+
+If this relates to code in your current repository, I can search for it. Want me to look through the codebase, or can you point me to a reference so I can give you an accurate, grounded answer?
+</div>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">Here's how the **Spectral Query Analyzer** optimizes execution plans for multi-upstream searches:
+
+## Query Decomposition
+
+The analyzer decomposes queries into **sub-plans** using **cost-based optimization** with the Spectral cost model. Three cost factors drive the optimization:
+
+| Cost Factor | Source |
+|---|---|
+| `upstream_latency_p99` | Measured (live stats) |
+| `result_cardinality` | Estimated via histogram sketches |
+| `network_hop_count` | Topology-derived |
+
+Statistics for these factors are refreshed every `spectral.stats_refresh_interval_sec` (default **300s**).
+
+## Plan Strategies
+
+The analyzer supports three strategies, configured via `spectral.strategy`:
+
+1. **`parallel`** — Fan-out to all upstreams simultaneously. Best when latency matters more than resource cost.
+2. **`sequential`** — Try upstreams in ascending cost order, stopping once a result threshold is met. Minimizes resource usage.
+3. **`adaptive`** — Starts parallel, then switches to sequential after the first result arrives. Balances latency and efficiency.
+
+## Plan Caching
+
+Computed plans are cached using an **LRU eviction** policy. Cache size is controlled by `spectral.plan_cache_size` (default **1000** entries), avoiding repeated re-optimization for recurring query patterns.
+
+## Inspecting Plans
+
+You can inspect the chosen plan with the `EXPLAIN` command:
+
+```
+EXPLAIN QUERY 'search terms'
+```
+
+This outputs the **estimated cost per upstream**, the **chosen strategy**, and the **predicted latency**.
+</div>
+</details>
+<details><summary>MCP+Tools — recall 0%</summary>
+<div class="response-box agent">The conpack search proxy is not running, and there are no knowledge files or packages installed in the conpack MCP server. This means I don't have access to any documentation about a &quot;Spectral Query Analyzer.&quot;
+
+I wasn't able to find any documentation on a &quot;Spectral Query Analyzer&quot; through the available conpack tools:
+
+- **Proxy search** failed because the proxy server isn't running at `127.0.0.1:9999`.
+- **Knowledge files** returned empty — no pre-fetched documentation is available.
+- **Installed packages** returned empty — no conpack packages are configured.
+
+To get an answer, you could:
+
+1. **Start the conpack proxy** if one is configured, so `conpack_search` can reach the upstream vector database.
+2. **Install the relevant conpack package** that contains documentation about the Spectral Query Analyzer.
+3. **Add knowledge files** with the relevant documentation to the conpack knowledge store.
+
+Could you point me to where the Spectral Query Analyzer documentation lives, or set up the conpack data source so I can search it?
+</div>
+</details>
+<details><summary>MCPOnly — recall 0%</summary>
+<div class="response-box agent">I wasn't able to find any information about a &quot;Spectral Query Analyzer&quot; through the available documentation sources. Here's what I checked:
+
+- **Proxy search** — the proxy server is not running, so semantic search is unavailable.
+- **Knowledge files** — no knowledge files are stored locally.
+- **Installed packages** — no conpack packages are installed.
+
+&quot;Spectral Query Analyzer&quot; doesn't match any concept I'm familiar with from my training data either. It's possible this refers to:
+
+1. A proprietary or internal tool/component specific to your project or organization.
+2. A feature within a specific product or framework that isn't indexed here.
+
+**To move forward, you could:**
+- Ensure the conpack proxy server is running (so semantic search works) and any relevant packages are installed.
+- Provide more context about where this term comes from — e.g., a specific library, product, or codebase — and I can search more precisely.
+- Share relevant documentation or code, and I can analyze it directly.
+</div>
+</details>
+</details>
+<details><summary><strong>q-010</strong> — Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files</summary>
+<div class="response-section"><div class="response-label">Expected: eval-010 — Obsidian Vault Sync Protocol for Knowledge Files</div><div class="response-box expected">The Obsidian Vault Sync protocol synchronizes knowledge files between conpack's local knowledge folder and a remote vault. Sync operates in three modes: obsidian.sync_mode = 'pull' (read-only from vault), 'push' (write local changes to vault), or 'bidirectional' (merge with conflict detection). File identity uses content-addressed hashing: obsidian.hash_algorithm (default 'blake3'). Delta sync transfers only changed blocks using rolling checksums with obsidian.block_size (default 4KB). Conflict resolution in bidirectional mode creates .conflict files with timestamps. The vault manifest (vault.json) tracks file metadata: path, hash, last_modified, size_bytes. Sync scheduling uses obsidian.sync_interval_sec (default 60) with jitter of ±10%. Authentication to remote vaults uses Ed25519 key pairs stored in obsidian.key_path (default '~/.conpack/vault_key').</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Baseline</td><td>eval-010</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.1s</td><td><div class="tags"></div></td></tr>
+<tr><td>Ctx+CLI</td><td>eval-010</td><td class="pass">YES</td><td class="conf-high">0.682</td><td>17.3s</td><td><div class="tags"><span class="tag tag-title">title-partial:6/6</span><span class="tag tag-phrase">phrase:Delta sync</span><span class="tag tag-phrase">phrase:File identity</span><span class="tag tag-tag">tag:obsidian</span><span class="tag tag-tag">tag:vault-sync</span><span class="tag tag-tag">tag:knowledge</span><span class="tag tag-tag">tag:delta-sync</span><span class="tag">term:conflict</span><span class="tag">term:between</span><span class="tag">term:hash_algorithm</span><span class="tag">term:sync_mode</span><span class="tag">term:content-addressed</span><span class="tag">term:hash</span><span class="tag">term:file</span><span class="tag">term:blocks</span><span class="tag">term:push</span><span class="tag">term:path</span></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-010</td><td class="pass">YES</td><td class="conf-mid">0.387</td><td>23.8s</td><td><div class="tags"><span class="tag tag-title">title-partial:6/6</span><span class="tag tag-phrase">phrase:Delta sync</span><span class="tag tag-tag">tag:obsidian</span><span class="tag tag-tag">tag:vault-sync</span><span class="tag tag-tag">tag:knowledge</span><span class="tag tag-tag">tag:delta-sync</span><span class="tag">term:file</span></div></td></tr>
+<tr><td>MCPOnly</td><td>eval-010</td><td class="pass">YES</td><td class="conf-mid">0.410</td><td>18.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:6/6</span><span class="tag tag-phrase">phrase:Delta sync</span><span class="tag tag-tag">tag:obsidian</span><span class="tag tag-tag">tag:vault-sync</span><span class="tag tag-tag">tag:knowledge</span><span class="tag tag-tag">tag:delta-sync</span><span class="tag">term:file</span><span class="tag">term:path</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Baseline — TIMEOUT</summary>
+<p class="no-response">No response captured (run with EVAL_DIRTY=1 to capture responses)</p>
+</details>
+<details><summary>Ctx+CLI — recall 100%</summary>
+<div class="response-box agent">## Obsidian Vault Sync Protocol: Modes &amp; Delta Sync
+
+The Obsidian Vault Sync protocol synchronizes knowledge files between conpack's **local knowledge folder** and a **remote vault**. Here's a breakdown:
+
+### Three Sync Modes (`obsidian.sync_mode`)
+
+| Mode | Behavior |
+|---|---|
+| **`pull`** | Read-only from the remote vault. Local changes are never sent upstream. |
+| **`push`** | Write-only — pushes local changes to the vault. Remote changes are ignored. |
+| **`bidirectional`** | Full two-way merge with **conflict detection**. When both sides modify the same file, `.conflict` files are created with timestamps for manual resolution. |
+
+### Delta Sync Mechanism
+
+Rather than transferring entire files, delta sync transfers **only changed blocks**:
+
+- Uses **rolling checksums** to identify which blocks have changed.
+- Block size is configured via `obsidian.block_size` (default **4KB**).
+- File identity is tracked via **content-addressed hashing** using `obsidian.hash_algorithm` (default **`blake3`**).
+
+This makes sync efficient even for large knowledge files — only the modified 4KB blocks are transmitted.
+
+### Vault Manifest (`vault.json`)
+
+The manifest tracks metadata for every file:
+- `path`, `hash`, `last_modified`, `size_bytes`
+
+This allows the protocol to quickly determine what has changed without scanning file contents.
+
+### Scheduling &amp; Authentication
+
+- **Sync interval**: `obsidian.sync_interval_sec` — default **60 seconds**, with **±10% jitter** to avoid thundering-herd problems on shared vaults.
+- **Authentication**: Remote vaults are authenticated using **Ed25519 key pairs** stored at `obsidian.key_path` (default `~/.conpack/vault_key`).
+</div>
+</details>
+<details><summary>MCP+Tools — recall 100%</summary>
+<div class="response-box agent">I don't have the information needed to answer your question. Here's what I found:
+
+- **No conpack packages** are installed in this project
+- **No knowledge files** are available locally
+- **The proxy search server** is not running (needed for `conpack_search`)
+- **No local files** in this repository reference Obsidian Vault Sync or delta sync mechanisms
+
+&quot;Obsidian Vault Sync protocol modes&quot; and &quot;delta sync mechanism for knowledge files&quot; don't appear to be standard, widely-documented Obsidian concepts that I have training data on either — this may be specific to a custom tool, plugin, or internal system.
+
+To proceed, you could:
+
+1. **Start the conpack proxy server** so I can search upstream documentation
+2. **Install the relevant conpack package** (`conpack install &lt;package&gt;`) that contains the Obsidian/vault sync docs
+3. **Point me to a specific file or URL** containing this documentation
+
+Would you like to try one of these approaches?
+</div>
+</details>
+<details><summary>MCPOnly — recall 100%</summary>
+<div class="response-box agent">No conpack packages are installed and no knowledge files are available in this environment. The search proxy is also not running, so I cannot query an upstream vector database.
+
+Based on this, I don't have access to any documentation about an &quot;Obsidian Vault Sync protocol&quot; with delta sync mechanisms for knowledge files. This doesn't appear to be a standard, well-known protocol that I have reliable information about either — it may be:
+
+1. **A feature specific to a particular tool or plugin** (e.g., a conpack-related or Obsidian community plugin feature) that would be documented in packages not currently installed here.
+2. **A custom/internal protocol** from a specific project.
+
+To help you, I'd need one of the following:
+
+- **Install the relevant conpack package** that contains this documentation (if you know the package name, I can look into it).
+- **A running search proxy** (`conpack proxy` on port 9999) connected to a vector database that indexes the relevant docs.
+- **A link or file path** to the documentation you're referencing.
+
+Could you point me to the source of this documentation or the conpack package that covers it?
+</div>
+</details>
+</details>
+
+</body>
+</html>

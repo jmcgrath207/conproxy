@@ -1,0 +1,43 @@
+# Cascade: 2 upstreams with priority-based cascade + RRF fusion.
+# Requires: Qdrant (port 6333) + Elasticsearch (port 9200).
+#
+# Resources are shared by id; legs set priority/weight per context.
+
+[server]
+listen = "127.0.0.1:9090"
+
+[upstreams.primary-qdrant]
+url = "http://localhost:6333"
+type = "qdrant"
+
+[upstreams.fallback-es]
+url = "http://localhost:9200"
+type = "elasticsearch"
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "primary-qdrant"
+priority = 0
+weight = 3
+
+[[contexts.default.upstreams]]
+ref = "fallback-es"
+priority = 1
+weight = 1
+
+[contexts.default.cache]
+fresh_secs = 300
+stale_secs = 600
+max_entries = 10000
+
+[contexts.default.cascade]
+enabled = true
+min_score_threshold = 0.3
+min_results = 3
+max_cascade_depth = 2
+merge_cascade_results = true
+cascade_timeout_ms = 5000
+fusion_method = "rrf"
+rrf_k = 60

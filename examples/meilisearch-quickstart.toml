@@ -1,0 +1,23 @@
+# Min Meilisearch upstream with API key auth.
+#
+# Requires:
+#   docker run -d -p 7700:7700 \
+#     -e MEILI_MASTER_KEY=dev_master_key \
+#     getmeili/meilisearch:v1.8
+#
+# Copy to .conproxy/conproxy.toml, adjust url/api_key for your env.
+
+[server]
+listen = "127.0.0.1:9090"
+
+[upstreams.meili]
+url = "http://localhost:7700"
+type = "meilisearch"
+index = "docs"
+api_key = "dev_master_key"   # or "${MEILI_MASTER_KEY}"
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "meili"

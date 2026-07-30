@@ -1,0 +1,509 @@
+{
+  "schema_version": 2,
+  "timestamp": "20260724-201244",
+  "mode": "full",
+  "threshold_pct": 15.0,
+  "verdict": "PASS",
+  "git_sha": "cfff440",
+  "rustc_version": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "benches": [
+    {
+      "name": "response_serialize_json",
+      "group": "core_ops",
+      "mean_ns": 1624.4944313416026,
+      "change_pct": 9.216146363280098,
+      "ci": [
+        7.681577153764629,
+        10.750715572795567
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+7.7%, +10.8%] crosses ±15% (point +9.2%)"
+    },
+    {
+      "name": "slugify",
+      "group": "core_ops",
+      "mean_ns": 28.23805582200994,
+      "change_pct": 9.037035371165093,
+      "ci": [
+        6.703131968764089,
+        11.370938773566097
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+6.7%, +11.4%] crosses ±15% (point +9.0%)"
+    },
+    {
+      "name": "cache_lookup_hit",
+      "group": "core_ops",
+      "mean_ns": 178.00691377960945,
+      "change_pct": 8.142255094286433,
+      "ci": [
+        6.578690960691716,
+        9.70581922788115
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+6.6%, +9.7%] crosses ±15% (point +8.1%)"
+    },
+    {
+      "name": "cache_lookup_miss",
+      "group": "core_ops",
+      "mean_ns": 233.67271268768283,
+      "change_pct": 7.292413263024421,
+      "ci": [
+        5.262231990345347,
+        9.322594535703493
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+5.3%, +9.3%] crosses ±15% (point +7.3%)"
+    },
+    {
+      "name": "normalize_query",
+      "group": "core_ops",
+      "mean_ns": 60.82768966231788,
+      "change_pct": 6.732818233965282,
+      "ci": [
+        5.439419860232311,
+        8.026216607698254
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+5.4%, +8.0%] crosses ±15% (point +6.7%)"
+    },
+    {
+      "name": "fuse_rrf/dedup_2upstreams",
+      "group": "cascade_scope",
+      "mean_ns": 3636.806189215274,
+      "change_pct": 6.211623355534681,
+      "ci": [
+        -63.35852874157762,
+        75.78177545264698
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-63.4%, +75.8%] crosses ±15% (point +6.2%)"
+    },
+    {
+      "name": "cache_throughput/10000",
+      "group": "core_ops",
+      "mean_ns": 26723959.995,
+      "change_pct": 3.3215151112390227,
+      "ci": [
+        1.971683667369132,
+        4.671346555108913
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+2.0%, +4.7%] crosses ±15% (point +3.3%)"
+    },
+    {
+      "name": "cache_insert",
+      "group": "core_ops",
+      "mean_ns": 4411.873670904717,
+      "change_pct": 3.0694591345529885,
+      "ci": [
+        -0.5696411362375311,
+        6.708559405343507
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-0.6%, +6.7%] crosses ±15% (point +3.1%)"
+    },
+    {
+      "name": "fuse_rrf/3upstreams_k60",
+      "group": "cascade_scope",
+      "mean_ns": 13164.76611723961,
+      "change_pct": 2.7623231146335345,
+      "ci": [
+        -38.29867777987863,
+        43.8233240091457
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-38.3%, +43.8%] crosses ±15% (point +2.8%)"
+    },
+    {
+      "name": "response_deserialize_json",
+      "group": "core_ops",
+      "mean_ns": 2252.528230587928,
+      "change_pct": 2.4328927936862534,
+      "ci": [
+        0.21012032344833445,
+        4.655665263924172
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+0.2%, +4.7%] crosses ±15% (point +2.4%)"
+    },
+    {
+      "name": "cache_eviction_pressure",
+      "group": "core_ops",
+      "mean_ns": 3162.091801135451,
+      "change_pct": 2.0458679740074595,
+      "ci": [
+        0.8284118471785997,
+        3.263324100836319
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [+0.8%, +3.3%] crosses ±15% (point +2.0%)"
+    },
+    {
+      "name": "query_hash",
+      "group": "core_ops",
+      "mean_ns": 139.78389699269795,
+      "change_pct": -2.2721216563014783,
+      "ci": [
+        -3.42707217646881,
+        -1.117171136134146
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-3.4%, -1.1%] crosses ±15% (point -2.3%)"
+    },
+    {
+      "name": "query_deserialize_json",
+      "group": "core_ops",
+      "mean_ns": 146.49458595098676,
+      "change_pct": -2.895318794793577,
+      "ci": [
+        -5.14765083090852,
+        -0.6429867586786326
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-5.1%, -0.6%] crosses ±15% (point -2.9%)"
+    },
+    {
+      "name": "scope_best_sim_short_content",
+      "group": "cascade_scope",
+      "mean_ns": 653.92113812252,
+      "change_pct": -3.197942545107223,
+      "ci": [
+        -4.078406309459667,
+        -2.31747878075478
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-4.1%, -2.3%] crosses ±15% (point -3.2%)"
+    },
+    {
+      "name": "fuse_rrf/2upstreams_50each",
+      "group": "cascade_scope",
+      "mean_ns": 36135.04225034636,
+      "change_pct": -3.607861751356325,
+      "ci": [
+        -4.433117415288809,
+        -2.7826060874238414
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-4.4%, -2.8%] crosses ±15% (point -3.6%)"
+    },
+    {
+      "name": "scope_best_sim_long_content",
+      "group": "cascade_scope",
+      "mean_ns": 3004.174039149727,
+      "change_pct": -3.6562796379837343,
+      "ci": [
+        -4.910368680595853,
+        -2.402190595371617
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-4.9%, -2.4%] crosses ±15% (point -3.7%)"
+    },
+    {
+      "name": "cache_throughput/100",
+      "group": "core_ops",
+      "mean_ns": 276461.01110039686,
+      "change_pct": -3.7282692457605884,
+      "ci": [
+        -4.710159543156498,
+        -2.746378948364677
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-4.7%, -2.7%] crosses ±15% (point -3.7%)"
+    },
+    {
+      "name": "cache_throughput/1000",
+      "group": "core_ops",
+      "mean_ns": 2853279.10375,
+      "change_pct": -4.278181200595011,
+      "ci": [
+        -5.363530218047276,
+        -3.1928321831427464
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-5.4%, -3.2%] crosses ±15% (point -4.3%)"
+    },
+    {
+      "name": "scope_best_sim_no_match",
+      "group": "cascade_scope",
+      "mean_ns": 362.3046480986353,
+      "change_pct": -4.468903187715006,
+      "ci": [
+        -5.515586559964996,
+        -3.422219815465017
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-5.5%, -3.4%] crosses ±15% (point -4.5%)"
+    },
+    {
+      "name": "query_serialize_json",
+      "group": "core_ops",
+      "mean_ns": 90.9410283278224,
+      "change_pct": -5.184097985785323,
+      "ci": [
+        -7.022984927826675,
+        -3.3452110437439684
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-7.0%, -3.3%] crosses ±15% (point -5.2%)"
+    },
+    {
+      "name": "scope_filter_results_20items",
+      "group": "cascade_scope",
+      "mean_ns": 13436.677307392036,
+      "change_pct": -7.4091231475794395,
+      "ci": [
+        -8.639285355809609,
+        -6.178960939349271
+      ],
+      "has_main": true,
+      "status": "inconclusive",
+      "verdict_reason": "CI [-8.6%, -6.2%] crosses ±15% (point -7.4%)"
+    }
+  ],
+  "regressions": [],
+  "improvements": [],
+  "inconclusive": [
+    {
+      "name": "cache_eviction_pressure",
+      "change_pct": 2.0458679740074595,
+      "ci": [
+        0.8284118471785997,
+        3.263324100836319
+      ]
+    },
+    {
+      "name": "cache_insert",
+      "change_pct": 3.0694591345529885,
+      "ci": [
+        -0.5696411362375311,
+        6.708559405343507
+      ]
+    },
+    {
+      "name": "cache_lookup_hit",
+      "change_pct": 8.142255094286433,
+      "ci": [
+        6.578690960691716,
+        9.70581922788115
+      ]
+    },
+    {
+      "name": "cache_lookup_miss",
+      "change_pct": 7.292413263024421,
+      "ci": [
+        5.262231990345347,
+        9.322594535703493
+      ]
+    },
+    {
+      "name": "cache_throughput/100",
+      "change_pct": -3.7282692457605884,
+      "ci": [
+        -4.710159543156498,
+        -2.746378948364677
+      ]
+    },
+    {
+      "name": "cache_throughput/1000",
+      "change_pct": -4.278181200595011,
+      "ci": [
+        -5.363530218047276,
+        -3.1928321831427464
+      ]
+    },
+    {
+      "name": "cache_throughput/10000",
+      "change_pct": 3.3215151112390227,
+      "ci": [
+        1.971683667369132,
+        4.671346555108913
+      ]
+    },
+    {
+      "name": "fuse_rrf/2upstreams_50each",
+      "change_pct": -3.607861751356325,
+      "ci": [
+        -4.433117415288809,
+        -2.7826060874238414
+      ]
+    },
+    {
+      "name": "fuse_rrf/3upstreams_k60",
+      "change_pct": 2.7623231146335345,
+      "ci": [
+        -38.29867777987863,
+        43.8233240091457
+      ]
+    },
+    {
+      "name": "fuse_rrf/dedup_2upstreams",
+      "change_pct": 6.211623355534681,
+      "ci": [
+        -63.35852874157762,
+        75.78177545264698
+      ]
+    },
+    {
+      "name": "normalize_query",
+      "change_pct": 6.732818233965282,
+      "ci": [
+        5.439419860232311,
+        8.026216607698254
+      ]
+    },
+    {
+      "name": "query_deserialize_json",
+      "change_pct": -2.895318794793577,
+      "ci": [
+        -5.14765083090852,
+        -0.6429867586786326
+      ]
+    },
+    {
+      "name": "query_hash",
+      "change_pct": -2.2721216563014783,
+      "ci": [
+        -3.42707217646881,
+        -1.117171136134146
+      ]
+    },
+    {
+      "name": "query_serialize_json",
+      "change_pct": -5.184097985785323,
+      "ci": [
+        -7.022984927826675,
+        -3.3452110437439684
+      ]
+    },
+    {
+      "name": "response_deserialize_json",
+      "change_pct": 2.4328927936862534,
+      "ci": [
+        0.21012032344833445,
+        4.655665263924172
+      ]
+    },
+    {
+      "name": "response_serialize_json",
+      "change_pct": 9.216146363280098,
+      "ci": [
+        7.681577153764629,
+        10.750715572795567
+      ]
+    },
+    {
+      "name": "scope_best_sim_long_content",
+      "change_pct": -3.6562796379837343,
+      "ci": [
+        -4.910368680595853,
+        -2.402190595371617
+      ]
+    },
+    {
+      "name": "scope_best_sim_no_match",
+      "change_pct": -4.468903187715006,
+      "ci": [
+        -5.515586559964996,
+        -3.422219815465017
+      ]
+    },
+    {
+      "name": "scope_best_sim_short_content",
+      "change_pct": -3.197942545107223,
+      "ci": [
+        -4.078406309459667,
+        -2.31747878075478
+      ]
+    },
+    {
+      "name": "scope_filter_results_20items",
+      "change_pct": -7.4091231475794395,
+      "ci": [
+        -8.639285355809609,
+        -6.178960939349271
+      ]
+    },
+    {
+      "name": "slugify",
+      "change_pct": 9.037035371165093,
+      "ci": [
+        6.703131968764089,
+        11.370938773566097
+      ]
+    }
+  ],
+  "metrics": {
+    "after": {},
+    "deltas": {}
+  },
+  "artifacts": {
+    "summary_md": "SUMMARY.md",
+    "report_criterion": "report_criterion.json",
+    "analysis_md": "ANALYSIS.md"
+  },
+  "baseline_meta": {
+    "schema_version": 1,
+    "saved_at": "2026-07-25T00:13:18Z",
+    "git_sha": "cfff440",
+    "git_dirty": false,
+    "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "bench_count": 21
+  },
+  "baseline_status": "ok",
+  "baseline_age_hours": 0.0,
+  "baseline_commits_behind": 0,
+  "hitrate": {
+    "verdict": "PASS",
+    "agentic_best": 0.956375,
+    "agentic_gate": 0.4,
+    "workloads": [
+      {
+        "name": "zipf",
+        "best_exact_hr": 0.91323,
+        "best_combined_hr": null,
+        "best_tau": null,
+        "false_hit_rate": null,
+        "semantic_hr_uplift": null
+      },
+      {
+        "name": "agentic",
+        "best_exact_hr": 0.956375,
+        "best_combined_hr": null,
+        "best_tau": null,
+        "false_hit_rate": null,
+        "semantic_hr_uplift": null
+      }
+    ]
+  },
+  "diagnostics": {
+    "flamegraph": false,
+    "heaptrack": true,
+    "tokio_console": false,
+    "hitrate": true
+  },
+  "tokio": null,
+  "trend": [],
+  "chronic_regressions": null,
+  "history": []
+}

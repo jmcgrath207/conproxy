@@ -1,0 +1,119 @@
+# Default values for conproxy.
+# Backends run as host docker containers in dev (see tests/e2e/docker-compose.yml).
+# The pod reaches them via hostIP below. Override hostIP per-node.
+
+image:
+  # GHCR is the published registry. Override per-environment:
+  #   helm install ... --set image.repository=ghcr.io/me/conproxy,image.tag=edge
+  # Tilt/local dev uses:
+  #   helm install ... --set image.repository=conproxy,image.tag=dev
+  repository: ghcr.io/jmcgrath207/conproxy
+  # When empty, the chart defaults to .Chart.AppVersion (stamped by the
+  # release job from the git tag, e.g. v0.1.0 -> 0.1.0).
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# Address of the docker host as seen from inside kind nodes.
+# Linux default from `docker network inspect bridge` gateway; override per-host.
+hostIP: 172.17.0.1
+
+service:
+  type: NodePort
+  grpc:
+    port: 9999
+    nodePort: 31999
+  http:
+    port: 10000
+    nodePort: 31000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Conproxy config rendered into the ConfigMap's conproxy.toml.
+# Matches the structure of examples/qdrant-quickstart.toml:
+#   [server] listen  +  [upstreams.*]  +  [contexts.default.{cache,upstreams}]
+
+# gRPC listen (HTTP is gRPC+1).
+listen: "0.0.0.0:9999"
+
+# Upstreams (hostnames from pod's perspective; hit the docker host at hostIP).
+# `url` is a Go-template string rendered by configmap.yaml with tpl, so
+# `{{ .Values.hostIP }}` is expanded at chart-render time. Override hostIP
+# via `helm --set hostIP=...` (or values file).
+upstreams:
+  qdrant:
+    url: "http://{{ .Values.hostIP }}:6333"
+    type: qdrant
+    collection: conproxy_corpus
+  elastic:
+    url: "http://{{ .Values.hostIP }}:9200"
+    type: elasticsearch
+    index: conproxy_corpus
+  opensearch:
+    url: "http://{{ .Values.hostIP }}:9201"
+    type: opensearch
+    index: conproxy_corpus
+  meili1:
+    url: "http://{{ .Values.hostIP }}:7700"
+    type: meilisearch
+    index: conproxy_corpus
+    api_key: "conproxy_test_key"
+  meili2:
+    url: "http://{{ .Values.hostIP }}:7701"
+    type: meilisearch
+    index: conproxy_corpus
+    api_key: "conproxy_test_key"
+  pgvector:
+    url: "postgres://postgres:postgres@{{ .Values.hostIP }}:5432/conproxy_test"
+    type: pgvector
+    table: conproxy_corpus
+    embedding_column: vector
+    content_column: content
+
+# Contexts project upstreams into queryable groups.
+# contexts.default.cache uses ContextCacheConfig fields: fresh_secs, stale_secs, max_entries.
+contexts:
+  default:
+    default: true
+    upstreams:
+      - ref: qdrant
+        priority: 0
+      - ref: elastic
+        priority: 0
+      - ref: opensearch
+        priority: 0
+      - ref: meili1
+        priority: 0
+      - ref: meili2
+        priority: 0
+      - ref: pgvector
+        priority: 0
+    cache:
+      fresh_secs: 300
+      stale_secs: 600
+      max_entries: 10000
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 2
+  periodSeconds: 5
+
+# Web UI dashboard (read-only status panel).
+webUi:
+  enabled: true

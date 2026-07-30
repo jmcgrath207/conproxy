@@ -1,0 +1,39 @@
+# cargo-nextest configuration.
+# See https://nexte.st/docs/configuration/
+#
+# `dev` profile is for the local save loop:
+#   - terse output (one line per test)
+#   - N processes (one per CPU)
+#   - no retries (the slowest test is real; flakiness is its own issue)
+#
+# Usage: `cargo nextest run --profile dev` (or `make test-nextest`).
+
+[profile.dev]
+# Use all CPUs for parallelism. Set lower on shared / loud hosts.
+test-threads = "num-cpus"
+
+# Per-test timeout: catches stuck tests fast. 5 min is generous for unit
+# tests; raise if a long-running test legitimately needs more.
+timeout = "5m"
+
+# Fail fast: stop on the first failure (the dev loop wants signal ASAP).
+fail-fast = true
+
+# Default status level: skip per-test PASS, show summary only.
+status-level = "pass"
+
+# Failure output: only print captured stdout/stderr for failing tests.
+failure-output = "immediate"
+
+# Success output: discard — re-run with `--success-output=immediate` to see.
+success-output = "never"
+
+# Stdout capture: per-test (lets the above settings work).
+final-status-level = "fail"
+# Print a final summary line on completion.
+output = "terminal"
+
+# Don't use libtest's auto-tracing; rely on nextest's per-test capture.
+#
+# A `ci` profile (slower, retries) is left to the team to add if/when CI uses
+# nextest. For now GitHub Actions runs `cargo test`, not nextest.

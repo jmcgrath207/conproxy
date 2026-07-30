@@ -1,0 +1,10 @@
+rust programming language
+vector database embeddings
+elasticsearch full text search
+axum web framework rust
+cache ttl lru eviction
+gRPC protobuf protocol buffers
+caching strategies distributed systems
+BM25 ranking algorithm
+PostgreSQL pgvector extension
+Docker multi-stage builds

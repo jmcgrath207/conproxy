@@ -1,0 +1,27 @@
+# Plan 09: context-rooted mixed-upstreams for e2e-mixed.
+# Qdrant + meilisearch in one context.
+
+[server]
+listen = "127.0.0.1:8080"
+
+[upstreams.qdrant]
+url = "http://localhost:6333"
+type = "qdrant"
+index = "conproxy_test"
+
+[upstreams.meili]
+url = "http://localhost:7700"
+type = "meilisearch"
+index = "conproxy_test"
+api_key = "conproxy_test_key"
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "qdrant"
+priority = 0
+
+[[contexts.default.upstreams]]
+ref = "meili"
+priority = 1

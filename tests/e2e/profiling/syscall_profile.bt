@@ -1,0 +1,262 @@
+#!/usr/bin/env bpftrace
+//
+// syscall_profile.bt — Page cache and I/O syscall tracing for conpack proxy.
+//
+// Traces fadvise64, madvise, mmap, write, writev, epoll_wait, read, and readv
+// syscalls for the target PID.  Captures latency histograms, byte counts,
+// and advice-code breakdowns.
+//
+// Usage: sudo bpftrace -p <PID> syscall_profile.bt <PID>
+//
+
+config = { max_map_keys = 16384 }
+
+// ---- fadvise64 (page cache hints: WILLNEED=3, DONTNEED=4) ----
+
+tracepoint:syscalls:sys_enter_fadvise64 / pid == $1 /
+{
+    @fadvise_start[tid] = nsecs;
+    @fadvise_count++;
+    @fadvise_advice[args.advice]++;
+    // Track specific advice codes
+    if (args.advice == 3) { @fadvise_willneed++; }
+    if (args.advice == 4) { @fadvise_dontneed++; }
+}
+
+tracepoint:syscalls:sys_exit_fadvise64 / pid == $1 && @fadvise_start[tid] /
+{
+    $lat = (nsecs - @fadvise_start[tid]) / 1000;  // microseconds
+    @fadvise_latency_us = hist($lat);
+    @fadvise_total_lat_us += $lat;
+    delete(@fadvise_start[tid]);
+}
+
+// ---- madvise ----
+
+tracepoint:syscalls:sys_enter_madvise / pid == $1 /
+{
+    @madvise_start[tid] = nsecs;
+    @madvise_count++;
+    @madvise_advice[args.behavior]++;
+}
+
+tracepoint:syscalls:sys_exit_madvise / pid == $1 && @madvise_start[tid] /
+{
+    $lat = (nsecs - @madvise_start[tid]) / 1000;
+    @madvise_latency_us = hist($lat);
+    @madvise_total_lat_us += $lat;
+    delete(@madvise_start[tid]);
+}
+
+// ---- mmap ----
+
+tracepoint:syscalls:sys_enter_mmap / pid == $1 /
+{
+    @mmap_count++;
+    @mmap_sizes = hist(args.len);
+}
+
+// ---- write (socket + file I/O) ----
+
+tracepoint:syscalls:sys_enter_write / pid == $1 /
+{
+    @write_start[tid] = nsecs;
+    @write_count++;
+    @write_bytes += args.count;
+}
+
+tracepoint:syscalls:sys_exit_write / pid == $1 && @write_start[tid] /
+{
+    $lat = (nsecs - @write_start[tid]) / 1000;
+    @write_latency_us = hist($lat);
+    @write_total_lat_us += $lat;
+    delete(@write_start[tid]);
+}
+
+// ---- writev (scatter-gather write, used by tokio/hyper) ----
+
+tracepoint:syscalls:sys_enter_writev / pid == $1 /
+{
+    @writev_start[tid] = nsecs;
+    @writev_count++;
+}
+
+tracepoint:syscalls:sys_exit_writev / pid == $1 && @writev_start[tid] /
+{
+    $lat = (nsecs - @writev_start[tid]) / 1000;
+    @writev_latency_us = hist($lat);
+    @writev_total_lat_us += $lat;
+    if (args.ret > 0) {
+        @writev_bytes += args.ret;
+    }
+    delete(@writev_start[tid]);
+}
+
+// ---- readv (scatter-gather read, used by tokio/hyper) ----
+
+tracepoint:syscalls:sys_enter_readv / pid == $1 /
+{
+    @readv_start[tid] = nsecs;
+    @readv_count++;
+}
+
+tracepoint:syscalls:sys_exit_readv / pid == $1 && @readv_start[tid] /
+{
+    $lat = (nsecs - @readv_start[tid]) / 1000;
+    @readv_latency_us = hist($lat);
+    @readv_total_lat_us += $lat;
+    if (args.ret > 0) {
+        @readv_bytes += args.ret;
+    }
+    delete(@readv_start[tid]);
+}
+
+// ---- epoll_wait (tokio reactor) ----
+
+tracepoint:syscalls:sys_enter_epoll_wait / pid == $1 /
+{
+    @epoll_start[tid] = nsecs;
+    @epoll_count++;
+}
+
+tracepoint:syscalls:sys_exit_epoll_wait / pid == $1 && @epoll_start[tid] /
+{
+    $lat = (nsecs - @epoll_start[tid]) / 1000;
+    @epoll_latency_us = hist($lat);
+    @epoll_total_lat_us += $lat;
+    if (args.ret > 0) {
+        @epoll_events += args.ret;
+    }
+    delete(@epoll_start[tid]);
+}
+
+// ---- read (file + socket I/O) ----
+
+tracepoint:syscalls:sys_enter_read / pid == $1 /
+{
+    @read_start[tid] = nsecs;
+    @read_count++;
+    @read_bytes += args.count;
+}
+
+tracepoint:syscalls:sys_exit_read / pid == $1 && @read_start[tid] /
+{
+    $lat = (nsecs - @read_start[tid]) / 1000;
+    @read_latency_us = hist($lat);
+    @read_total_lat_us += $lat;
+    delete(@read_start[tid]);
+}
+
+END
+{
+    printf("\n========================================\n");
+    printf("CONPACK SYSCALL PROFILE SUMMARY\n");
+    printf("========================================\n\n");
+
+    // ---- fadvise64 ----
+    printf("--- fadvise64 ---\n");
+    printf("count:          %lld\n", @fadvise_count);
+    printf("WILLNEED (3):   %lld\n", @fadvise_willneed);
+    printf("DONTNEED (4):   %lld\n", @fadvise_dontneed);
+    if (@fadvise_count > 0) {
+        printf("avg latency us: %lld\n", @fadvise_total_lat_us / @fadvise_count);
+    }
+    printf("advice breakdown:\n");
+    print(@fadvise_advice);
+    printf("latency histogram (us):\n");
+    print(@fadvise_latency_us);
+    printf("\n");
+
+    // ---- madvise ----
+    printf("--- madvise ---\n");
+    printf("count:          %lld\n", @madvise_count);
+    if (@madvise_count > 0) {
+        printf("avg latency us: %lld\n", @madvise_total_lat_us / @madvise_count);
+    }
+    printf("advice breakdown:\n");
+    print(@madvise_advice);
+    printf("latency histogram (us):\n");
+    print(@madvise_latency_us);
+    printf("\n");
+
+    // ---- mmap ----
+    printf("--- mmap ---\n");
+    printf("count:          %lld\n", @mmap_count);
+    printf("size histogram:\n");
+    print(@mmap_sizes);
+    printf("\n");
+
+    // ---- write ----
+    printf("--- write ---\n");
+    printf("count:          %lld\n", @write_count);
+    printf("total bytes:    %lld\n", @write_bytes);
+    if (@write_count > 0) {
+        printf("avg latency us: %lld\n", @write_total_lat_us / @write_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@write_latency_us);
+    printf("\n");
+
+    // ---- writev ----
+    printf("--- writev ---\n");
+    printf("count:          %lld\n", @writev_count);
+    printf("total bytes:    %lld\n", @writev_bytes);
+    if (@writev_count > 0) {
+        printf("avg latency us: %lld\n", @writev_total_lat_us / @writev_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@writev_latency_us);
+    printf("\n");
+
+    // ---- readv ----
+    printf("--- readv ---\n");
+    printf("count:          %lld\n", @readv_count);
+    printf("total bytes:    %lld\n", @readv_bytes);
+    if (@readv_count > 0) {
+        printf("avg latency us: %lld\n", @readv_total_lat_us / @readv_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@readv_latency_us);
+    printf("\n");
+
+    // ---- epoll_wait ----
+    printf("--- epoll_wait ---\n");
+    printf("count:          %lld\n", @epoll_count);
+    printf("total events:   %lld\n", @epoll_events);
+    if (@epoll_count > 0) {
+        printf("avg events/call: %lld\n", @epoll_events / @epoll_count);
+        printf("avg latency us: %lld\n", @epoll_total_lat_us / @epoll_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@epoll_latency_us);
+    printf("\n");
+
+    // ---- read ----
+    printf("--- read ---\n");
+    printf("count:          %lld\n", @read_count);
+    printf("total bytes:    %lld\n", @read_bytes);
+    if (@read_count > 0) {
+        printf("avg latency us: %lld\n", @read_total_lat_us / @read_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@read_latency_us);
+    printf("\n");
+
+    // Clean up
+    clear(@fadvise_start); clear(@fadvise_count); clear(@fadvise_willneed);
+    clear(@fadvise_dontneed); clear(@fadvise_advice); clear(@fadvise_latency_us);
+    clear(@fadvise_total_lat_us);
+    clear(@madvise_start); clear(@madvise_count); clear(@madvise_advice);
+    clear(@madvise_latency_us); clear(@madvise_total_lat_us);
+    clear(@mmap_count); clear(@mmap_sizes);
+    clear(@write_start); clear(@write_count); clear(@write_bytes);
+    clear(@write_latency_us); clear(@write_total_lat_us);
+    clear(@writev_start); clear(@writev_count); clear(@writev_bytes);
+    clear(@writev_latency_us); clear(@writev_total_lat_us);
+    clear(@readv_start); clear(@readv_count); clear(@readv_bytes);
+    clear(@readv_latency_us); clear(@readv_total_lat_us);
+    clear(@epoll_start); clear(@epoll_count); clear(@epoll_events);
+    clear(@epoll_latency_us); clear(@epoll_total_lat_us);
+    clear(@read_start); clear(@read_count); clear(@read_bytes);
+    clear(@read_latency_us); clear(@read_total_lat_us);
+}

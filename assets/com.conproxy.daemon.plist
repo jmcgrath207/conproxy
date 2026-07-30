@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+Conproxy Daemon launchd plist
+
+Install to ~/Library/LaunchAgents/com.conproxy.daemon.plist (user) or
+/Library/LaunchDaemons/com.conproxy.daemon.plist (system)
+
+Load and start:
+  launchctl load ~/Library/LaunchAgents/com.conproxy.daemon.plist
+
+Unload:
+  launchctl unload ~/Library/LaunchAgents/com.conproxy.daemon.plist
+
+View logs:
+  tail -f /tmp/conproxy-daemon.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.conproxy.daemon</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/conproxy</string>
+        <string>daemon</string>
+        <string>run</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/conproxy-daemon.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/conproxy-daemon.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>RUST_LOG</key>
+        <string>info</string>
+    </dict>
+</dict>
+</plist>

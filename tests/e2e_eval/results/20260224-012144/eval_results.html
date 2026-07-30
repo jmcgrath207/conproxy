@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conpack E2E Eval Results</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --fg: #e6edf3;
+          --fg2: #8b949e; --green: #3fb950; --red: #f85149; --yellow: #d29922;
+          --blue: #58a6ff; --purple: #bc8cff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+         background: var(--bg); color: var(--fg); padding: 2rem; line-height: 1.5; }
+  h1 { font-size: 1.6rem; margin-bottom: .3rem; }
+  .subtitle { color: var(--fg2); font-size: .85rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.15rem; margin: 1.8rem 0 .8rem; color: var(--blue); }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.2rem; }
+  th, td { padding: .55rem .75rem; text-align: left; border: 1px solid var(--border); }
+  th { background: var(--surface); font-weight: 600; font-size: .85rem; color: var(--fg2); }
+  td { font-size: .85rem; }
+  tr:hover td { background: #1c2333; }
+  .best { background: #0d2818; }
+  .worst { background: #2d1114; }
+  .pass { color: var(--green); font-weight: 600; }
+  .fail { color: var(--red); font-weight: 600; }
+  .timeout { color: var(--yellow); font-weight: 600; }
+  .conf-high { color: var(--green); }
+  .conf-mid { color: var(--yellow); }
+  .conf-low { color: var(--red); }
+  .badge { display: inline-block; padding: .15rem .5rem; border-radius: 3px;
+           font-size: .75rem; font-weight: 600; }
+  .badge-best { background: #0d2818; color: var(--green); border: 1px solid var(--green); }
+  .badge-worst { background: #2d1114; color: var(--red); border: 1px solid var(--red); }
+  .bar-cell { position: relative; }
+  .bar { position: absolute; top: 0; left: 0; bottom: 0; opacity: .15; border-radius: 2px; }
+  .bar-green { background: var(--green); }
+  .bar-red { background: var(--red); }
+  .bar-yellow { background: var(--yellow); }
+  .bar-label { position: relative; z-index: 1; }
+  details { margin: .4rem 0; }
+  summary { cursor: pointer; font-size: .8rem; color: var(--fg2); padding: .2rem 0; }
+  summary:hover { color: var(--fg); }
+  .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+  .tag { font-size: .7rem; padding: .1rem .4rem; border-radius: 3px;
+         background: var(--surface); border: 1px solid var(--border); color: var(--fg2); }
+  .tag-phrase { border-color: var(--purple); color: var(--purple); }
+  .tag-title { border-color: var(--blue); color: var(--blue); }
+  .tag-tag { border-color: var(--green); color: var(--green); }
+  .query-text { color: var(--fg2); font-size: .8rem; font-style: italic; display: block;
+                margin-top: .2rem; max-width: 60ch; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+          padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .metric-val { font-size: 1.8rem; font-weight: 700; }
+  .metric-label { font-size: .75rem; color: var(--fg2); text-transform: uppercase; letter-spacing: .05em; }
+  .response-section { margin-top: .6rem; }
+  .response-label { font-size: .75rem; font-weight: 600; color: var(--fg2); text-transform: uppercase;
+                     letter-spacing: .05em; margin-bottom: .3rem; }
+  .response-box { background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+                  padding: .6rem .8rem; font-size: .8rem; white-space: pre-wrap; word-break: break-word;
+                  max-height: 20rem; overflow-y: auto; line-height: 1.5; }
+  .response-box.expected { border-left: 3px solid var(--green); }
+  .response-box.agent { border-left: 3px solid var(--blue); }
+  .response-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .5rem; }
+  @media (max-width: 900px) { .response-grid { grid-template-columns: 1fr; } }
+  .no-response { color: var(--fg2); font-style: italic; font-size: .8rem; }
+</style>
+</head>
+<body>
+<h1>Conpack E2E Eval Results</h1>
+<p class="subtitle">Generated: 1771918404s-since-epoch</p>
+<h2>Summary</h2>
+<div class="grid-2">
+<div class="card"><div class="metric-label">No Ctx <span class="badge badge-best">BEST</span></div><div class="metric-val conf-low">40%</div><div class="metric-label">recall &nbsp;|&nbsp; 29.2s avg &nbsp;|&nbsp; 10/10 ok &nbsp;|&nbsp; 0 timeouts</div></div>
+<div class="card"><div class="metric-label">Know+CLI <span class="badge badge-worst">WORST</span></div><div class="metric-val conf-low">0%</div><div class="metric-label">recall &nbsp;|&nbsp; 60.0s avg &nbsp;|&nbsp; 0/10 ok &nbsp;|&nbsp; 10 timeouts</div></div>
+<div class="card"><div class="metric-label">CLI Search</div><div class="metric-val conf-low">0%</div><div class="metric-label">recall &nbsp;|&nbsp; 60.0s avg &nbsp;|&nbsp; 0/10 ok &nbsp;|&nbsp; 10 timeouts</div></div>
+<div class="card"><div class="metric-label">MCP+Tools</div><div class="metric-val conf-low">0%</div><div class="metric-label">recall &nbsp;|&nbsp; 60.0s avg &nbsp;|&nbsp; 0/10 ok &nbsp;|&nbsp; 10 timeouts</div></div>
+<div class="card"><div class="metric-label">MCP Only</div><div class="metric-val conf-low">0%</div><div class="metric-label">recall &nbsp;|&nbsp; 60.0s avg &nbsp;|&nbsp; 0/10 ok &nbsp;|&nbsp; 10 timeouts</div></div>
+</div>
+<h2>Comparison</h2>
+<table>
+<tr><th>Metric</th><th>No Ctx</th><th>Know+CLI</th><th>CLI Search</th><th>MCP+Tools</th><th>MCP Only</th></tr>
+<tr><td>Total Recall</td><td class="best" class="bar-cell"><span class="bar bar-green" style="width:40%"></span><span class="bar-label">40.0%</span></td><td class="worst" class="bar-cell"><span class="bar bar-green" style="width:0%"></span><span class="bar-label">0.0%</span></td><td class="bar-cell"><span class="bar bar-green" style="width:0%"></span><span class="bar-label">0.0%</span></td><td class="bar-cell"><span class="bar bar-green" style="width:0%"></span><span class="bar-label">0.0%</span></td><td class="bar-cell"><span class="bar bar-green" style="width:0%"></span><span class="bar-label">0.0%</span></td></tr>
+<tr><td>Avg Response Time</td><td>29.2s</td><td>60.0s</td><td>60.0s</td><td>60.0s</td><td>60.0s</td></tr>
+<tr><td>Success Rate</td><td>10/10</td><td>0/10</td><td>0/10</td><td>0/10</td><td>0/10</td></tr>
+<tr><td>Timeouts</td><td class="">0</td><td class="timeout">10</td><td class="timeout">10</td><td class="timeout">10</td><td class="timeout">10</td></tr>
+</table>
+<h2>Per-Query Recall</h2>
+<table>
+<tr><th>Query</th><th>No Ctx</th><th>Know+CLI</th><th>CLI Search</th><th>MCP+Tools</th><th>MCP Only</th></tr>
+<tr><td><strong>q-001</strong><span class="query-text">What is the Zephyr Query Protocol and how does its three-phase handshake work?</span></td><td class="fail">0%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-002</strong><span class="query-text">How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?</span></td><td class="pass">100%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-003</strong><span class="query-text">Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach</span></td><td class="fail">0%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-004</strong><span class="query-text">How do you configure the Vortex ingestion pipeline stages and dead-letter handling?</span></td><td class="pass">100%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-005</strong><span class="query-text">What traffic shaping policies does the Auralis service mesh support?</span></td><td class="pass">100%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-006</strong><span class="query-text">How do you train custom embeddings with the Helix Embedder and export to ONNX?</span></td><td class="fail">0%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-007</strong><span class="query-text">Describe the Prismoid cache coherence protocol and its gossip-based invalidation</span></td><td class="fail">0%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-008</strong><span class="query-text">What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?</span></td><td class="fail">0%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-009</strong><span class="query-text">How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?</span></td><td class="fail">0%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+<tr><td><strong>q-010</strong><span class="query-text">Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files</span></td><td class="pass">100%</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td><td class="timeout">TIMEOUT</td></tr>
+</table>
+<h2>Query Details</h2>
+<details><summary><strong>q-001</strong> — What is the Zephyr Query Protocol and how does its three-phase handshake work?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-001 — Zephyr Query Protocol v3.2 Specification</div><div class="response-box expected">The Zephyr Query Protocol (ZQP) v3.2 introduces scatter-gather query routing with adaptive fan-out. ZQP uses a three-phase handshake: DISCOVER, NEGOTIATE, STREAM. The DISCOVER phase broadcasts topology probes to all registered shards using multicast group 239.17.42.0/24. NEGOTIATE selects optimal shards based on affinity scores computed via the Kessler-Huang ranking algorithm. STREAM delivers results using chunked transfer with backpressure signaling via ZQP-FlowControl headers. Configuration requires setting zqp.scatter_factor (default 3), zqp.negotiate_timeout_ms (default 150), and zqp.stream_window_size (default 64KB). The protocol supports both synchronous request-response and asynchronous push modes controlled by the zqp.mode parameter.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.205</td><td>11.3s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/5</span><span class="tag tag-tag">tag:zephyr</span><span class="tag tag-tag">tag:query-protocol</span><span class="tag">term:phase</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">I'm not aware of any established protocol called the &quot;Zephyr Query Protocol&quot; or a &quot;three-phase handshake&quot; associated with it. This doesn't correspond to any well-known networking protocol, database protocol, or standard in my training data (up to May 2025).
+
+There are some things with similar names that exist but don't match this description:
+
+- **MIT Zephyr** — a notification/messaging system from Project Athena, but it's not called the &quot;Zephyr Query Protocol&quot; and isn't defined by a three-phase handshake.
+- **Three-way handshake** — a well-known mechanism in **TCP** (SYN, SYN-ACK, ACK), but that's not called &quot;Zephyr.&quot;
+
+If this is a term from a specific textbook, course, proprietary system, or a very recent development, I may not have information on it. Could you share where you encountered this term? I'd be happy to look into it further with more context.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-002</strong> — How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-002 — ConpackDB Ring-Buffer Sharding Architecture</div><div class="response-box expected">ConpackDB implements ring-buffer sharding using BLAKE3 partition keys for deterministic data distribution. Each shard is a fixed-size ring buffer (default 256MB) that overwrites oldest entries on capacity. The sharding algorithm computes shard_id = blake3(document_key) % num_shards. Hot shards are detected when write throughput exceeds the configurable threshold shard.hot_threshold_ops_sec (default 10000). Hot shard mitigation uses split-and-replicate: the hot shard is split into two sub-shards and the secondary is placed on a different node. The ring-buffer uses a cursor-based read model where consumers track their position via monotonic sequence numbers. ConpackDB's consistency model is eventual with a configurable convergence window of shard.convergence_ms (default 500).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-002</td><td class="pass">YES</td><td class="conf-mid">0.432</td><td>15.4s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:BLAKE3 partition</span><span class="tag tag-tag">tag:conpackdb</span><span class="tag tag-tag">tag:ring-buffer</span><span class="tag tag-tag">tag:sharding</span><span class="tag tag-tag">tag:blake3</span><span class="tag">term:sharding</span><span class="tag">term:ring</span><span class="tag">term:buffer</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-002</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-002</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-002</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-002</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">The working directory is empty and contains no references to ConpackDB, ring-buffer sharding, or BLAKE3 partition keys.
+
+**I cannot answer this question.** &quot;ConpackDB&quot; does not appear to be a real or publicly documented database system that I have knowledge of. The specific combination of concepts — ring-buffer sharding with BLAKE3 partition keys — doesn't match any known system in my training data.
+
+If this is a real system, I would need access to its source code or documentation to provide an accurate technical answer. I'd rather say I don't know than fabricate details about a system I'm unfamiliar with.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-003</strong> — Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach</summary>
+<div class="response-section"><div class="response-label">Expected: eval-003 — Nexara Consensus: The Meridian Protocol</div><div class="response-box expected">Nexara implements the Meridian consensus protocol, a Byzantine fault-tolerant algorithm designed for geo-distributed clusters. Meridian operates in three rounds: PROPOSE, CERTIFY, COMMIT. Unlike traditional BFT protocols, Meridian uses a rotating committee of 2f+1 validators selected via verifiable random functions (VRFs). The protocol achieves 50,000 TPS in WAN configurations with 100ms finality. Key parameters include meridian.committee_size (default 7), meridian.vrf_threshold (0.67), and meridian.proposal_timeout_ms (default 200). Meridian introduces the concept of 'temporal sharding' where consensus rounds are partitioned across time slots to reduce message complexity from O(n^2) to O(n*log(n)). The Nexara implementation uses the Ed25519 signature scheme for vote signing.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.250</td><td>22.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-tag">tag:nexara</span><span class="tag tag-tag">tag:meridian</span><span class="tag tag-tag">tag:consensus</span><span class="tag">term:consensus</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">Neither the local codebase nor web search results return anything about &quot;Nexara,&quot; a &quot;Meridian consensus protocol,&quot; or &quot;temporal sharding&quot; as a named approach associated with them.
+
+**These do not appear to be real technologies or concepts.** I cannot provide technical details about them because doing so would mean fabricating information.
+
+There are real consensus protocols and sharding approaches in the blockchain/distributed systems space that involve related ideas, such as:
+
+- **Radix DLT's Tempo/Cerberus** — uses logical clocks and temporal proofs for consensus ordering across shards
+- **NEAR Protocol's Nightshade** — a sharding design for blockchain scalability
+- **Various academic shard-based consensus protocols** — e.g., DynaShard, Shardora
+
+If you're thinking of one of these, or if &quot;Nexara&quot; / &quot;Meridian&quot; are terms from a specific whitepaper, course, or fictional scenario, let me know and I can help with that instead.
+
+Sources:
+- [Tempo - Consensus Lessons Learned | Radix DLT](https://www.radixdlt.com/blog/tempo-consensus-lessons-learned)
+- [Nightshade: NEAR Protocol Sharding Design](https://pages.near.org/downloads/Nightshade.pdf)
+- [DynaShard: Secure and Adaptive Blockchain Sharding](https://arxiv.org/html/2411.06895v2)
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-004</strong> — How do you configure the Vortex ingestion pipeline stages and dead-letter handling?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-004 — Vortex Ingestion Pipeline Configuration Guide</div><div class="response-box expected">The Vortex ingestion pipeline processes streaming data through configurable stages: PARSE, ENRICH, VALIDATE, ROUTE. Each stage runs as an isolated actor with bounded mailboxes (vortex.stage.mailbox_size, default 4096). The PARSE stage supports JSON, Avro, Protobuf, and custom formats via pluggable deserializers registered in vortex.parsers[]. ENRICH applies transformation rules defined in vortex.enrichment_rules[], supporting field mapping, regex extraction, and lookup joins against reference tables. VALIDATE enforces schema contracts using Vortex Schema Language (VSL) files referenced by vortex.schema_path. ROUTE distributes validated records to downstream sinks based on content-based routing rules in vortex.routing_table[]. Dead-letter handling sends invalid records to the vortex.dlq_topic (default 'vortex-dlq'). Backpressure propagates upstream when any stage's mailbox exceeds 80% capacity.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-004</td><td class="pass">YES</td><td class="conf-mid">0.364</td><td>49.9s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/5</span><span class="tag tag-phrase">phrase:Dead-letter handling</span><span class="tag tag-tag">tag:vortex</span><span class="tag tag-tag">tag:ingestion</span><span class="tag tag-tag">tag:pipeline</span><span class="tag tag-tag">tag:streaming</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-004</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-004</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-004</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-004</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">I was unable to find a specific, well-documented product or framework called **&quot;Vortex&quot;** that features configurable ingestion pipeline stages and dead-letter handling as described in your question. Here's what my research turned up:
+
+## What I Found Under the Name &quot;Vortex&quot;
+
+Several distinct systems use the name &quot;Vortex,&quot; but none match your description:
+
+1. **Google Vortex** — BigQuery's stream-oriented storage engine. It handles streaming ingestion via Streams, Streamlets, and Fragments, but its configuration is internal to Google/BigQuery and doesn't expose user-facing &quot;pipeline stages&quot; or dead-letter queue configuration. ([Research paper](https://research.google/pubs/vortex-a-stream-oriented-storage-engine-for-big-data-analytics/), [Medium deep-dive](https://medium.com/google-cloud/how-does-vortex-the-bigquery-storage-engine-work-behind-the-scenes-2698b37f8093))
+
+2. **ADLINK Vortex OpenSplice** — A Data Distribution Service (DDS) middleware implementation, focused on pub/sub messaging rather than ingestion pipelines with DLQ semantics. ([ADLINK site](https://www.adlinktech.com/en/vortex-opensplice-data-distribution-service))
+
+3. **Vortex Columnar Format** — An open-source columnar file format (formerly at SpiralDB, now under LF AI &amp; Data). It's a storage format, not an ingestion pipeline. ([GitHub](https://github.com/vortex-data/vortex))
+
+4. **Dropbox Vortex** — A metrics monitoring system, not a data ingestion pipeline. ([Dropbox Engineering](https://dropbox.tech/infrastructure/monitoring-server-applications-with-vortex))
+
+## Could You Clarify?
+
+None of these systems have documented &quot;ingestion pipeline stages&quot; with &quot;dead-letter handling&quot; as a user-configurable feature. The &quot;Vortex&quot; you're asking about may be:
+
+- A **proprietary/internal platform** at a specific company
+- A **very new or niche tool** without broad public documentation
+- Part of a **specific vendor's product suite** with a different full name
+
+Could you provide more context — such as the vendor, a documentation URL, or the ecosystem (e.g., Kafka, Spark, cloud provider) this &quot;Vortex&quot; belongs to? That would help me give you accurate, specific configuration details.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-005</strong> — What traffic shaping policies does the Auralis service mesh support?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-005 — Auralis Service Mesh: Traffic Shaping Policies</div><div class="response-box expected">Auralis service mesh provides traffic shaping through declarative policies defined in AuralisPolicy CRDs. Traffic splitting uses weighted backends specified as auralis.backends[].weight (0-100, must sum to 100). Circuit breaking triggers when error_rate exceeds auralis.circuit.threshold (default 0.5) over auralis.circuit.window_sec (default 30). The mesh supports canary deployments via header-based routing: requests with X-Auralis-Canary: true are routed to canary backends. Rate limiting is per-service with auralis.ratelimit.rps (default 1000) and auralis.ratelimit.burst (default 50). Auralis uses sidecar proxies based on the Luminex engine, which processes L4/L7 traffic with sub-millisecond overhead. Mutual TLS is enforced by default between all mesh services using SPIFFE identities (spiffe://auralis.local/service/&lt;name&gt;).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-005</td><td class="pass">YES</td><td class="conf-mid">0.364</td><td>19.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-phrase">phrase:Auralis service</span><span class="tag tag-tag">tag:auralis</span><span class="tag tag-tag">tag:service-mesh</span><span class="tag tag-tag">tag:traffic-shaping</span><span class="tag">term:traffic</span><span class="tag">term:name</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-005</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-005</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-005</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-005</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">I was unable to find any information about an &quot;Auralis service mesh.&quot; My search covered:
+
+- The current workspace (no files or references found)
+- Web searches (no results specific to &quot;Auralis&quot;)
+
+**&quot;Auralis service mesh&quot; does not appear to be a recognized or publicly documented technology.** It doesn't appear in any open-source repositories, cloud provider documentation, or industry publications that I can find. It may be:
+
+1. A **fictional or hypothetical** product name
+2. A **misspelling** of another service mesh (e.g., Istio, Linkerd, Consul Connect, Kuma, Open Service Mesh)
+3. A **proprietary/internal** tool with no public documentation
+
+I cannot provide specific technical details about traffic shaping policies for a product I can't verify exists. If you can provide more context — such as a documentation URL, repository, or the correct product name — I'd be happy to research it further.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-006</strong> — How do you train custom embeddings with the Helix Embedder and export to ONNX?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-006 — Helix Embedder: Custom Model Training Workflow</div><div class="response-box expected">The Helix Embedder produces domain-specific text embeddings using a fine-tuned transformer architecture. Training requires a corpus file in Helix Format (.hxf) containing tab-separated (anchor, positive, negative) triplets. The training pipeline is: helix train --corpus data.hxf --model-dim 384 --epochs 20 --lr 1e-5 --loss contrastive-margin --margin 0.3. Evaluation uses helix eval --model checkpoint.hx --benchmark internal-retrieval --metrics ndcg@10,mrr. The Helix runtime exports models as ONNX for inference, supporting batch sizes up to helix.inference.max_batch (default 32). Quantization reduces model size via helix quantize --bits 8 --calibration cal.hxf. The Helix index format uses product quantization (PQ) with helix.index.pq_segments (default 48) and helix.index.pq_bits (default 8) for compressed vector storage.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-006</td><td class="fail">NO</td><td class="conf-low">0.273</td><td>34.9s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/6</span><span class="tag tag-tag">tag:helix</span><span class="tag tag-tag">tag:embedder</span><span class="tag tag-tag">tag:training</span><span class="tag tag-tag">tag:onnx</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-006</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-006</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-006</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-006</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">I was unable to find any specific tool, library, or framework called **&quot;Helix Embedder&quot;** that trains custom embeddings and exports to ONNX. My searches across the web and the local repository turned up no matches.
+
+Here's what I did find under the &quot;Helix&quot; name in the ML space:
+
+- **[helix-py](https://github.com/HelixDB/helix-py)** — A Python client for HelixDB (a graph-vector database), which has embedder interfaces for providers like OpenAI, Gemini, and Voyage AI. It does not appear to support custom embedding training or ONNX export.
+- **[Helix 1.0](https://arxiv.org/abs/2507.17791)** — An open-source framework for reproducible ML on tabular data, unrelated to embeddings training.
+- **[HelixML](https://docs.helix.ml/)** — A GenAI platform for deploying AI agents, not an embeddings trainer.
+
+None of these match a workflow for &quot;training custom embeddings and exporting to ONNX.&quot;
+
+**&quot;Helix Embedder&quot; does not appear to be a publicly documented tool or framework.** It's possible it is:
+1. A proprietary/internal tool
+2. Known by a different name
+3. A concept that doesn't exist as a named product
+
+I cannot provide specific technical details for something I can't verify exists. If you have a link to documentation or a repository for &quot;Helix Embedder,&quot; I'd be happy to review it and answer your question.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-007</strong> — Describe the Prismoid cache coherence protocol and its gossip-based invalidation</summary>
+<div class="response-section"><div class="response-label">Expected: eval-007 — Prismoid Cache Coherence Protocol</div><div class="response-box expected">The Prismoid protocol maintains cache coherence across distributed proxy nodes using a gossip-based invalidation scheme. Each cache entry carries a vector clock (prismoid.vclock) that tracks the last-write timestamp per node. On cache miss, Prismoid performs a quorum read: it queries prismoid.quorum_size (default 3) peer nodes and returns the entry with the highest vector clock. Invalidation messages are propagated via anti-entropy gossip every prismoid.gossip_interval_ms (default 100). Conflict resolution uses last-writer-wins (LWW) with tie-breaking on node_id. The protocol supports two consistency modes: 'strong' (synchronous quorum writes) and 'eventual' (async gossip propagation). Memory overhead per entry is 24 bytes (8-byte vclock + 8-byte hash + 8-byte expiry). Prismoid integrates with conpack's CacheProxy via the PrismoidAdapter trait.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.250</td><td>11.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/4</span><span class="tag tag-tag">tag:prismoid</span><span class="tag tag-tag">tag:cache-coherence</span><span class="tag tag-tag">tag:gossip</span><span class="tag">term:distributed</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">I don't have any knowledge of a cache coherence protocol called &quot;Prismoid&quot; or an associated gossip-based invalidation mechanism. This does not appear to be a recognized protocol in the cache coherence literature I'm aware of.
+
+Well-known cache coherence protocols include **MSI**, **MESI**, **MOESI**, **Dragon**, and **Firefly**, among others. Some distributed systems do use **gossip protocols** (e.g., epidemic-style dissemination) for state propagation or invalidation, but I'm not aware of a specific protocol that combines these under the name &quot;Prismoid.&quot;
+
+If this is a term from a specific paper, course, or proprietary system, I'd need a reference to provide accurate details. I'd rather tell you I don't know than fabricate an answer with plausible-sounding but incorrect technical details.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-008</strong> — What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-008 — Terraform Module: ConpackCluster Deployment</div><div class="response-box expected">The conpack-cluster Terraform module deploys a production-ready conpack proxy cluster on AWS. Resources provisioned: ALB (conpack_alb), ECS Fargate tasks (conpack_proxy, 3 replicas), ElastiCache Redis (conpack_cache), and CloudWatch alarms. Required variables: cluster_name, vpc_id, subnet_ids[], conpack_image, upstream_urls[]. Optional variables: proxy_cpu (default 1024), proxy_memory (default 2048), cache_node_type (default 'cache.r6g.large'), min_tasks (default 3), max_tasks (default 12). Auto-scaling triggers on CloudWatch metric ConpackProxyCacheHitRate: scales out when hit rate drops below 70% for 5 minutes, scales in when above 90% for 15 minutes. Health checks use /ready endpoint with 30-second interval. The module outputs: alb_dns_name, ecs_cluster_arn, redis_endpoint, cloudwatch_dashboard_url.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.159</td><td>53.2s</td><td><div class="tags"><span class="tag tag-tag">tag:terraform</span><span class="tag tag-tag">tag:conpack-cluster</span><span class="tag">term:module</span><span class="tag">term:triggers</span><span class="tag">term:auto-scaling</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-008</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">I don't have enough information to answer this question. The current repository (`no_context`) is an empty git repo with no source files, and there is no conpack-cluster Terraform module present in the codebase. The term &quot;conpack-cluster Terraform&quot; appears only as a knowledge seed query in configuration files in other directories, but no actual Terraform code (`.tf` files) or module definitions exist anywhere in this repository.
+
+I cannot provide specific technical details about what resources the conpack-cluster Terraform module provisions or what its auto-scaling triggers are, because:
+
+1. **No Terraform files exist** in this repository.
+2. **No documentation** describing the module is available in the codebase.
+3. This appears to be an evaluation/test repository, and the `no_context` vertical I'm working in is intentionally empty — it contains only a `.git` directory with no files.
+
+To answer this question, I would need access to either the actual Terraform module source code or documentation describing it. If this information exists in an external knowledge base or another repository, could you point me to it?
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-009</strong> — How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-009 — Spectral Query Analyzer: Execution Plan Optimization</div><div class="response-box expected">The Spectral Query Analyzer optimizes query execution plans for multi-upstream searches. It decomposes queries into sub-plans using cost-based optimization with the Spectral cost model. Cost factors include: upstream_latency_p99 (measured), result_cardinality (estimated via histogram sketches), and network_hop_count. The analyzer supports three plan strategies: spectral.strategy = 'parallel' (fan-out all upstreams simultaneously), 'sequential' (try upstreams in cost order, stop on threshold), or 'adaptive' (start parallel, switch to sequential after first result). Plan caching uses spectral.plan_cache_size (default 1000) with LRU eviction. The EXPLAIN command outputs the chosen plan: EXPLAIN QUERY 'search terms' shows estimated costs per upstream, chosen strategy, and predicted latency. Statistics are refreshed every spectral.stats_refresh_interval_sec (default 300).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.273</td><td>15.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-tag">tag:spectral</span><span class="tag tag-tag">tag:query-analyzer</span><span class="tag tag-tag">tag:execution-plan</span><span class="tag">term:searches</span><span class="tag">term:multi-upstream</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-009</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">There's nothing in this project related to that term either.
+
+**I don't have reliable information about a &quot;Spectral Query Analyzer&quot; or its optimization of execution plans for &quot;multi-upstream searches.&quot;** This term doesn't match any widely known query optimization technique, database system, or search framework in my knowledge.
+
+If this is a concept from a specific product, research paper, or internal system you're working with, could you share more context (e.g., documentation, a link, or the system it belongs to)? I'd be happy to help analyze it with that additional information.
+
+I'd rather be upfront about not knowing than risk giving you fabricated technical details.
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-010</strong> — Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files</summary>
+<div class="response-section"><div class="response-label">Expected: eval-010 — Obsidian Vault Sync Protocol for Knowledge Files</div><div class="response-box expected">The Obsidian Vault Sync protocol synchronizes knowledge files between conpack's local knowledge folder and a remote vault. Sync operates in three modes: obsidian.sync_mode = 'pull' (read-only from vault), 'push' (write local changes to vault), or 'bidirectional' (merge with conflict detection). File identity uses content-addressed hashing: obsidian.hash_algorithm (default 'blake3'). Delta sync transfers only changed blocks using rolling checksums with obsidian.block_size (default 4KB). Conflict resolution in bidirectional mode creates .conflict files with timestamps. The vault manifest (vault.json) tracks file metadata: path, hash, last_modified, size_bytes. Sync scheduling uses obsidian.sync_interval_sec (default 60) with jitter of ±10%. Authentication to remote vaults uses Ed25519 key pairs stored in obsidian.key_path (default '~/.conpack/vault_key').</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-010</td><td class="pass">YES</td><td class="conf-high">0.523</td><td>59.5s</td><td><div class="tags"><span class="tag tag-title">title-partial:6/6</span><span class="tag tag-phrase">phrase:Conflict resolution</span><span class="tag tag-phrase">phrase:Delta sync</span><span class="tag tag-tag">tag:obsidian</span><span class="tag tag-tag">tag:vault-sync</span><span class="tag tag-tag">tag:knowledge</span><span class="tag tag-tag">tag:delta-sync</span><span class="tag">term:vaults</span><span class="tag">term:file</span><span class="tag">term:sync</span></div></td></tr>
+<tr><td>Know+CLI</td><td>eval-010</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>CLI Search</td><td>eval-010</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP+Tools</td><td>eval-010</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+<tr><td>MCP Only</td><td>eval-010</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">Based on my research, I need to be straightforward: **&quot;Obsidian Vault Sync protocol modes&quot; and &quot;delta sync mechanism for knowledge files&quot; are not established technical concepts in Obsidian's documented architecture.** The question uses terminology that doesn't map to Obsidian Sync's actual design. Here's what Obsidian Sync actually implements:
+
+## Encryption Modes (Not &quot;Protocol Modes&quot;)
+
+When creating a remote vault, Obsidian Sync offers two **encryption models**:
+
+1. **End-to-End Encryption (E2EE)** — Uses **AES-256 with GCM** (Galois/Counter Mode) and **scrypt key derivation**. The encryption password is user-controlled; the server has zero-knowledge access and cannot decrypt vault contents.
+2. **Managed Encryption** — Uses AES-256 with Obsidian-managed keys. The server can decrypt data for service operations (e.g., Obsidian Publish integration).
+
+Transport security uses **TLS 1.3**.
+
+## Synchronization Architecture (Not &quot;Delta Sync&quot;)
+
+Obsidian Sync operates on a **hub-and-spoke, file-level sync model** — not a byte-level delta sync protocol:
+
+- **File-level granularity**: Only modified *files* are transferred, not byte-level diffs/deltas within files. This is explicitly described as &quot;file-level (not byte-level) change tracking.&quot;
+- **Deterministic file-hash deduplication**: Identical content with the same encryption key and salt produces the same encrypted hash, avoiding redundant uploads.
+- **Active push + periodic polling**: Changes upload immediately upon local detection; remote devices poll periodically for updates.
+- **Obsidian must be running** — there is no background/daemon sync.
+
+## Conflict Resolution Modes
+
+The actual configurable modes in Obsidian Sync (v1.9.7+) are **conflict resolution strategies**:
+
+| File Type | Strategy |
+|-----------|----------|
+| Markdown (.md) | **Three-way merge** via Google's `diff-match-patch` algorithm |
+| Non-Markdown (images, PDFs, etc.) | **Last-modified-wins** (timestamp comparison) |
+| Settings (JSON) | **Key-level merge** (local keys overlay remote) |
+
+Users can configure two behaviors:
+- **Automatically merge** (default) — combines divergent changes into one file
+- **Create conflict file** — generates a separate file named `original-note.sync-conflict-YYYYMMDD-HHMMSS.md`
+
+## &quot;Knowledge Files&quot; Is Not an Obsidian Concept
+
+Obsidian works with **vault files** — primarily Markdown (`.md`). There is no distinct &quot;knowledge file&quot; type or protocol. Selective sync controls what file types are synchronized (markdown is always synced; images, audio, video, PDFs, and `.obsidian` config are configurable).
+
+---
+
+If you encountered the phrase &quot;Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files&quot; in a source, it likely conflates or fabricates terminology. The actual Obsidian Sync system is file-level, not delta-level, and has no formally named &quot;protocol modes.&quot;
+
+Sources:
+- [Obsidian Sync - Official](https://obsidian.md/sync)
+- [Introduction to Obsidian Sync - Help](https://help.obsidian.md/sync)
+- [Obsidian Sync | DeepWiki](https://deepwiki.com/obsidianmd/obsidian-help/3.1-obsidian-sync)
+- [Synchronization and Conflict Resolution | DeepWiki](https://deepwiki.com/obsidianmd/obsidian-help/2.3-filters-and-views)
+- [Security and Encryption | DeepWiki](https://deepwiki.com/obsidianmd/obsidian-help/2.2-variables-and-functions)
+- [Local and Remote Vaults - Obsidian Help](https://help.obsidian.md/sync/vault-types)
+</div>
+</details>
+<details><summary>Know+CLI — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP+Tools — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+<details><summary>MCP Only — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+
+</body>
+</html>

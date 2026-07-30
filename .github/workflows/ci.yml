@@ -1,0 +1,334 @@
+# conproxy CI — PR gate.
+#
+# Every PR (and push to the default branch) runs six jobs. Five start in
+# parallel so we never burn heavy e2e time when a cheaper gate would
+# block the merge. `e2e` is gated on the cheap gates so the full
+# ignored suite + UAT + e2e-security only run when code is otherwise
+# green.
+#
+#   1. unit                    — fmt, clippy (all feature surfaces + bins),
+#                                lib tests (default / embed-api / mcp /
+#                                release), mcp_test, workspace build,
+#                                embed linker, release binary smoke +
+#                                install-sim.
+#   2. integration             — testcontainers matrix (qdrant, ES, OS,
+#                                meili, pgvector, cascade, peer,
+#                                circuit, batch, metrics,
+#                                context_config, singleflight).
+#                                `make test-integration`.
+#   3. integration-experimental — pinecone + milvus mocks. Default-on
+#                                (cheap, no real backends). `make
+#                                test-integration-experimental`.
+#   4. security                — cargo audit + cargo deny + lint-security
+#                                clippy. ~1 min.
+#   5. fuzz                    — cargo fuzz on every target, 60s each,
+#                                best-effort (continue-on-error: true).
+#                                Crash repros uploaded as artifacts.
+#   6. e2e                     — needs: [unit, integration]. Full
+#                                ignored e2e_proxy_suite (compose up →
+#                                load → all phases: smoke/health/query,
+#                                cascade, load, reload, observability,
+#                                efficiency, advanced, security) + UAT
+#                                CLI suite + e2e-security. Heaviest job.
+#
+# Out of CI scope (kept local / nightly / release.yml):
+#   - e2e_eval (LLM eval: requires Ollama or `EVAL_PROVIDER=claude` key)
+#   - rlt load tests (`make e2e-bench`)
+#   - PGO / DHAT / flamegraph / perf-tuning-full
+#   - cross-compile (lives in release.yml)
+#   - container build + Helm publish (lives in release.yml)
+#
+# Cache strategy:
+#   - Swatinem/rust-cache@v2 on every cargo job.
+#   - `shared-key: "ci-<job>-<os>"` so cache keys are stable across
+#     matrix renames but isolated per job (different feature graphs
+#     must not share a registry).
+#   - `cache-on-failure: true` so a failing build still leaves a warm
+#     cache for the next attempt.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: unit (cheap, fast — every PR sees this fail first)
+  # ---------------------------------------------------------------------------
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-unit-${{ runner.os }}
+          cache-on-failure: true
+      - name: Format
+        run: cargo fmt -- --check
+      - name: Clippy (lib, all feature surfaces)
+        run: |
+          cargo clippy --lib -- -D warnings
+          cargo clippy --features embed-api --lib -- -D warnings
+          cargo clippy --features persistence --lib -- -D warnings
+          cargo clippy --features mcp --lib -- -D warnings
+          cargo clippy --features pgvector --lib -- -D warnings
+          cargo clippy --features linux-sandbox --lib -- -D warnings
+          cargo clippy --features release --lib -- -D warnings
+      - name: Clippy (bins)
+        run: |
+          cargo clippy --bin perf_summarize -- -D warnings
+          cargo clippy --features tokio-console --bin conproxy -- -D warnings
+      - name: Lib tests (default / embed-api / mcp / release)
+        run: |
+          cargo test --lib
+          cargo test --features embed-api --lib
+          cargo test --features mcp --lib
+          cargo test --features release --lib
+      - name: MCP integration test
+        run: cargo test --features mcp --test mcp_test
+      - name: Build (workspace)
+        run: cargo build --workspace
+      - name: Build (embed linker, hard gate)
+        run: cargo build --features embed --lib
+      - name: Release binary smoke
+        run: |
+          cargo build --release --features release --bin conproxy
+          ./target/release/conproxy --version
+          ./target/release/conproxy --help 2>&1 | head -40
+      - name: Install simulation (isolated --root)
+        run: |
+          cargo install --locked --path . --features release --root /tmp/conproxy-install
+          /tmp/conproxy-install/bin/conproxy --version
+          rm -rf /tmp/conproxy-install
+
+  # ---------------------------------------------------------------------------
+  # Job 2: integration (testcontainers — Docker daemon on runner)
+  # ---------------------------------------------------------------------------
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-integration-${{ runner.os }}
+          cache-on-failure: true
+      - name: Core testcontainers matrix
+        # qdrant, ES, OS, meili, pgvector + cascade/peer/circuit/batch/
+        # metrics/context_config/singleflight. ~10 min on a standard
+        # ubuntu-latest runner.
+        run: make test-integration
+
+  # ---------------------------------------------------------------------------
+  # Job 3: integration-experimental (pinecone + milvus mocks)
+  # Cheap — no real backends. Default-on so we catch regressions even
+  # when nobody runs the `run-integration` label.
+  # ---------------------------------------------------------------------------
+  integration-experimental:
+    name: integration-experimental
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc (build.rs uses tonic-prost-build)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-integration-experimental-${{ runner.os }}
+          cache-on-failure: true
+      - name: Pinecone + Milvus mock integration tests
+        run: make test-integration-experimental
+
+  # ---------------------------------------------------------------------------
+  # Job 4: security (cargo audit + cargo deny + lint-security clippy)
+  # ---------------------------------------------------------------------------
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc + cargo-audit + cargo-deny
+        # protoc needed for the conproxy build.rs (tonic-prost-build)
+        # in the clippy step below.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          cargo install cargo-audit --locked || true
+          cargo install cargo-deny --locked || true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-security-${{ runner.os }}
+          cache-on-failure: true
+      - name: RustSec advisory scan
+        run: cargo audit
+      - name: Supply chain + license check
+        run: cargo deny check
+      - name: Security-focused clippy lints
+        # Lint the lib only. `--all-targets` / `--bins` would also
+        # compile test code and pre-existing `corpus_gen` indexing
+        # panics, which are tracked in CONTRIBUTING Known Gaps.
+        # Tier 1 unit job already covers `--bin perf_summarize` and
+        # `--bin conproxy` with the standard lib clippy surface.
+        run: |
+          cargo clippy --lib -- -D warnings \
+            -W clippy::unwrap_used \
+            -W clippy::expect_used \
+            -W clippy::panic \
+            -W clippy::indexing_slicing \
+            -W clippy::arithmetic_side_effects
+
+  # ---------------------------------------------------------------------------
+  # Job 5: fuzz (cargo fuzz, every target, 60s each, best effort)
+  # Best-effort because fuzz is by nature non-deterministic; we still
+  # gate PRs on the green gates in jobs 1–4, and any crashes found get
+  # uploaded as artifacts for triage.
+  # ---------------------------------------------------------------------------
+  fuzz:
+    name: fuzz
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        # cargo-fuzz needs the nightly toolchain (profiler-rt).
+      - name: Install protoc + cargo-fuzz
+        # protoc needed because fuzz/Cargo.toml links against the
+        # conproxy crate, whose build.rs uses tonic-prost-build.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          cargo install cargo-fuzz --locked
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-fuzz-${{ runner.os }}
+          cache-on-failure: true
+      - name: Fuzz query request deserializer
+        run: cargo fuzz run fuzz_query_request -- -max_len=4096 -max_total_time=60 || true
+      - name: Fuzz config TOML parser
+        run: cargo fuzz run fuzz_config_parse -- -max_len=8192 -max_total_time=60 || true
+      - name: Fuzz ES response
+        run: cargo fuzz run fuzz_es_response -- -max_len=8192 -max_total_time=60 || true
+      - name: Fuzz Qdrant response
+        run: cargo fuzz run fuzz_qdrant_response -- -max_len=8192 -max_total_time=60 || true
+      - name: Fuzz schema fingerprint
+        run: cargo fuzz run fuzz_schema_fingerprint -- -max_len=4096 -max_total_time=60 || true
+      - name: Upload fuzz crash artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts
+          path: |
+            fuzz/artifacts/
+            fuzz/corpus/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Job 6: e2e (needs unit + integration)
+  # Real ignored e2e_proxy_suite (all phases), plus UAT CLI suite, plus
+  # the security-focused e2e filter. Uses GHA Docker layer cache
+  # (setup-buildx) + docker compose pull to keep image pulls fast.
+  # ---------------------------------------------------------------------------
+  e2e:
+    name: e2e
+    needs: [unit, integration]
+    if: success()
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: docker/setup-buildx-action@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-e2e-${{ runner.os }}
+          cache-on-failure: true
+      - name: Build release binary (conproxy)
+        run: cargo build --release --features release --bin conproxy
+      - name: Pull backend images (Docker cache)
+        run: |
+          cd tests/e2e
+          docker compose pull --quiet || true
+      - name: Bring up backends (docker compose)
+        run: |
+          cd tests/e2e
+          docker compose up -d
+      - name: Wait for backends
+        run: |
+          cargo build --bin test_runner --features default -q
+          cargo run --bin test_runner --features default -- wait all
+      - name: Load test data
+        run: cargo run --bin test_runner --features default -- load-data
+      - name: Full ignored e2e_proxy_suite (all phases)
+        # Single-threaded to avoid two phases fighting over the same
+        # proxy lifecycle; the test internally restarts the proxy
+        # between phases. PROXY_URL points the test's E2eClient (and the
+        # conproxy CLI helper) at the test's proxy on 8080/8081.
+        env:
+          E2E_SUITE: all
+          E2E_OUTPUT_DIR: ${{ github.workspace }}/e2e-results
+          PROXY_URL: http://127.0.0.1:8081
+        run: |
+          mkdir -p "$E2E_OUTPUT_DIR"
+          PROXY_BIN="${{ github.workspace }}/target/release/conproxy" \
+            cargo test --test e2e_proxy --features e2e \
+              -- --ignored --nocapture --test-threads=1 e2e_proxy_suite
+      - name: UAT (CLI lifecycle)
+        env:
+          PROXY_BIN: ${{ github.workspace }}/target/release/conproxy
+          PROXY_URL: http://127.0.0.1:8081
+        run: |
+          PROXY_BIN=$PROXY_BIN \
+            cargo test --test e2e_uat --features e2e -- --ignored --nocapture
+      - name: Security-focused e2e
+        env:
+          PROXY_BIN: ${{ github.workspace }}/target/release/conproxy
+          E2E_SUITE: security
+          E2E_FILTER: security
+          PROXY_URL: http://127.0.0.1:8081
+        run: |
+          PROXY_BIN=$PROXY_BIN \
+            cargo test --test e2e_proxy --features e2e \
+              -- --ignored --nocapture e2e_proxy_suite security
+      - name: Upload e2e results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: e2e-results/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Tear down backends
+        if: always()
+        run: |
+          cd tests/e2e
+          docker compose down -v || true

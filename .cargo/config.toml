@@ -1,0 +1,14 @@
+# Local-dev toolchain tuning. See docs/dev-loop.md for the rationale.
+#
+# Effects on Linux dev/test loops:
+#   - lld via clang: much faster link of large test binaries (~300-400 MB)
+#   - --no-keep-memory: lld release peak RSS during big links
+#
+# This file only takes effect on Linux. macOS / Windows keep the host default linker.
+# Opt out per-invocation with `CARGO_BUILD_RUSTFLAGS=""` if a toolchain is missing.
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = [
+  "-C", "link-arg=-fuse-ld=lld",
+  "-C", "link-arg=-Wl,--no-keep-memory",
+]

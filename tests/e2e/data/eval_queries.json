@@ -1,0 +1,58 @@
+{
+  "queries": [
+    {
+      "id": "q-fts-1",
+      "query": "Tokio async runtime scheduler",
+      "query_type": "factual",
+      "strategy": "fts",
+      "expected_doc_ids": ["doc-001"],
+      "min_score": 0.1,
+      "description": "FTS lookup of async runtime terms → should hit doc-001"
+    },
+    {
+      "id": "q-fts-2",
+      "query": "Cache-Control ETag header freshness",
+      "query_type": "factual",
+      "strategy": "fts",
+      "expected_doc_ids": ["doc-005"],
+      "min_score": 0.1,
+      "description": "FTS lookup of HTTP cache headers → should hit doc-005"
+    },
+    {
+      "id": "q-vector-1",
+      "query": "similarity search over high-dimensional embeddings",
+      "query_type": "semantic",
+      "strategy": "vector",
+      "expected_doc_ids": ["doc-004"],
+      "min_score": 0.3,
+      "description": "Vector semantic match on embedding search → doc-004"
+    },
+    {
+      "id": "q-vector-2",
+      "query": "in-memory data store with TTL eviction",
+      "query_type": "semantic",
+      "strategy": "vector",
+      "expected_doc_ids": ["doc-003"],
+      "min_score": 0.3,
+      "description": "Vector semantic match on caching strategies → doc-003"
+    },
+    {
+      "id": "q-cascade-1",
+      "query": "Meilisearch typo tolerance ranking",
+      "query_type": "factual",
+      "strategy": "cascade",
+      "expected_doc_ids": ["doc-002"],
+      "min_score": 0.2,
+      "description": "Cascade (FTS → vector) lookup of search engine → doc-002"
+    },
+    {
+      "id": "q-cascade-2",
+      "query": "Result enum pattern matching errors",
+      "query_type": "factual",
+      "strategy": "cascade",
+      "expected_doc_ids": ["doc-006"],
+      "min_score": 0.2,
+      "description": "Cascade lookup of Rust error handling → doc-006"
+    }
+  ]
+}

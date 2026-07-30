@@ -1,0 +1,588 @@
+{
+  "comparison": {
+    "best_avg_time_ms": 16098,
+    "best_vertical": "knowledge_only",
+    "worst_avg_time_ms": 14188,
+    "worst_vertical": "no_context"
+  },
+  "duration_secs": 0,
+  "seed_routing": [
+    {
+      "local_name": "zephyr-query-protocol",
+      "query": "Zephyr Query Protocol",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "conpackdb-ring-buffer",
+      "query": "ConpackDB ring-buffer sharding",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "conpack-cluster-terraform",
+      "query": "conpack-cluster Terraform",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "prismoid-cache-coherence",
+      "query": "Prismoid cache coherence",
+      "strategy": "fts",
+      "upstream_id": "elasticsearch-fts"
+    },
+    {
+      "local_name": "vortex-ingestion-pipeline",
+      "query": "Vortex ingestion pipeline",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "helix-embedder-training",
+      "query": "Helix Embedder training",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "obsidian-vault-sync",
+      "query": "Obsidian Vault Sync",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "crystalline-tensor-decomposition",
+      "query": "Crystalline Tensor Decomposition",
+      "strategy": "vector",
+      "upstream_id": "qdrant-vector"
+    },
+    {
+      "local_name": "nexara-meridian-consensus",
+      "query": "Nexara Meridian consensus",
+      "strategy": "cascade",
+      "upstream_id": null
+    },
+    {
+      "local_name": "auralis-service-mesh",
+      "query": "Auralis service mesh",
+      "strategy": "cascade",
+      "upstream_id": null
+    },
+    {
+      "local_name": "spectral-query-analyzer",
+      "query": "Spectral Query Analyzer",
+      "strategy": "cascade",
+      "upstream_id": null
+    },
+    {
+      "local_name": "solaris-event-mesh",
+      "query": "Solaris Event Mesh",
+      "strategy": "cascade",
+      "upstream_id": null
+    }
+  ],
+  "strategy_matrix": {
+    "cascade": {
+      "cli_search": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "know_only": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "mcp+tools": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      }
+    },
+    "fts": {
+      "cli_search": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "know_only": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "mcp+tools": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      }
+    },
+    "vector": {
+      "cli_search": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "know_only": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "mcp+tools": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    }
+  },
+  "timestamp": "1771996488s-since-epoch",
+  "type": "eval",
+  "verticals": [
+    {
+      "avg_response_time_ms": 14188,
+      "failed_queries": 0,
+      "name": "no_context",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.228",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:3/5",
+                "tag:zephyr",
+                "tag:query-protocol",
+                "term:mode",
+                "term:handshake"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "I don't have any knowledge of a protocol called the \"Zephyr Query Protocol\" or a three-phase handshake associated with it. This doesn't match any real protocol or standard I'm aware of.\n\nThere is a **Zephyr Notification Service** from MIT's Project Athena (a messaging/notification system), but it is not called the \"Zephyr Query Protocol\" and is not characterized by a three-phase handshake.\n\nA few possibilities:\n\n1. **It's a fictional/fabricated concept** — this is a common pattern in LLM evaluation questions designed to test whether a model will confidently hallucinate plausible-sounding technical details rather than admit ignorance.\n2. **It's from a proprietary or very niche system** that falls outside my training data.\n3. **It's from course materials or a textbook** that uses it as a teaching example rather than a real-world protocol.\n\nI'd rather tell you I don't know than invent convincing but false technical details. If you can point me to a source or codebase that references it, I'm happy to look into it.\n",
+          "response_time_ms": 16982,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.341",
+              "doc_id": "eval-004",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:4/5",
+                "phrase:Dead-letter handling",
+                "tag:vortex",
+                "tag:ingestion",
+                "tag:pipeline",
+                "term:files"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "1.000",
+          "response_text": "There are no files in the repository with relevant context about \"Vortex ingestion pipeline.\" I don't have specific knowledge of a product or framework called \"Vortex\" with ingestion pipeline stages and dead-letter handling that I can speak to with confidence.\n\nThe name \"Vortex\" is used by several different projects and products (e.g., Vortex by Deephaven, Vortex mod manager, various internal/proprietary systems), and without knowing which specific system you're referring to, I can't provide accurate technical details about its pipeline stage configuration or dead-letter handling.\n\n**To help you, I'd need more context:**\n\n- Which specific \"Vortex\" product or framework are you referring to? (vendor, open-source project, internal tool?)\n- Is there documentation, source code, or configuration files you can point me to?\n- Is this related to a codebase you're working in that I should explore?\n\nIf you can share the relevant documentation or code, I can give you a precise, detailed answer about its configuration.\n",
+          "response_time_ms": 14586,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.273",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:3/4",
+                "tag:nexara",
+                "tag:meridian",
+                "tag:consensus",
+                "term:meridian",
+                "term:consensus"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "I don't have any information about a \"Meridian consensus protocol,\" \"Nexara,\" or a \"temporal sharding approach\" associated with these names. These terms don't correspond to any known technology, blockchain protocol, or distributed systems project that I'm aware of from my training data.\n\nRather than fabricate technical details, I want to be straightforward: I cannot find evidence that these are real, established concepts. A few possibilities:\n\n1. **These are fictional or hypothetical** — invented names that don't correspond to a real project.\n2. **These are very niche or emerged after my knowledge cutoff** (May 2025) — though the names don't match any project trajectory I'm aware of.\n3. **These refer to something in this repository** — but the repo appears clean with no relevant files.\n\nIf this is a real project you're working with, could you share documentation, a link, or source material? I'd be happy to analyze and explain it accurately rather than guess.\n",
+          "response_time_ms": 10995,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "11.00",
+      "time_p95_secs": "16.74",
+      "time_p97_secs": "16.84",
+      "time_p99_secs": "16.93",
+      "timed_out_queries": 0,
+      "total_recall": "0.333"
+    },
+    {
+      "avg_response_time_ms": 16098,
+      "failed_queries": 0,
+      "name": "knowledge_only",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.773",
+              "doc_id": "eval-002",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:3/4",
+                "phrase:BLAKE3 partition",
+                "phrase:ConpackDB implements",
+                "phrase:Each shard",
+                "tag:conpackdb",
+                "tag:ring-buffer",
+                "tag:sharding",
+                "tag:blake3",
+                "term:shard",
+                "term:convergence_ms",
+                "term:ring-buffer",
+                "term:num_shards",
+                "term:split",
+                "term:oldest",
+                "term:sharding",
+                "term:buffer",
+                "term:numbers",
+                "term:hot_threshold_ops_sec"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-002",
+          "query_text": "How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?",
+          "recall": "1.000",
+          "response_text": "Here's how ConpackDB implements ring-buffer sharding with BLAKE3 partition keys:\n\n**Shard Assignment**\n\nThe sharding algorithm is deterministic: `shard_id = blake3(document_key) % num_shards`. BLAKE3 hashes the document key, and the modulo operation maps it to a specific shard.\n\n**Ring-Buffer Structure**\n\nEach shard is a fixed-size ring buffer (default **256 MB**) that overwrites the oldest entries when it reaches capacity. Consumers read using a **cursor-based model**, tracking their position via monotonic sequence numbers.\n\n**Hot Shard Mitigation**\n\nWhen a shard's write throughput exceeds `shard.hot_threshold_ops_sec` (default **10,000 ops/sec**), ConpackDB uses a **split-and-replicate** strategy:\n\n1. The hot shard is split into two sub-shards.\n2. The secondary sub-shard is placed on a different node to distribute load.\n\n**Consistency Model**\n\nConpackDB uses **eventual consistency** with a configurable convergence window controlled by `shard.convergence_ms` (default **500 ms**).\n\n**Key configuration parameters:**\n\n| Parameter | Default | Description |\n|---|---|---|\n| Ring-buffer size | 256 MB | Per-shard capacity before overwrite |\n| `shard.hot_threshold_ops_sec` | 10,000 | Write ops/sec triggering hot shard mitigation |\n| `shard.convergence_ms` | 500 ms | Eventual consistency convergence window |\n",
+          "response_time_ms": 16071,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.864",
+              "doc_id": "eval-006",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:4/6",
+                "phrase:--benchmark internal-retrieval",
+                "phrase:--calibration cal.hxf",
+                "phrase:--corpus data.hxf",
+                "phrase:--loss contrastive-margin",
+                "phrase:--lr 1e-5",
+                "tag:helix",
+                "tag:embedder",
+                "tag:training",
+                "tag:onnx",
+                "term:negative",
+                "term:--benchmark",
+                "term:training",
+                "term:--bits",
+                "term:--calibration",
+                "term:pq_segments"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-006",
+          "query_text": "How do you train custom embeddings with the Helix Embedder and export to ONNX?",
+          "recall": "1.000",
+          "response_text": "Here's how to train custom embeddings with the Helix Embedder and export to ONNX:\n\n## Corpus Preparation\n\nYour training data must be in **Helix Format (`.hxf`)** — a file containing **tab-separated triplets** of `(anchor, positive, negative)` examples.\n\n## Training\n\nRun the training pipeline with:\n\n```bash\nhelix train \\\n  --corpus data.hxf \\\n  --model-dim 384 \\\n  --epochs 20 \\\n  --lr 1e-5 \\\n  --loss contrastive-margin \\\n  --margin 0.3\n```\n\nKey parameters:\n- **`--model-dim 384`** — embedding dimensionality\n- **`--loss contrastive-margin`** with **`--margin 0.3`** — the contrastive margin loss function\n- **`--lr 1e-5`** — learning rate\n- **`--epochs 20`** — number of training epochs\n\n## Evaluation\n\nEvaluate a checkpoint against a retrieval benchmark:\n\n```bash\nhelix eval \\\n  --model checkpoint.hx \\\n  --benchmark internal-retrieval \\\n  --metrics ndcg@10,mrr\n```\n\n## ONNX Export\n\nThe Helix runtime **natively exports models as ONNX** for inference. It supports batch sizes up to `helix.inference.max_batch` (default **32**).\n\n## Optional: Quantization\n\nTo reduce model size, quantize to 8-bit with a calibration dataset:\n\n```bash\nhelix quantize --bits 8 --calibration cal.hxf\n```\n\n## Indexing (Compressed Vector Storage)\n\nThe Helix index format uses **Product Quantization (PQ)** with two tunable settings:\n\n| Config Key | Default | Description |\n|---|---|---|\n| `helix.index.pq_segments` | 48 | Number of PQ sub-vector segments |\n| `helix.index.pq_bits` | 8 | Bits per sub-quantizer |\n",
+          "response_time_ms": 16587,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.569",
+              "doc_id": "eval-005",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:5/6",
+                "phrase:Auralis service",
+                "tag:auralis",
+                "tag:service-mesh",
+                "tag:traffic-shaping",
+                "tag:luminex",
+                "term:ratelimit",
+                "term:specified",
+                "term:weighted",
+                "term:splitting",
+                "term:identities",
+                "term:mesh",
+                "term:traffic",
+                "term:defined",
+                "term:services"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-005",
+          "query_text": "What traffic shaping policies does the Auralis service mesh support?",
+          "recall": "1.000",
+          "response_text": "The Auralis service mesh supports the following traffic shaping policies, all defined declaratively via **AuralisPolicy CRDs**:\n\n### Traffic Splitting\n- Weighted backends specified as `auralis.backends[].weight` (values 0–100, must sum to 100).\n\n### Circuit Breaking\n- Triggers when the error rate exceeds `auralis.circuit.threshold` (default **0.5**) over a window defined by `auralis.circuit.window_sec` (default **30** seconds).\n\n### Header-Based / Canary Routing\n- Supports canary deployments via header-based routing: requests with `X-Auralis-Canary: true` are routed to canary backends.\n\n### Rate Limiting\n- Per-service rate limiting with two knobs:\n  - `auralis.ratelimit.rps` — requests per second (default **1000**)\n  - `auralis.ratelimit.burst` — burst allowance (default **50**)\n\n### Underlying Engine\nTraffic is processed by sidecar proxies based on the **Luminex engine**, handling L4/L7 traffic with sub-millisecond overhead. **Mutual TLS** is enforced by default between all mesh services using SPIFFE identities (`spiffe://auralis.local/service/<name>`).\n",
+          "response_time_ms": 15636,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "15.64",
+      "time_p95_secs": "16.54",
+      "time_p97_secs": "16.56",
+      "time_p99_secs": "16.58",
+      "timed_out_queries": 0,
+      "total_recall": "1.000"
+    },
+    {
+      "avg_response_time_ms": 52391,
+      "failed_queries": 2,
+      "name": "cli_search",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-007",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-007",
+          "query_text": "Describe the Prismoid cache coherence protocol and its gossip-based invalidation",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60034,
+          "strategy": "fts",
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-010",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-010",
+          "query_text": "Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60034,
+          "strategy": "vector",
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.636",
+              "doc_id": "eval-009",
+              "matched": true,
+              "matched_terms": [
+                "title:Spectral Query Analyzer: Execution Plan Optimization",
+                "phrase:Analyzer optimizes",
+                "phrase:Cost factors",
+                "tag:spectral",
+                "tag:query-analyzer",
+                "tag:cost-based",
+                "tag:execution-plan",
+                "term:strategy",
+                "term:optimizes",
+                "term:execution",
+                "term:optimization",
+                "term:query",
+                "term:multi-upstream"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-009",
+          "query_text": "How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?",
+          "recall": "1.000",
+          "response_text": "Based on the search results, here is what the documentation reveals about the Spectral Query Analyzer:\n\n## Spectral Query Analyzer: Execution Plan Optimization\n\nThe Spectral Query Analyzer optimizes query execution plans for **multi-upstream searches** through a **cost-based optimization** approach using the **Spectral cost model**. Here's how it works:\n\n### Query Decomposition\nThe analyzer **decomposes queries into sub-plans** — breaking a single multi-upstream query into smaller, targeted sub-plans that can each be routed and executed against individual upstreams.\n\n### Cost-Based Optimization\nThe Spectral cost model drives the optimization decisions. The cost factors it considers include (based on what the document enumerates):\n\n- **Upstream latency** — expected round-trip time to each upstream source\n- **Cardinality** — estimated result set sizes which influence join/merge strategies\n- **Index availability** — whether an upstream can leverage indexes for the query predicates\n- **Network bandwidth** — throughput constraints between the analyzer and upstream sources\n\nThese factors are weighed to produce an optimal execution plan that minimizes total query cost across all upstreams.\n\n### Key Optimization Techniques\nThe Spectral Analyzer applies several optimization strategies:\n\n1. **Predicate pushdown** — filters are pushed as close to the upstream data sources as possible, reducing the volume of data transferred and processed\n2. **Sub-plan parallelization** — independent sub-plans are scheduled for parallel execution across upstreams (scatter-gather style), reducing wall-clock latency\n3. **Plan pruning** — sub-plans or upstreams that are estimated to be too costly or unlikely to contribute meaningful results can be eliminated early\n4. **Result aggregation/merging** — results from parallel sub-plans are merged using strategies informed by the cost model's cardinality estimates\n\n### How It Fits Together\nThe overall flow is: **parse query → decompose into sub-plans → cost-estimate each sub-plan per upstream → apply rewrite/optimization rules → execute optimized plan → merge results**. The cost model ensures that the analyzer picks the cheapest execution strategy given the current state of all upstream sources (their latency, load, available indexes, etc.).\n\nThis approach is analogous to how distributed SQL query planners (e.g., in CockroachDB or Presto/Trino) optimize federated queries, but tailored specifically to conpack's multi-upstream search architecture.\n",
+          "response_time_ms": 37107,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 1,
+      "time_best_secs": "37.11",
+      "time_p95_secs": "60.03",
+      "time_p97_secs": "60.03",
+      "time_p99_secs": "60.03",
+      "timed_out_queries": 2,
+      "total_recall": "1.000"
+    },
+    {
+      "avg_response_time_ms": 19374,
+      "failed_queries": 0,
+      "name": "mcp_tools",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.500",
+              "doc_id": "eval-008",
+              "matched": true,
+              "matched_terms": [
+                "phrase:30-second interval",
+                "tag:terraform",
+                "tag:conpack-cluster",
+                "tag:aws",
+                "tag:ecs-fargate",
+                "term:cache_node_type",
+                "term:tasks",
+                "term:cache",
+                "term:variables",
+                "term:above",
+                "term:elasticache",
+                "term:proxy_memory",
+                "term:replicas",
+                "term:drops",
+                "term:optional"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-008",
+          "query_text": "What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?",
+          "recall": "1.000",
+          "response_text": "## conpack-cluster Terraform Module\n\nThe `conpack-cluster` module deploys a **production-ready conpack proxy cluster on AWS**. Here's the breakdown:\n\n### Resources Provisioned\n\n| Resource | Name/Details |\n|---|---|\n| **ALB** (Application Load Balancer) | `conpack_alb` |\n| **ECS Fargate tasks** | `conpack_proxy` — 3 replicas by default |\n| **ElastiCache Redis** | `conpack_cache` |\n| **CloudWatch alarms** | Monitoring for scaling and health |\n\n### Auto-Scaling Triggers\n\nScaling is driven by the CloudWatch metric **`ConpackProxyCacheHitRate`**:\n\n- **Scale out** — when cache hit rate drops **below 70%** for **5 minutes**\n- **Scale in** — when cache hit rate rises **above 90%** for **15 minutes**\n\nTask count ranges from `min_tasks` (default **3**) to `max_tasks` (default **12**).\n\n### Required Variables\n\n- `cluster_name`, `vpc_id`, `subnet_ids[]`, `conpack_image`, `upstream_urls[]`\n\n### Optional Variables (with defaults)\n\n| Variable | Default |\n|---|---|\n| `proxy_cpu` | 1024 |\n| `proxy_memory` | 2048 |\n| `cache_node_type` | `cache.r6g.large` |\n| `min_tasks` | 3 |\n| `max_tasks` | 12 |\n\n### Health Checks\n\nUses the `/ready` endpoint with a **30-second interval**.\n\n### Module Outputs\n\n- `alb_dns_name`\n- `ecs_cluster_arn`\n- `redis_endpoint`\n- `cloudwatch_dashboard_url`\n",
+          "response_time_ms": 15833,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.773",
+              "doc_id": "eval-011",
+              "matched": true,
+              "matched_terms": [
+                "title:Crystalline Tensor Decomposition Engine",
+                "phrase:Archive Format",
+                "phrase:Compression ratios",
+                "phrase:Crystalline Archive",
+                "tag:crystalline",
+                "tag:tensor-decomposition",
+                "tag:hosvd",
+                "tag:tucker",
+                "term:worker_threads",
+                "term:iteration",
+                "term:norm",
+                "term:crystalline",
+                "term:termination",
+                "term:core",
+                "term:higher-order",
+                "term:tucker"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-011",
+          "query_text": "How does the Crystalline engine perform Tucker decomposition on high-dimensional tensors?",
+          "recall": "1.000",
+          "response_text": "## Crystalline Engine: Tucker Decomposition on High-Dimensional Tensors\n\nThe Crystalline Tensor Decomposition Engine supports tensors **up to rank 12** and offers three configurable decomposition strategies, with Tucker decomposition being one of the core methods.\n\n### Decomposition Strategies\n\n| Strategy | Mode | Details |\n|----------|------|---------|\n| `hosvd` | Exact | Higher-Order SVD with O(n^d) complexity |\n| `tucker` | Approximate | Iterative ALS (Alternating Least Squares), up to `crystalline.max_iterations` (default **200**) |\n| `hybrid` | Combined | HOSVD initialization followed by Tucker refinement |\n\nFor Tucker specifically, Crystalline uses **iterative Alternating Least Squares (ALS)**. The iteration loop terminates when the change falls below `crystalline.convergence_threshold` (default **1e-6**) or the max iteration count is reached.\n\n### Core Output\n\nThe decomposition produces:\n- **Factor matrices** `U_1 .. U_d` (one per mode/dimension)\n- A **core tensor** `G`\n\nThese are stored in **Crystalline Archive Format (`.caf`)**. Typical compression ratios are **50–200x** for sparse scientific datasets.\n\n### Performance Optimizations\n\n- **Tiled memory layout** — `crystalline.tile_size` (default **64**) enables cache-optimal traversal of tensor data, which is critical for high-dimensional operations.\n- **Parallel mode-n unfoldings** — Mode-n unfoldings (matricizations) are distributed across `crystalline.worker_threads` (default **8**) using a **work-stealing scheduler**.\n\n### Reconstruction Quality\n\nReconstruction error is measured via the **normalized Frobenius norm**:\n\n```\n||T - T_approx||_F / ||T||_F\n```\n\nThis gives a scale-independent measure of how well the Tucker approximation represents the original tensor.\n\n### Key Configuration Summary\n\n| Parameter | Default | Purpose |\n|-----------|---------|---------|\n| `crystalline.strategy` | — | `'hosvd'`, `'tucker'`, or `'hybrid'` |\n| `crystalline.max_iterations` | 200 | Max ALS iterations for Tucker |\n| `crystalline.convergence_threshold` | 1e-6 | Tucker iteration termination |\n| `crystalline.tile_size` | 64 | Cache-optimal memory tiling |\n| `crystalline.worker_threads` | 8 | Parallel unfolding workers |\n\nThe `hybrid` strategy is particularly effective: it uses HOSVD to compute an initial factorization (providing a good starting point for the factor matrices), then refines the result with Tucker ALS iterations for better approximation quality.\n",
+          "response_time_ms": 19710,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.682",
+              "doc_id": "eval-012",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:6/6",
+                "phrase:Causal ordering",
+                "phrase:Dead letter",
+                "tag:solaris",
+                "tag:event-mesh",
+                "tag:causal-ordering",
+                "tag:topic-partitioning",
+                "term:partitions",
+                "term:relay_buffer_size",
+                "term:mesh",
+                "term:leader",
+                "term:tree",
+                "term:coordinator",
+                "term:idempotency_window_sec",
+                "term:causal",
+                "term:raft-based",
+                "term:timestamps"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-012",
+          "query_text": "Explain the Solaris Event Mesh causal ordering and topic partitioning approach",
+          "recall": "1.000",
+          "response_text": "## Solaris Event Mesh: Causal Ordering & Topic Partitioning\n\nThe Solaris Event Mesh is a distributed event routing system designed for **geo-distributed clusters**. Here's how its two core mechanisms work:\n\n### Causal Ordering via Vector Timestamps\n\nSolaris enforces causal ordering using **vector clocks**. Every event carries a `solaris.vclock` field that tracks producer-side causality. The guarantees are:\n\n- **Causally related events** (same causal chain) are always delivered in order.\n- **Independent events** (no causal relationship) may be freely reordered to maximize throughput.\n\nThis is a deliberate trade-off — total ordering is expensive across geo-distributed nodes, so Solaris only enforces ordering where it semantically matters.\n\n### Topic Partitioning Strategies\n\nEvent streams are divided into independent partitions, each assigned to a **partition leader** via a Raft-based coordinator. Three partitioning strategies are supported:\n\n| Strategy | Config Value | Description |\n|---|---|---|\n| **Hash** | `solaris.partition_strategy = 'hash'` | Consistent hashing on the event key |\n| **Range** | `solaris.partition_strategy = 'range'` | Ordered key ranges |\n| **Custom** | `solaris.partition_strategy = 'custom'` | User-defined partition function |\n\nThe default maximum is **64 partitions per topic** (`solaris.max_partitions_per_topic`).\n\n### Network Topology & Routing\n\nEvents are routed through **relay nodes** organized in a **spanning tree topology**, which minimizes cross-region traffic. Each relay node has a configurable buffer (`solaris.relay_buffer_size`, default 8192).\n\n### Delivery Guarantees & Error Handling\n\n- **At-least-once delivery** with optional idempotency via `solaris.idempotency_window_sec` (default 300 seconds).\n- **Delivery timeout**: `solaris.delivery_timeout_ms` (default 5000ms).\n- **Dead letter queue**: Undeliverable events are routed to `solaris.dlq_topic` with full causal metadata preserved, so the vector clock context is never lost.\n\nThe key design insight is coupling vector-clock causality with partitioned parallelism — partitions can process independently and in parallel, while the vector timestamps ensure that events sharing a causal relationship within any partition are never misordered.\n",
+          "response_time_ms": 22578,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "15.83",
+      "time_p95_secs": "22.29",
+      "time_p97_secs": "22.41",
+      "time_p99_secs": "22.52",
+      "timed_out_queries": 0,
+      "total_recall": "1.000"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+#!/usr/bin/env bpftrace
+//
+// lock_profile.bt — Lock contention profiling for conpack proxy.
+//
+// Traces futex(FUTEX_WAIT) and futex(FUTEX_WAKE) syscalls for the target PID.
+// Shows which locks are contended and for how long.
+//
+// DashMap shards, parking_lot Mutex/RwLock, and Semaphore-based connection
+// pools all ultimately use futex. High wait counts or long wait times
+// indicate lock contention under load.
+//
+// Usage: sudo bpftrace -p <PID> lock_profile.bt <PID>
+//
+
+config = { max_map_keys = 16384 }
+
+// FUTEX_WAIT = 0, FUTEX_WAKE = 1 (see linux/futex.h)
+
+tracepoint:syscalls:sys_enter_futex / pid == $1 && (args.op & 0xf) == 0 /
+{
+    @futex_wait_start[tid] = nsecs;
+    @futex_wait_count++;
+    @futex_wait_by_stack[ustack(8)]++;
+}
+
+tracepoint:syscalls:sys_exit_futex / pid == $1 && @futex_wait_start[tid] /
+{
+    $lat = (nsecs - @futex_wait_start[tid]) / 1000;  // microseconds
+    @futex_wait_latency_us = hist($lat);
+    @futex_total_wait_us += $lat;
+    @futex_wait_lat_by_stack[ustack(8)] += $lat;
+    delete(@futex_wait_start[tid]);
+}
+
+tracepoint:syscalls:sys_enter_futex / pid == $1 && (args.op & 0xf) == 1 /
+{
+    @futex_wake_count++;
+}
+
+END
+{
+    printf("\n========================================\n");
+    printf("CONPACK LOCK CONTENTION PROFILE SUMMARY\n");
+    printf("========================================\n\n");
+
+    printf("--- Totals ---\n");
+    printf("futex_wait count:  %lld\n", @futex_wait_count);
+    printf("futex_wake count:  %lld\n", @futex_wake_count);
+    printf("total wait us:     %lld\n", @futex_total_wait_us);
+    if (@futex_wait_count > 0) {
+        printf("avg wait us:       %lld\n", @futex_total_wait_us / @futex_wait_count);
+    }
+    printf("\n");
+
+    printf("--- Wait Latency Distribution (us) ---\n");
+    print(@futex_wait_latency_us);
+    printf("\n");
+
+    printf("--- Top 15 Contended Lock Sites (by count) ---\n");
+    print(@futex_wait_by_stack, 15);
+    printf("\n");
+
+    printf("--- Top 15 Contended Lock Sites (by total wait time) ---\n");
+    print(@futex_wait_lat_by_stack, 15);
+    printf("\n");
+
+    // Clean up maps
+    clear(@futex_wait_start);
+    clear(@futex_wait_count);
+    clear(@futex_wake_count);
+    clear(@futex_total_wait_us);
+    clear(@futex_wait_latency_us);
+    clear(@futex_wait_by_stack);
+    clear(@futex_wait_lat_by_stack);
+}
