@@ -52,8 +52,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      - name: Install cross
-        run: cargo install cross --locked
+      - name: Install cross + host linker (build-scripts use .cargo/config.toml clang)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang lld
+          cargo install cross --locked
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: release-cross-${{ matrix.target }}-${{ runner.os }}
@@ -81,8 +84,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-unknown-linux-gnu
-      - name: Install cross
-        run: cargo install cross --locked
+      - name: Install cross + host linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang lld
+          cargo install cross --locked
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: release-cross-aarch64-smoke-${{ runner.os }}
@@ -104,9 +110,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # platform = buildx platforms= value; tag_suffix must be docker-tag-safe (no /)
           - platform: linux/amd64
+            tag_suffix: linux-amd64
             description: x86_64
           - platform: linux/arm64
+            tag_suffix: linux-arm64
             description: aarch64
     steps:
       - uses: actions/checkout@v4
@@ -131,19 +140,19 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-${{ matrix.platform }}
+            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-${{ matrix.tag_suffix }}
           labels: |
             org.opencontainers.image.title=conproxy
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ steps.v.outputs.VERSION }}
-          cache-from: type=gha,scope=container-${{ matrix.platform }}
-          cache-to: type=gha,scope=container-${{ matrix.platform }},mode=max
+          cache-from: type=gha,scope=container-${{ matrix.tag_suffix }}
+          cache-to: type=gha,scope=container-${{ matrix.tag_suffix }},mode=max
       - name: Smoke amd64 image
         if: matrix.platform == 'linux/amd64'
         run: |
-          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/amd64 --version
-          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/amd64 --help 2>&1 | head -20
+          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux-amd64 --version
+          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux-amd64 --help 2>&1 | head -20
 
   # Assemble the multi-arch manifest + re-tag with the version-only
   # tags. Runs once per tag after every per-arch image is pushed.
@@ -172,8 +181,8 @@ jobs:
             --tag ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }} \
             --tag ${{ env.REGISTRY_IMAGE }}:v${{ steps.v.outputs.VERSION }} \
             --tag ${{ env.REGISTRY_IMAGE }}:latest \
-            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/amd64 \
-            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/arm64
+            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux-amd64 \
+            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux-arm64
       - name: Inspect manifest
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}
