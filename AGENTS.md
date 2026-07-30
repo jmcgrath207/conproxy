@@ -84,7 +84,7 @@ block the merge.
 
 | Job | Needs | Steps (summary) |
 |-----|-------|-----------------|
-| `unit` | — | fmt, clippy (all feature surfaces + bins), lib tests (default / embed-api / mcp / release), mcp_test, build (workspace + embed), release binary smoke, install-sim, coverage gate (tarpaulin 80% line) |
+| `unit` | — | fmt, clippy (all feature surfaces + bins), lib tests (default / embed-api / mcp / release), mcp_test, build (workspace + embed), release binary smoke, install-sim |
 | `integration` | — | `make test-integration` (testcontainers: qdrant, ES, OS, meili, pgvector, cascade, peer, circuit, batch, metrics, context_config, singleflight) |
 | `integration-experimental` | — | `make test-integration-experimental` (pinecone + milvus mocks, no real backends, ~2 min) |
 | `security` | — | `cargo audit` (RustSec), `cargo deny check` (supply chain + license), `cargo clippy` with security lints (unwrap/expect/panic/indexing_slicing/arithmetic_side_effects) |
@@ -118,6 +118,15 @@ Published artifacts per `v*` tag:
 | Container | `ghcr.io/jmcgrath207/conproxy` | `<version>`, `v<version>`, `latest` (multi-arch) |
 | Helm chart | `oci://ghcr.io/jmcgrath207/charts/conproxy` + `.tgz` on GH Release | `version` + `appVersion` stamped from tag |
 | Binaries | GH Release + workflow artifacts | x86_64-musl, aarch64-gnu |
+
+### Coverage (weekly, not a PR gate)
+
+`.github/workflows/coverage.yml` runs `cargo tarpaulin` (lib + bins,
+80% line gate via `make test-coverage-check`) on a weekly cron
+(Monday 06:00 UTC), `push` to the default branch, and `workflow_dispatch`.
+**Not** part of the PR gate — tarpaulin takes ~10 min cold cache and
+runs best on a warm weekly schedule. Report is uploaded as the
+`coverage-results` artifact.
 
 Prerequisites: Docker daemon running; `cross` cargo subcommand (`cargo install cross`); targets `rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-gnu` (cross auto-installs).
 

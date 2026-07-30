@@ -1,0 +1,81 @@
+# Coverage gate (weekly).
+#
+# Runs `cargo tarpaulin` to produce the per-file line coverage report
+# and the `make test-coverage-check` per-file 80% gate. **Not** part of
+# the PR gate (lives in `ci.yml` unit job). Tarpaulin takes ~10 min on
+# cold cache and is non-deterministic across runners, so we keep it off
+# the PR path and report weekly instead.
+#
+# Triggers:
+#   - weekly: Monday 06:00 UTC (cron)
+#   - workflow_dispatch: manual rerun / ad-hoc
+#   - push to default branch: refresh the report on every merge
+#
+# Artifacts:
+#   - coverage-results: tarpaulin-report.json + html (when generated)
+name: coverage
+
+on:
+  schedule:
+    # 06:00 UTC every Monday. Cost ~10 min on a standard runner.
+    - cron: '0 6 * * 1'
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  coverage:
+    name: tarpaulin (lib + bins)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Tarpaulin wants a recent nightly for the full surface; we
+          # don't need that and stable works for lib + bins.
+          components: rustfmt
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: coverage-tarpaulin-${{ runner.os }}
+          cache-on-failure: true
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin --locked --version '^0.32'
+      - name: Run tarpaulin
+        # `--lib --bins` keeps coverage scoped to production code (not
+        # `#[cfg(test)]` test modules). `--skip-clean` lets the cached
+        # build artifacts survive between tarpaulin passes. `--timeout
+        # 180` (per-fn) is generous for the slowest instrumented
+        # functions. Best-effort: report failure doesn't break anything
+        # — the JSON artifact is still uploaded for inspection.
+        continue-on-error: true
+        run: |
+          mkdir -p coverage
+          cargo tarpaulin --lib --bins --skip-clean --timeout 180 \
+            --out Html --out Json --output-dir coverage 2>&1 | tail -40
+          echo "--- tarpaulin-report.json (head) ---"
+          head -50 coverage/tarpaulin-report.json 2>/dev/null || echo "(no report)"
+      - name: Per-file 80% line coverage check
+        continue-on-error: true
+        run: make test-coverage-check 2>&1 | tail -20
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-results
+          path: |
+            coverage/tarpaulin-report.json
+            coverage/coverage.html
+          if-no-files-found: ignore
+          retention-days: 90

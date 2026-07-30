@@ -10,8 +10,7 @@
 #                                lib tests (default / embed-api / mcp /
 #                                release), mcp_test, workspace build,
 #                                embed linker, release binary smoke +
-#                                install-sim, coverage gate (tarpaulin
-#                                80% line).
+#                                install-sim.
 #   2. integration             — testcontainers matrix (qdrant, ES, OS,
 #                                meili, pgvector, cascade, peer,
 #                                circuit, batch, metrics,
@@ -116,16 +115,6 @@ jobs:
           cargo install --locked --path . --features release --root /tmp/conproxy-install
           /tmp/conproxy-install/bin/conproxy --version
           rm -rf /tmp/conproxy-install
-      - name: Coverage gate (tarpaulin, 80% line)
-        # Best-effort: cargo-tarpaulin requires nightly for the full
-        # surface; we cap at lib + bins so it runs on stable. If the
-        # toolchain doesn't support a flag, the check-coverage make
-        # target will surface a clear error.
-        run: |
-          cargo install cargo-tarpaulin --locked --version '^0.32' || true
-          cargo tarpaulin --lib --bins --skip-clean --timeout 120 \
-            --out Json --output-dir coverage 2>&1 | tail -40
-          echo "Tarpaulin report: coverage/tarpaulin-report.json"
 
   # ---------------------------------------------------------------------------
   # Job 2: integration (testcontainers — Docker daemon on runner)

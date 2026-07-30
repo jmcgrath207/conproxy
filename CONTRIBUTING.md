@@ -254,8 +254,7 @@ six `ci.yml` jobs:
 
 - `ci / unit` — fmt, clippy (all feature surfaces + bins), lib
   tests (default / embed-api / mcp / release), mcp_test, build
-  (workspace + embed), release binary smoke + install-sim, coverage
-  gate (tarpaulin 80% line).
+  (workspace + embed), release binary smoke + install-sim.
 - `ci / integration` — `make test-integration` (testcontainers
   real-backend matrix: qdrant, ES, OS, meili, pgvector, cascade,
   peer, circuit, batch, metrics, context_config, singleflight).
@@ -278,6 +277,14 @@ six `ci.yml` jobs:
 `fuzz` start in parallel; `e2e` is gated on `unit` + `integration` so
 the heavy compose + load + ignored suite never runs if the cheaper
 gates would block the merge.
+
+**Out of the PR gate** (lives in `.github/workflows/coverage.yml`,
+weekly cron + workflow_dispatch):
+- `coverage / coverage` — `cargo tarpaulin --lib --bins` + per-file
+  80% line gate via `make test-coverage-check`. Report uploaded as
+  `coverage-results` artifact. Tarpaulin takes ~10 min on cold cache
+  and is non-deterministic across runners, so we keep it off the PR
+  path.
 
 `release.yml` (`v*` tag / `workflow_dispatch`) **publishes artifacts
 only** — no test execution. By the time a tag lands, every commit
