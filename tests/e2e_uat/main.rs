@@ -34,9 +34,7 @@ struct UatFixture {
 fn fixture() -> &'static UatFixture {
     static FIX: OnceLock<UatFixture> = OnceLock::new();
     FIX.get_or_init(|| {
-        let cwd = tempfile::tempdir()
-            .expect("tempdir")
-            .keep();
+        let cwd = tempfile::tempdir().expect("tempdir").keep();
         let conproxy_dir = cwd.join(".conproxy");
         std::fs::create_dir_all(&conproxy_dir).expect("mkdir .conproxy");
 
