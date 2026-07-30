@@ -219,13 +219,17 @@ pub fn test_pid_file_path(dir: &Path) -> PathBuf {
 
 /// Run conproxy CLI command in a specific directory.
 ///
-/// Automatically sets `CONPROXY_PID_FILE=<dir>/.conproxy/test-proxy.pid`
-/// so each temp dir has its own PID file — no cross-test contamination.
+/// Sets:
+/// - `CONPROXY_PID_FILE=<dir>/.conproxy/test-proxy.pid` for per-test PID isolation
+/// - `PROXY_URL=http://127.0.0.1:8081` (HTTP REST) so the CLI's default
+///   config points at the test's proxy on 8080/8081 instead of the
+///   default 9999/10000
 pub fn run_conproxy_in(dir: &Path, args: &[&str]) -> Output {
     let pid_file = test_pid_file_path(dir);
     let mut cmd = Command::new(conproxy_bin());
     cmd.current_dir(dir).args(args);
     cmd.env(CONPROXY_PID_ENV, pid_file);
+    cmd.env("PROXY_URL", "http://127.0.0.1:8081");
     cmd.output()
         .unwrap_or_else(|e| panic!("Failed to run conproxy binary: {e}"))
 }

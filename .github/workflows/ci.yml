@@ -291,10 +291,12 @@ jobs:
       - name: Full ignored e2e_proxy_suite (all phases)
         # Single-threaded to avoid two phases fighting over the same
         # proxy lifecycle; the test internally restarts the proxy
-        # between phases.
+        # between phases. PROXY_URL points the test's E2eClient (and the
+        # conproxy CLI helper) at the test's proxy on 8080/8081.
         env:
           E2E_SUITE: all
           E2E_OUTPUT_DIR: ${{ github.workspace }}/e2e-results
+          PROXY_URL: http://127.0.0.1:8081
         run: |
           mkdir -p "$E2E_OUTPUT_DIR"
           PROXY_BIN="${{ github.workspace }}/target/release/conproxy" \
@@ -303,6 +305,7 @@ jobs:
       - name: UAT (CLI lifecycle)
         env:
           PROXY_BIN: ${{ github.workspace }}/target/release/conproxy
+          PROXY_URL: http://127.0.0.1:8081
         run: |
           PROXY_BIN=$PROXY_BIN \
             cargo test --test e2e_uat --features e2e -- --ignored --nocapture
@@ -311,6 +314,7 @@ jobs:
           PROXY_BIN: ${{ github.workspace }}/target/release/conproxy
           E2E_SUITE: security
           E2E_FILTER: security
+          PROXY_URL: http://127.0.0.1:8081
         run: |
           PROXY_BIN=$PROXY_BIN \
             cargo test --test e2e_proxy --features e2e \
