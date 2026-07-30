@@ -3,17 +3,21 @@
 # This file is auto-detected by `cross` from the repo root. No Cargo.toml
 # edits required.
 
-# x86_64-unknown-linux-musl: the default cross image lacks `protoc`, which
-# tonic (gRPC) requires for build-time code generation. Install it.
+# Host build-scripts (proc-macro2, quote, …) compile for the runner triple
+# and honor `.cargo/config.toml` which sets linker=clang + lld. Install both
+# inside the cross image so those scripts link. Also install protoc for tonic.
+
+# x86_64-unknown-linux-musl
 [target.x86_64-unknown-linux-musl]
 pre-build = [
     "apt-get update",
-    "apt-get install -y --no-install-recommends protobuf-compiler",
+    "apt-get install -y --no-install-recommends protobuf-compiler clang lld",
 ]
 
-# aarch64-unknown-linux-gnu: the default cross image (Ubuntu 18.04) ships
-# glibc 2.27, which is too old for modern rustc build-scripts (e.g.
-# serde_core needs glibc 2.30+). Pin to the `:main` tag, which tracks
-# newer glibc.
+# aarch64-unknown-linux-gnu: pin :main for glibc 2.30+ (serde_core etc.)
 [target.aarch64-unknown-linux-gnu]
 image = "ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main"
+pre-build = [
+    "apt-get update",
+    "apt-get install -y --no-install-recommends protobuf-compiler clang lld",
+]

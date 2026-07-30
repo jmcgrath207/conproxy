@@ -62,6 +62,11 @@ jobs:
           shared-key: release-cross-${{ matrix.target }}-${{ runner.os }}
           cache-on-failure: true
       - name: Cross build (release bundle)
+        # Host build-scripts honor .cargo/config.toml (clang+lld). Cross.toml
+        # pre-build installs those inside the image; also set env so a missing
+        # clang on the runner host cannot break proc-macro builds.
+        env:
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: clang
         run: cross build --release --features release --target ${{ matrix.target }} --bin conproxy
       - name: Upload cross artifact
         uses: actions/upload-artifact@v4
@@ -96,6 +101,8 @@ jobs:
       - name: Register qemu binfmt
         run: docker run --privileged --rm tonistiigi/binfmt --install all
       - name: Smoke aarch64 binary
+        env:
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: clang
         run: cross run --release --features release --target aarch64-unknown-linux-gnu --bin conproxy -- --version
 
   # Build + publish multi-arch container image to GHCR.
