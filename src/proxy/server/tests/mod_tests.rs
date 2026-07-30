@@ -1014,7 +1014,7 @@ async fn test_handler_admin_agents_list_no_registry() {
 
 #[tokio::test]
 async fn test_handler_admin_agents_list_with_registry() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let registry = crate::proxy::agent::AgentRegistry::new();
     registry.register(&crate::config::AgentConfig {
         id: "agent-1".to_string(),
@@ -1036,7 +1036,7 @@ async fn test_handler_admin_agents_list_with_registry() {
 
 #[tokio::test]
 async fn test_handler_admin_agents_create_success() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state
         .agent_registry
         .store(Some(Arc::new(crate::proxy::agent::AgentRegistry::new())));
@@ -1080,7 +1080,7 @@ async fn test_handler_admin_agents_create_no_registry() {
 
 #[tokio::test]
 async fn test_handler_admin_agents_delete_success() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let registry = crate::proxy::agent::AgentRegistry::new();
     registry.register(&crate::config::AgentConfig {
         id: "to-delete".to_string(),
@@ -1101,7 +1101,7 @@ async fn test_handler_admin_agents_delete_success() {
 
 #[tokio::test]
 async fn test_handler_admin_agents_delete_not_found() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state
         .agent_registry
         .store(Some(Arc::new(crate::proxy::agent::AgentRegistry::new())));
@@ -1124,7 +1124,7 @@ async fn test_handler_admin_agents_delete_no_registry() {
 
 #[tokio::test]
 async fn test_handler_admin_agents_rotate_key_success() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let registry = crate::proxy::agent::AgentRegistry::new();
     registry.register(&crate::config::AgentConfig {
         id: "rotate-me".to_string(),
@@ -1153,7 +1153,7 @@ async fn test_handler_admin_agents_rotate_key_success() {
 
 #[tokio::test]
 async fn test_handler_admin_agents_rotate_key_not_found() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state
         .agent_registry
         .store(Some(Arc::new(crate::proxy::agent::AgentRegistry::new())));
@@ -1674,7 +1674,7 @@ fn test_determine_degradation_no_upstream_state() {
 
 #[test]
 fn test_determine_degradation_with_pool() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let configs = vec![crate::config::UpstreamEndpointConfig {
         id: "test".to_string(),
         url: "http://localhost:6333".to_string(),
@@ -1924,7 +1924,7 @@ async fn test_handler_query_with_cascade() {
     let cascade_config = crate::proxy::CascadeConfig::new().with_threshold(0.5);
     let executor = crate::proxy::CascadeExecutor::new(pool.clone(), cascade_config);
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state.upstream_pool.store(Some(pool));
     state.cascade_executor.store(Some(Arc::new(executor)));
 
@@ -2283,7 +2283,7 @@ async fn test_handler_batch_with_cascade() {
     let cascade_config = crate::proxy::CascadeConfig::new().with_threshold(0.5);
     let executor = crate::proxy::CascadeExecutor::new(pool.clone(), cascade_config);
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state.upstream_pool.store(Some(pool));
     state.cascade_executor.store(Some(Arc::new(executor)));
 
@@ -2736,7 +2736,7 @@ fn test_determine_degradation_pool_all_offline() {
 
 #[test]
 fn test_determine_degradation_pool_offline_with_cache() {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     // Add a pool
     let configs = vec![crate::config::UpstreamEndpointConfig {
         id: "deg-test".to_string(),
@@ -2888,7 +2888,7 @@ async fn test_reload_file_overrides_api_agents() {
     let mut state = make_test_app_state();
 
     // Seed agent registry with one entry (simulates POST /admin/agents).
-    let mut reg = AgentRegistry::new();
+    let reg = AgentRegistry::new();
     reg.register(&AgentConfig {
         id: "api-only-agent".to_string(),
         api_key: "k".to_string(),
@@ -4315,7 +4315,7 @@ async fn test_handler_batch_mixed_cache_and_upstream() {
 async fn test_handler_federated_enabled_no_upstream() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4346,7 +4346,7 @@ async fn test_handler_federated_enabled_with_upstream() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
     let (_handle, url) = start_mock_upstream_server().await;
-    let mut state = make_test_app_state_with_upstream(&url);
+    let state = make_test_app_state_with_upstream(&url);
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4377,7 +4377,7 @@ async fn test_handler_federated_enabled_with_upstream() {
 async fn test_handler_federated_local_sufficient() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4427,7 +4427,7 @@ async fn test_handler_federated_low_confidence_with_upstream() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
     let (_handle, url) = start_mock_upstream_server().await;
-    let mut state = make_test_app_state_with_upstream(&url);
+    let state = make_test_app_state_with_upstream(&url);
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4462,7 +4462,7 @@ async fn test_handler_federated_upstream_failure() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
     let (_handle, url) = start_failing_mock_upstream().await;
-    let mut state = make_test_app_state_with_upstream(&url);
+    let state = make_test_app_state_with_upstream(&url);
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4494,7 +4494,7 @@ async fn test_handler_federated_always_remote() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig, MergeMode};
 
     let (_handle, url) = start_mock_upstream_server().await;
-    let mut state = make_test_app_state_with_upstream(&url);
+    let state = make_test_app_state_with_upstream(&url);
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4525,7 +4525,7 @@ async fn test_handler_federated_always_remote() {
 async fn test_handler_federated_remote_cache_hit() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state
         .federated_search
         .store(Arc::new(FederatedSearch::new(FederatedSearchConfig {
@@ -4575,7 +4575,7 @@ async fn test_handler_federated_with_pool() {
     use crate::proxy::federated::{FederatedSearch, FederatedSearchConfig};
 
     let (_handle, url) = start_mock_upstream_server().await;
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let configs = vec![crate::config::UpstreamEndpointConfig {
         id: "pool-up".to_string(),
         url: url.clone(),
@@ -4912,7 +4912,7 @@ fn test_cache_proxy_with_upstream_agents() {
 fn test_determine_degradation_pool_all_disabled_empty_cache() {
     use crate::config::UpstreamEndpointConfig;
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let configs = vec![UpstreamEndpointConfig {
         id: "dead".to_string(),
         url: "http://10.255.255.1:9999".to_string(),
@@ -4938,7 +4938,7 @@ fn test_determine_degradation_pool_all_disabled_empty_cache() {
 fn test_determine_degradation_pool_all_disabled_with_cached_data() {
     use crate::config::UpstreamEndpointConfig;
 
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     let configs = vec![UpstreamEndpointConfig {
         id: "dead".to_string(),
         url: "http://10.255.255.1:9999".to_string(),
@@ -6283,7 +6283,7 @@ pub(crate) async fn start_failing_mock_upstream() -> (tokio::task::JoinHandle<()
 }
 
 pub(crate) fn make_test_app_state_with_upstream(url: &str) -> AppState {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state.upstream.store(Some(Arc::new(
         crate::proxy::upstream::GenericRestAdapter::new(url, Duration::from_secs(5)).unwrap(),
     )));
@@ -6291,7 +6291,7 @@ pub(crate) fn make_test_app_state_with_upstream(url: &str) -> AppState {
 }
 
 fn make_test_app_state_with_pool(configs: &[crate::config::UpstreamEndpointConfig]) -> AppState {
-    let mut state = make_test_app_state();
+    let state = make_test_app_state();
     state.upstream_pool.store(Some(Arc::new(
         crate::proxy::pool::UpstreamPool::new(
             configs,

@@ -563,7 +563,7 @@ mod tests {
         // Defense in depth: `Some(empty registry)` must NOT require auth.
         // Previously this asserted `is_err()`, which broke search after a
         // hot reload on a deployment that had no agents.
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         state.agent_registry.store(Some(std::sync::Arc::new(
             crate::proxy::agent::AgentRegistry::new(),
         )));
@@ -578,7 +578,7 @@ mod tests {
         // Same defense in depth: with an empty registry a stale key is
         // simply ignored (treated as no auth context). Compare with
         // `test_authenticate_non_empty_registry_invalid_key` below.
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         state.agent_registry.store(Some(std::sync::Arc::new(
             crate::proxy::agent::AgentRegistry::new(),
         )));
@@ -591,8 +591,8 @@ mod tests {
 
     #[test]
     fn test_authenticate_non_empty_registry_no_key() {
-        let mut state = make_test_app_state();
-        let mut registry = crate::proxy::agent::AgentRegistry::new();
+        let state = make_test_app_state();
+        let registry = crate::proxy::agent::AgentRegistry::new();
         registry.register(&crate::config::AgentConfig {
             id: "agent-1".to_string(),
             api_key: "valid-key".to_string(),
@@ -612,8 +612,8 @@ mod tests {
 
     #[test]
     fn test_authenticate_non_empty_registry_invalid_key() {
-        let mut state = make_test_app_state();
-        let mut registry = crate::proxy::agent::AgentRegistry::new();
+        let state = make_test_app_state();
+        let registry = crate::proxy::agent::AgentRegistry::new();
         registry.register(&crate::config::AgentConfig {
             id: "agent-1".to_string(),
             api_key: "valid-key".to_string(),
@@ -634,7 +634,7 @@ mod tests {
 
     #[test]
     fn test_authenticate_with_registry_valid_key() {
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         let registry = crate::proxy::agent::AgentRegistry::new();
         registry.register(&crate::config::AgentConfig {
             id: "agent-1".to_string(),
@@ -825,7 +825,7 @@ mod tests {
     async fn test_grpc_federated_query_with_local_results() {
         use proto::search_service_server::SearchService;
 
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         // Enable federated search
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
@@ -1032,7 +1032,7 @@ mod tests {
         use proto::search_service_server::SearchService;
 
         let (_handle, url) = start_mock_upstream_server().await;
-        let mut state = make_test_app_state_with_upstream(&url);
+        let state = make_test_app_state_with_upstream(&url);
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
@@ -1156,7 +1156,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_grpc_query_agent_context_denied() {
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         let registry = crate::proxy::agent::AgentRegistry::new();
         registry.register(&crate::config::AgentConfig {
             id: "agent-restricted".to_string(),
@@ -1265,7 +1265,7 @@ mod tests {
     async fn test_grpc_federated_enabled_no_upstream_empty_local() {
         use proto::search_service_server::SearchService;
 
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
@@ -1296,7 +1296,7 @@ mod tests {
         use proto::search_service_server::SearchService;
 
         let (_handle, url) = start_mock_upstream_server().await;
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
 
         // Use upstream_pool instead of single upstream
         let configs = vec![crate::config::UpstreamEndpointConfig {
@@ -1345,7 +1345,7 @@ mod tests {
     async fn test_grpc_federated_local_sufficient() {
         use proto::search_service_server::SearchService;
 
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         // Default merge_mode=LocalOnlyFallback, min_local_results=3, min_local_confidence=0.7
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
@@ -1402,7 +1402,7 @@ mod tests {
         use proto::search_service_server::SearchService;
 
         let (_handle, url) = crate::proxy::server::tests::start_mock_upstream_server().await;
-        let mut state = crate::proxy::server::tests::make_test_app_state_with_upstream(&url);
+        let state = crate::proxy::server::tests::make_test_app_state_with_upstream(&url);
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
@@ -1441,7 +1441,7 @@ mod tests {
         use proto::search_service_server::SearchService;
 
         let (_handle, url) = crate::proxy::server::tests::start_mock_upstream_server().await;
-        let mut state = crate::proxy::server::tests::make_test_app_state_with_upstream(&url);
+        let state = crate::proxy::server::tests::make_test_app_state_with_upstream(&url);
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
@@ -1477,7 +1477,7 @@ mod tests {
         use proto::search_service_server::SearchService;
 
         let (_handle, url) = crate::proxy::server::tests::start_failing_mock_upstream().await;
-        let mut state = crate::proxy::server::tests::make_test_app_state_with_upstream(&url);
+        let state = crate::proxy::server::tests::make_test_app_state_with_upstream(&url);
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
@@ -1552,7 +1552,7 @@ mod tests {
     #[tokio::test]
     async fn test_grpc_query_circuit_open_503() {
         // Circuit breaker open → 503 → Unavailable status
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         state.upstream.store(Some(std::sync::Arc::new(
             crate::proxy::upstream::GenericRestAdapter::new(
                 "http://127.0.0.1:1", // won't connect
@@ -1659,7 +1659,7 @@ mod tests {
         use proto::search_service_server::SearchService;
 
         // Federated enabled, upstream pool fails, but we have local results
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
@@ -1759,7 +1759,7 @@ mod tests {
     async fn test_grpc_federated_query_local_only() {
         use proto::search_service_server::SearchService;
 
-        let mut state = make_test_app_state();
+        let state = make_test_app_state();
         state.federated_search.store(std::sync::Arc::new(
             crate::proxy::federated::FederatedSearch::new(
                 crate::proxy::federated::FederatedSearchConfig {
