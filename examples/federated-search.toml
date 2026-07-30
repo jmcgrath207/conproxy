@@ -1,0 +1,40 @@
+# Federated search: local Qdrant + remote Elasticsearch.
+# Requires: both backends running.
+#
+# Two legs on contexts.default; federated policy is per-context.
+
+[server]
+listen = "127.0.0.1:9090"
+
+[upstreams.local-qdrant]
+url = "http://localhost:6333"
+type = "qdrant"
+
+[upstreams.remote-es]
+url = "http://localhost:9200"
+type = "elasticsearch"
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "local-qdrant"
+priority = 0
+
+[[contexts.default.upstreams]]
+ref = "remote-es"
+priority = 1
+
+[contexts.default.cache]
+fresh_secs = 300
+stale_secs = 600
+max_entries = 10000
+
+[contexts.default.federated]
+enabled = true
+min_local_results = 3
+min_local_confidence = 0.5
+fallback_on_empty = true
+fallback_on_low_confidence = true
+merge_mode = "local_priority"
+max_merged_results = 20

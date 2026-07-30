@@ -1,0 +1,19 @@
+# Cross-compilation configuration for `cross` (https://github.com/cross-rs/cross).
+#
+# This file is auto-detected by `cross` from the repo root. No Cargo.toml
+# edits required.
+
+# x86_64-unknown-linux-musl: the default cross image lacks `protoc`, which
+# tonic (gRPC) requires for build-time code generation. Install it.
+[target.x86_64-unknown-linux-musl]
+pre-build = [
+    "apt-get update",
+    "apt-get install -y --no-install-recommends protobuf-compiler",
+]
+
+# aarch64-unknown-linux-gnu: the default cross image (Ubuntu 18.04) ships
+# glibc 2.27, which is too old for modern rustc build-scripts (e.g.
+# serde_core needs glibc 2.30+). Pin to the `:main` tag, which tracks
+# newer glibc.
+[target.aarch64-unknown-linux-gnu]
+image = "ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main"

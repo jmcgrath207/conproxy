@@ -1,0 +1,145 @@
+{
+  "embedder": "n/a",
+  "gates": {
+    "agentic_exact_best": 0.956375,
+    "agentic_exact_hit_rate": 0.4,
+    "false_hit_rate": 0.01
+  },
+  "model": {
+    "embed_usd_per_mtok": 0.13,
+    "ru_usd_per_m": 16.0,
+    "t_backend_ms": 20.0,
+    "t_embed_ms": 30.0,
+    "t_lookup_ms": 1.0,
+    "tokens_per_query": 15.0
+  },
+  "notes": [
+    "exact hit rate measured against real CacheStore",
+    "semantic ceiling = embedding-free upper bound (perfect embedder assumption)",
+    "semantic hit/false-hit measured against real SemanticCache with the named embedder",
+    "synthetic word-salad workloads are artificially dense for real embedders",
+    "TTL via harness virtual clock; stale = cluster mutated after insert, heals at TTL expiry (no-CDC worst case)"
+  ],
+  "schema_version": 1,
+  "seed": 42,
+  "tool": "hitrate_bench",
+  "verdict": "PASS",
+  "workloads": [
+    {
+      "description": "Zipf popularity, 10000 unique, s=1.00, 100000 queries",
+      "name": "zipf",
+      "semantic": [],
+      "sweep": [
+        {
+          "cache_size": 100,
+          "cdc_delay_secs": null,
+          "cdc_healed": 0,
+          "exact_hit_rate": 0.47631,
+          "exact_hits": 47631,
+          "expired_misses": 0,
+          "latency_saved_pct": 46.69705882352942,
+          "mean_latency_ms": 27.1845,
+          "mean_latency_no_cache_ms": 51.0,
+          "queries": 100000,
+          "semantic_ceiling_rate": 0.47746,
+          "stale_hits": 0,
+          "stale_rate": 0.0,
+          "ttl_secs": null,
+          "usd_saved_per_1k_queries": 0.008549764500000001
+        },
+        {
+          "cache_size": 1000,
+          "cdc_delay_secs": null,
+          "cdc_healed": 0,
+          "exact_hit_rate": 0.7424,
+          "exact_hits": 74240,
+          "expired_misses": 0,
+          "latency_saved_pct": 72.7843137254902,
+          "mean_latency_ms": 13.880000000000003,
+          "mean_latency_no_cache_ms": 51.0,
+          "queries": 100000,
+          "semantic_ceiling_rate": 0.21137,
+          "stale_hits": 0,
+          "stale_rate": 0.0,
+          "ttl_secs": null,
+          "usd_saved_per_1k_queries": 0.013326079999999999
+        },
+        {
+          "cache_size": 10000,
+          "cdc_delay_secs": null,
+          "cdc_healed": 0,
+          "exact_hit_rate": 0.91323,
+          "exact_hits": 91323,
+          "expired_misses": 0,
+          "latency_saved_pct": 89.53235294117647,
+          "mean_latency_ms": 5.338500000000001,
+          "mean_latency_no_cache_ms": 51.0,
+          "queries": 100000,
+          "semantic_ceiling_rate": 0.04058,
+          "stale_hits": 0,
+          "stale_rate": 0.0,
+          "ttl_secs": null,
+          "usd_saved_per_1k_queries": 0.0163924785
+        }
+      ]
+    },
+    {
+      "description": "500 tasks × 4 agents × 20 calls, requery=0.40, pool=200",
+      "name": "agentic",
+      "semantic": [],
+      "sweep": [
+        {
+          "cache_size": 100,
+          "cdc_delay_secs": null,
+          "cdc_healed": 0,
+          "exact_hit_rate": 0.55935,
+          "exact_hits": 22374,
+          "expired_misses": 0,
+          "latency_saved_pct": 54.838235294117645,
+          "mean_latency_ms": 23.0325,
+          "mean_latency_no_cache_ms": 51.0,
+          "queries": 40000,
+          "semantic_ceiling_rate": 0.4358,
+          "stale_hits": 0,
+          "stale_rate": 0.0,
+          "ttl_secs": null,
+          "usd_saved_per_1k_queries": 0.0100403325
+        },
+        {
+          "cache_size": 1000,
+          "cdc_delay_secs": null,
+          "cdc_healed": 0,
+          "exact_hit_rate": 0.89605,
+          "exact_hits": 35842,
+          "expired_misses": 0,
+          "latency_saved_pct": 87.84803921568627,
+          "mean_latency_ms": 6.1975,
+          "mean_latency_no_cache_ms": 51.0,
+          "queries": 40000,
+          "semantic_ceiling_rate": 0.0991,
+          "stale_hits": 0,
+          "stale_rate": 0.0,
+          "ttl_secs": null,
+          "usd_saved_per_1k_queries": 0.016084097500000002
+        },
+        {
+          "cache_size": 10000,
+          "cdc_delay_secs": null,
+          "cdc_healed": 0,
+          "exact_hit_rate": 0.956375,
+          "exact_hits": 38255,
+          "expired_misses": 0,
+          "latency_saved_pct": 93.76225490196079,
+          "mean_latency_ms": 3.1812500000000012,
+          "mean_latency_no_cache_ms": 51.0,
+          "queries": 40000,
+          "semantic_ceiling_rate": 0.038775,
+          "stale_hits": 0,
+          "stale_rate": 0.0,
+          "ttl_secs": null,
+          "usd_saved_per_1k_queries": 0.01716693125
+        }
+      ]
+    }
+  ]
+}

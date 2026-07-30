@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conpack E2E Eval Results</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --fg: #e6edf3;
+          --fg2: #8b949e; --green: #3fb950; --red: #f85149; --yellow: #d29922;
+          --blue: #58a6ff; --purple: #bc8cff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+         background: var(--bg); color: var(--fg); padding: 2rem; line-height: 1.5; }
+  h1 { font-size: 1.6rem; margin-bottom: .3rem; }
+  .subtitle { color: var(--fg2); font-size: .85rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.15rem; margin: 1.8rem 0 .8rem; color: var(--blue); }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.2rem; }
+  th, td { padding: .55rem .75rem; text-align: left; border: 1px solid var(--border); }
+  th { background: var(--surface); font-weight: 600; font-size: .85rem; color: var(--fg2); }
+  td { font-size: .85rem; }
+  tr:hover td { background: #1c2333; }
+  .best { background: #0d2818; }
+  .worst { background: #2d1114; }
+  .pass { color: var(--green); font-weight: 600; }
+  .fail { color: var(--red); font-weight: 600; }
+  .timeout { color: var(--yellow); font-weight: 600; }
+  .conf-high { color: var(--green); }
+  .conf-mid { color: var(--yellow); }
+  .conf-low { color: var(--red); }
+  .badge { display: inline-block; padding: .15rem .5rem; border-radius: 3px;
+           font-size: .75rem; font-weight: 600; }
+  .badge-best { background: #0d2818; color: var(--green); border: 1px solid var(--green); }
+  .badge-worst { background: #2d1114; color: var(--red); border: 1px solid var(--red); }
+  .bar-cell { position: relative; }
+  .bar { position: absolute; top: 0; left: 0; bottom: 0; opacity: .15; border-radius: 2px; }
+  .bar-green { background: var(--green); }
+  .bar-red { background: var(--red); }
+  .bar-yellow { background: var(--yellow); }
+  .bar-label { position: relative; z-index: 1; }
+  details { margin: .4rem 0; }
+  summary { cursor: pointer; font-size: .8rem; color: var(--fg2); padding: .2rem 0; }
+  summary:hover { color: var(--fg); }
+  .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+  .tag { font-size: .7rem; padding: .1rem .4rem; border-radius: 3px;
+         background: var(--surface); border: 1px solid var(--border); color: var(--fg2); }
+  .tag-phrase { border-color: var(--purple); color: var(--purple); }
+  .tag-title { border-color: var(--blue); color: var(--blue); }
+  .tag-tag { border-color: var(--green); color: var(--green); }
+  .query-text { color: var(--fg2); font-size: .8rem; font-style: italic; display: block;
+                margin-top: .2rem; max-width: 60ch; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+          padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .metric-val { font-size: 1.8rem; font-weight: 700; }
+  .metric-label { font-size: .75rem; color: var(--fg2); text-transform: uppercase; letter-spacing: .05em; }
+  .response-section { margin-top: .6rem; }
+  .response-label { font-size: .75rem; font-weight: 600; color: var(--fg2); text-transform: uppercase;
+                     letter-spacing: .05em; margin-bottom: .3rem; }
+  .response-box { background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+                  padding: .6rem .8rem; font-size: .8rem; white-space: pre-wrap; word-break: break-word;
+                  max-height: 20rem; overflow-y: auto; line-height: 1.5; }
+  .response-box.expected { border-left: 3px solid var(--green); }
+  .response-box.agent { border-left: 3px solid var(--blue); }
+  .response-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .5rem; }
+  @media (max-width: 900px) { .response-grid { grid-template-columns: 1fr; } }
+  .no-response { color: var(--fg2); font-style: italic; font-size: .8rem; }
+</style>
+</head>
+<body>
+<h1>Conpack E2E Eval Results</h1>
+<p class="subtitle">Generated: 1771996488s-since-epoch</p>
+<h2>Summary</h2>
+<div class="grid-2">
+<div class="card"><div class="metric-label">No Ctx <span class="badge badge-worst">WORST</span></div><div class="metric-val conf-low">33%</div><div class="metric-label">recall &nbsp;|&nbsp; p95: 16.7s &nbsp;|&nbsp; p97: 16.8s &nbsp;|&nbsp; p99: 16.9s &nbsp;|&nbsp; best: 11.0s</div></div>
+<div class="card"><div class="metric-label">Know Only <span class="badge badge-best">BEST</span></div><div class="metric-val conf-high">100%</div><div class="metric-label">recall &nbsp;|&nbsp; p95: 16.5s &nbsp;|&nbsp; p97: 16.6s &nbsp;|&nbsp; p99: 16.6s &nbsp;|&nbsp; best: 15.6s</div></div>
+<div class="card"><div class="metric-label">CLI Search</div><div class="metric-val conf-high">100%</div><div class="metric-label">recall &nbsp;|&nbsp; p95: 60.0s &nbsp;|&nbsp; p97: 60.0s &nbsp;|&nbsp; p99: 60.0s &nbsp;|&nbsp; best: 37.1s</div></div>
+<div class="card"><div class="metric-label">MCP+Tools</div><div class="metric-val conf-high">100%</div><div class="metric-label">recall &nbsp;|&nbsp; p95: 22.3s &nbsp;|&nbsp; p97: 22.4s &nbsp;|&nbsp; p99: 22.5s &nbsp;|&nbsp; best: 15.8s</div></div>
+</div>
+<h2>Comparison</h2>
+<table>
+<tr><th>Metric</th><th>No Ctx</th><th>Know Only</th><th>CLI Search</th><th>MCP+Tools</th></tr>
+<tr><td>Total Recall</td><td class="worst" class="bar-cell"><span class="bar bar-green" style="width:33%"></span><span class="bar-label">33.3%</span></td><td class="best" class="bar-cell"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100.0%</span></td><td class="bar-cell"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100.0%</span></td><td class="bar-cell"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100.0%</span></td></tr>
+<tr><td>Avg Time</td><td>14.2s</td><td>16.1s</td><td>52.4s</td><td>19.4s</td></tr>
+<tr><td>Time P95</td><td>16.7s</td><td>16.5s</td><td>60.0s</td><td>22.3s</td></tr>
+<tr><td>Time P97</td><td>16.8s</td><td>16.6s</td><td>60.0s</td><td>22.4s</td></tr>
+<tr><td>Time P99</td><td>16.9s</td><td>16.6s</td><td>60.0s</td><td>22.5s</td></tr>
+<tr><td>Best Time</td><td>11.0s</td><td>15.6s</td><td>37.1s</td><td>15.8s</td></tr>
+<tr><td>Success Rate</td><td>3/3</td><td>3/3</td><td>1/3</td><td>3/3</td></tr>
+<tr><td>Timeouts</td><td class="">0</td><td class="">0</td><td class="timeout">2</td><td class="">0</td></tr>
+<tr><td>Errors</td><td class="">0</td><td class="">0</td><td class="">0</td><td class="">0</td></tr>
+</table>
+<h2>Coverage Matrix (Strategy × Vertical)</h2>
+<table>
+<tr><th>Strategy</th><th>No Ctx</th><th>Know Only</th><th>CLI Search</th><th>MCP+Tools</th></tr>
+<tr><td><strong>fts</strong></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td></tr>
+<tr><td><strong>vector</strong></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td></tr>
+<tr><td><strong>cascade</strong></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td></tr>
+</table>
+<h2>Seed Routing</h2>
+<table>
+<tr><th>Seed</th><th>Strategy</th><th>Target Upstream</th></tr>
+<tr><td>zephyr-query-protocol</td><td class="conf-high">fts</td><td>elasticsearch-fts</td></tr>
+<tr><td>conpackdb-ring-buffer</td><td class="conf-high">fts</td><td>elasticsearch-fts</td></tr>
+<tr><td>conpack-cluster-terraform</td><td class="conf-high">fts</td><td>elasticsearch-fts</td></tr>
+<tr><td>prismoid-cache-coherence</td><td class="conf-high">fts</td><td>elasticsearch-fts</td></tr>
+<tr><td>vortex-ingestion-pipeline</td><td style="color: var(--purple)">vector</td><td>qdrant-vector</td></tr>
+<tr><td>helix-embedder-training</td><td style="color: var(--purple)">vector</td><td>qdrant-vector</td></tr>
+<tr><td>obsidian-vault-sync</td><td style="color: var(--purple)">vector</td><td>qdrant-vector</td></tr>
+<tr><td>crystalline-tensor-decomposition</td><td style="color: var(--purple)">vector</td><td>qdrant-vector</td></tr>
+<tr><td>nexara-meridian-consensus</td><td style="color: var(--blue)">cascade</td><td>(cascade — priority order)</td></tr>
+<tr><td>auralis-service-mesh</td><td style="color: var(--blue)">cascade</td><td>(cascade — priority order)</td></tr>
+<tr><td>spectral-query-analyzer</td><td style="color: var(--blue)">cascade</td><td>(cascade — priority order)</td></tr>
+<tr><td>solaris-event-mesh</td><td style="color: var(--blue)">cascade</td><td>(cascade — priority order)</td></tr>
+<tr><td colspan="3" style="color: var(--fg2); font-style: italic">12 seeds: 4 FTS, 4 vector, 4 cascade</td></tr>
+</table>
+<h2>Per-Strategy Recall</h2>
+<table>
+<tr><th>Strategy</th><th>No Ctx</th><th>Know Only</th><th>CLI Search</th><th>MCP+Tools</th></tr>
+<tr><td><strong>fts</strong></td><td class="fail">0% (0/1)</td><td class="pass">100% (1/1)</td><td>-</td><td class="pass">100% (1/1)</td></tr>
+<tr><td><strong>vector</strong></td><td class="pass">100% (1/1)</td><td class="pass">100% (1/1)</td><td>-</td><td class="pass">100% (1/1)</td></tr>
+<tr><td><strong>cascade</strong></td><td class="fail">0% (0/1)</td><td class="pass">100% (1/1)</td><td class="pass">100% (1/1)</td><td class="pass">100% (1/1)</td></tr>
+</table>
+<h2>Per-Query Recall</h2>
+<table>
+<tr><th>Query</th><th>Strategy</th><th>No Ctx</th><th>Know Only</th><th>CLI Search</th><th>MCP+Tools</th></tr>
+<tr><td><strong>q-001</strong><span class="query-text">What is the Zephyr Query Protocol and how does its three-phase handshake work?</span></td><td class="conf-high">fts</td><td class="fail">0%</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><strong>q-004</strong><span class="query-text">How do you configure the Vortex ingestion pipeline stages and dead-letter handling?</span></td><td class="" style="color: var(--purple)">vector</td><td class="pass">100%</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><strong>q-003</strong><span class="query-text">Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach</span></td><td class="" style="color: var(--blue)">cascade</td><td class="fail">0%</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><strong>q-002</strong><span class="query-text">How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?</span></td><td class="conf-high">fts</td><td>-</td><td class="pass">100%</td><td>-</td><td>-</td></tr>
+<tr><td><strong>q-006</strong><span class="query-text">How do you train custom embeddings with the Helix Embedder and export to ONNX?</span></td><td class="" style="color: var(--purple)">vector</td><td>-</td><td class="pass">100%</td><td>-</td><td>-</td></tr>
+<tr><td><strong>q-005</strong><span class="query-text">What traffic shaping policies does the Auralis service mesh support?</span></td><td class="" style="color: var(--blue)">cascade</td><td>-</td><td class="pass">100%</td><td>-</td><td>-</td></tr>
+<tr><td><strong>q-007</strong><span class="query-text">Describe the Prismoid cache coherence protocol and its gossip-based invalidation</span></td><td class="conf-high">fts</td><td>-</td><td>-</td><td class="timeout">TIMEOUT</td><td>-</td></tr>
+<tr><td><strong>q-010</strong><span class="query-text">Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files</span></td><td class="" style="color: var(--purple)">vector</td><td>-</td><td>-</td><td class="timeout">TIMEOUT</td><td>-</td></tr>
+<tr><td><strong>q-009</strong><span class="query-text">How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?</span></td><td class="" style="color: var(--blue)">cascade</td><td>-</td><td>-</td><td class="pass">100%</td><td>-</td></tr>
+<tr><td><strong>q-008</strong><span class="query-text">What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?</span></td><td class="conf-high">fts</td><td>-</td><td>-</td><td>-</td><td class="pass">100%</td></tr>
+<tr><td><strong>q-011</strong><span class="query-text">How does the Crystalline engine perform Tucker decomposition on high-dimensional tensors?</span></td><td class="" style="color: var(--purple)">vector</td><td>-</td><td>-</td><td>-</td><td class="pass">100%</td></tr>
+<tr><td><strong>q-012</strong><span class="query-text">Explain the Solaris Event Mesh causal ordering and topic partitioning approach</span></td><td class="" style="color: var(--blue)">cascade</td><td>-</td><td>-</td><td>-</td><td class="pass">100%</td></tr>
+</table>
+<h2>Query Details</h2>
+<details><summary><strong>q-001</strong> — What is the Zephyr Query Protocol and how does its three-phase handshake work?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-001 — Zephyr Query Protocol v3.2 Specification</div><div class="response-box expected">The Zephyr Query Protocol (ZQP) v3.2 introduces scatter-gather query routing with adaptive fan-out. ZQP uses a three-phase handshake: DISCOVER, NEGOTIATE, STREAM. The DISCOVER phase broadcasts topology probes to all registered shards using multicast group 239.17.42.0/24. NEGOTIATE selects optimal shards based on affinity scores computed via the Kessler-Huang ranking algorithm. STREAM delivers results using chunked transfer with backpressure signaling via ZQP-FlowControl headers. Configuration requires setting zqp.scatter_factor (default 3), zqp.negotiate_timeout_ms (default 150), and zqp.stream_window_size (default 64KB). The protocol supports both synchronous request-response and asynchronous push modes controlled by the zqp.mode parameter.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-001</td><td class="fail">NO</td><td class="conf-low">0.228</td><td>17.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/5</span><span class="tag tag-tag">tag:zephyr</span><span class="tag tag-tag">tag:query-protocol</span><span class="tag">term:mode</span><span class="tag">term:handshake</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">I don't have any knowledge of a protocol called the &quot;Zephyr Query Protocol&quot; or a three-phase handshake associated with it. This doesn't match any real protocol or standard I'm aware of.
+
+There is a **Zephyr Notification Service** from MIT's Project Athena (a messaging/notification system), but it is not called the &quot;Zephyr Query Protocol&quot; and is not characterized by a three-phase handshake.
+
+A few possibilities:
+
+1. **It's a fictional/fabricated concept** — this is a common pattern in LLM evaluation questions designed to test whether a model will confidently hallucinate plausible-sounding technical details rather than admit ignorance.
+2. **It's from a proprietary or very niche system** that falls outside my training data.
+3. **It's from course materials or a textbook** that uses it as a teaching example rather than a real-world protocol.
+
+I'd rather tell you I don't know than invent convincing but false technical details. If you can point me to a source or codebase that references it, I'm happy to look into it.
+</div>
+</details>
+</details>
+<details><summary><strong>q-004</strong> — How do you configure the Vortex ingestion pipeline stages and dead-letter handling?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-004 — Vortex Ingestion Pipeline Configuration Guide</div><div class="response-box expected">The Vortex ingestion pipeline processes streaming data through configurable stages: PARSE, ENRICH, VALIDATE, ROUTE. Each stage runs as an isolated actor with bounded mailboxes (vortex.stage.mailbox_size, default 4096). The PARSE stage supports JSON, Avro, Protobuf, and custom formats via pluggable deserializers registered in vortex.parsers[]. ENRICH applies transformation rules defined in vortex.enrichment_rules[], supporting field mapping, regex extraction, and lookup joins against reference tables. VALIDATE enforces schema contracts using Vortex Schema Language (VSL) files referenced by vortex.schema_path. ROUTE distributes validated records to downstream sinks based on content-based routing rules in vortex.routing_table[]. Dead-letter handling sends invalid records to the vortex.dlq_topic (default 'vortex-dlq'). Backpressure propagates upstream when any stage's mailbox exceeds 80% capacity.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-004</td><td class="pass">YES</td><td class="conf-mid">0.341</td><td>14.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/5</span><span class="tag tag-phrase">phrase:Dead-letter handling</span><span class="tag tag-tag">tag:vortex</span><span class="tag tag-tag">tag:ingestion</span><span class="tag tag-tag">tag:pipeline</span><span class="tag">term:files</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">There are no files in the repository with relevant context about &quot;Vortex ingestion pipeline.&quot; I don't have specific knowledge of a product or framework called &quot;Vortex&quot; with ingestion pipeline stages and dead-letter handling that I can speak to with confidence.
+
+The name &quot;Vortex&quot; is used by several different projects and products (e.g., Vortex by Deephaven, Vortex mod manager, various internal/proprietary systems), and without knowing which specific system you're referring to, I can't provide accurate technical details about its pipeline stage configuration or dead-letter handling.
+
+**To help you, I'd need more context:**
+
+- Which specific &quot;Vortex&quot; product or framework are you referring to? (vendor, open-source project, internal tool?)
+- Is there documentation, source code, or configuration files you can point me to?
+- Is this related to a codebase you're working in that I should explore?
+
+If you can share the relevant documentation or code, I can give you a precise, detailed answer about its configuration.
+</div>
+</details>
+</details>
+<details><summary><strong>q-003</strong> — Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach</summary>
+<div class="response-section"><div class="response-label">Expected: eval-003 — Nexara Consensus: The Meridian Protocol</div><div class="response-box expected">Nexara implements the Meridian consensus protocol, a Byzantine fault-tolerant algorithm designed for geo-distributed clusters. Meridian operates in three rounds: PROPOSE, CERTIFY, COMMIT. Unlike traditional BFT protocols, Meridian uses a rotating committee of 2f+1 validators selected via verifiable random functions (VRFs). The protocol achieves 50,000 TPS in WAN configurations with 100ms finality. Key parameters include meridian.committee_size (default 7), meridian.vrf_threshold (0.67), and meridian.proposal_timeout_ms (default 200). Meridian introduces the concept of 'temporal sharding' where consensus rounds are partitioned across time slots to reduce message complexity from O(n^2) to O(n*log(n)). The Nexara implementation uses the Ed25519 signature scheme for vote signing.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>eval-003</td><td class="fail">NO</td><td class="conf-low">0.273</td><td>11.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-tag">tag:nexara</span><span class="tag tag-tag">tag:meridian</span><span class="tag tag-tag">tag:consensus</span><span class="tag">term:meridian</span><span class="tag">term:consensus</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>No Ctx — recall 0%</summary>
+<div class="response-box agent">I don't have any information about a &quot;Meridian consensus protocol,&quot; &quot;Nexara,&quot; or a &quot;temporal sharding approach&quot; associated with these names. These terms don't correspond to any known technology, blockchain protocol, or distributed systems project that I'm aware of from my training data.
+
+Rather than fabricate technical details, I want to be straightforward: I cannot find evidence that these are real, established concepts. A few possibilities:
+
+1. **These are fictional or hypothetical** — invented names that don't correspond to a real project.
+2. **These are very niche or emerged after my knowledge cutoff** (May 2025) — though the names don't match any project trajectory I'm aware of.
+3. **These refer to something in this repository** — but the repo appears clean with no relevant files.
+
+If this is a real project you're working with, could you share documentation, a link, or source material? I'd be happy to analyze and explain it accurately rather than guess.
+</div>
+</details>
+</details>
+<details><summary><strong>q-002</strong> — How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-002 — ConpackDB Ring-Buffer Sharding Architecture</div><div class="response-box expected">ConpackDB implements ring-buffer sharding using BLAKE3 partition keys for deterministic data distribution. Each shard is a fixed-size ring buffer (default 256MB) that overwrites oldest entries on capacity. The sharding algorithm computes shard_id = blake3(document_key) % num_shards. Hot shards are detected when write throughput exceeds the configurable threshold shard.hot_threshold_ops_sec (default 10000). Hot shard mitigation uses split-and-replicate: the hot shard is split into two sub-shards and the secondary is placed on a different node. The ring-buffer uses a cursor-based read model where consumers track their position via monotonic sequence numbers. ConpackDB's consistency model is eventual with a configurable convergence window of shard.convergence_ms (default 500).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Know Only</td><td>eval-002</td><td class="pass">YES</td><td class="conf-high">0.773</td><td>16.1s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-phrase">phrase:BLAKE3 partition</span><span class="tag tag-phrase">phrase:ConpackDB implements</span><span class="tag tag-phrase">phrase:Each shard</span><span class="tag tag-tag">tag:conpackdb</span><span class="tag tag-tag">tag:ring-buffer</span><span class="tag tag-tag">tag:sharding</span><span class="tag tag-tag">tag:blake3</span><span class="tag">term:shard</span><span class="tag">term:convergence_ms</span><span class="tag">term:ring-buffer</span><span class="tag">term:num_shards</span><span class="tag">term:split</span><span class="tag">term:oldest</span><span class="tag">term:sharding</span><span class="tag">term:buffer</span><span class="tag">term:numbers</span><span class="tag">term:hot_threshold_ops_sec</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Know Only — recall 100%</summary>
+<div class="response-box agent">Here's how ConpackDB implements ring-buffer sharding with BLAKE3 partition keys:
+
+**Shard Assignment**
+
+The sharding algorithm is deterministic: `shard_id = blake3(document_key) % num_shards`. BLAKE3 hashes the document key, and the modulo operation maps it to a specific shard.
+
+**Ring-Buffer Structure**
+
+Each shard is a fixed-size ring buffer (default **256 MB**) that overwrites the oldest entries when it reaches capacity. Consumers read using a **cursor-based model**, tracking their position via monotonic sequence numbers.
+
+**Hot Shard Mitigation**
+
+When a shard's write throughput exceeds `shard.hot_threshold_ops_sec` (default **10,000 ops/sec**), ConpackDB uses a **split-and-replicate** strategy:
+
+1. The hot shard is split into two sub-shards.
+2. The secondary sub-shard is placed on a different node to distribute load.
+
+**Consistency Model**
+
+ConpackDB uses **eventual consistency** with a configurable convergence window controlled by `shard.convergence_ms` (default **500 ms**).
+
+**Key configuration parameters:**
+
+| Parameter | Default | Description |
+|---|---|---|
+| Ring-buffer size | 256 MB | Per-shard capacity before overwrite |
+| `shard.hot_threshold_ops_sec` | 10,000 | Write ops/sec triggering hot shard mitigation |
+| `shard.convergence_ms` | 500 ms | Eventual consistency convergence window |
+</div>
+</details>
+</details>
+<details><summary><strong>q-006</strong> — How do you train custom embeddings with the Helix Embedder and export to ONNX?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-006 — Helix Embedder: Custom Model Training Workflow</div><div class="response-box expected">The Helix Embedder produces domain-specific text embeddings using a fine-tuned transformer architecture. Training requires a corpus file in Helix Format (.hxf) containing tab-separated (anchor, positive, negative) triplets. The training pipeline is: helix train --corpus data.hxf --model-dim 384 --epochs 20 --lr 1e-5 --loss contrastive-margin --margin 0.3. Evaluation uses helix eval --model checkpoint.hx --benchmark internal-retrieval --metrics ndcg@10,mrr. The Helix runtime exports models as ONNX for inference, supporting batch sizes up to helix.inference.max_batch (default 32). Quantization reduces model size via helix quantize --bits 8 --calibration cal.hxf. The Helix index format uses product quantization (PQ) with helix.index.pq_segments (default 48) and helix.index.pq_bits (default 8) for compressed vector storage.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Know Only</td><td>eval-006</td><td class="pass">YES</td><td class="conf-high">0.864</td><td>16.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:4/6</span><span class="tag tag-phrase">phrase:--benchmark internal-retrieval</span><span class="tag tag-phrase">phrase:--calibration cal.hxf</span><span class="tag tag-phrase">phrase:--corpus data.hxf</span><span class="tag tag-phrase">phrase:--loss contrastive-margin</span><span class="tag tag-phrase">phrase:--lr 1e-5</span><span class="tag tag-tag">tag:helix</span><span class="tag tag-tag">tag:embedder</span><span class="tag tag-tag">tag:training</span><span class="tag tag-tag">tag:onnx</span><span class="tag">term:negative</span><span class="tag">term:--benchmark</span><span class="tag">term:training</span><span class="tag">term:--bits</span><span class="tag">term:--calibration</span><span class="tag">term:pq_segments</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Know Only — recall 100%</summary>
+<div class="response-box agent">Here's how to train custom embeddings with the Helix Embedder and export to ONNX:
+
+## Corpus Preparation
+
+Your training data must be in **Helix Format (`.hxf`)** — a file containing **tab-separated triplets** of `(anchor, positive, negative)` examples.
+
+## Training
+
+Run the training pipeline with:
+
+```bash
+helix train \
+  --corpus data.hxf \
+  --model-dim 384 \
+  --epochs 20 \
+  --lr 1e-5 \
+  --loss contrastive-margin \
+  --margin 0.3
+```
+
+Key parameters:
+- **`--model-dim 384`** — embedding dimensionality
+- **`--loss contrastive-margin`** with **`--margin 0.3`** — the contrastive margin loss function
+- **`--lr 1e-5`** — learning rate
+- **`--epochs 20`** — number of training epochs
+
+## Evaluation
+
+Evaluate a checkpoint against a retrieval benchmark:
+
+```bash
+helix eval \
+  --model checkpoint.hx \
+  --benchmark internal-retrieval \
+  --metrics ndcg@10,mrr
+```
+
+## ONNX Export
+
+The Helix runtime **natively exports models as ONNX** for inference. It supports batch sizes up to `helix.inference.max_batch` (default **32**).
+
+## Optional: Quantization
+
+To reduce model size, quantize to 8-bit with a calibration dataset:
+
+```bash
+helix quantize --bits 8 --calibration cal.hxf
+```
+
+## Indexing (Compressed Vector Storage)
+
+The Helix index format uses **Product Quantization (PQ)** with two tunable settings:
+
+| Config Key | Default | Description |
+|---|---|---|
+| `helix.index.pq_segments` | 48 | Number of PQ sub-vector segments |
+| `helix.index.pq_bits` | 8 | Bits per sub-quantizer |
+</div>
+</details>
+</details>
+<details><summary><strong>q-005</strong> — What traffic shaping policies does the Auralis service mesh support?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-005 — Auralis Service Mesh: Traffic Shaping Policies</div><div class="response-box expected">Auralis service mesh provides traffic shaping through declarative policies defined in AuralisPolicy CRDs. Traffic splitting uses weighted backends specified as auralis.backends[].weight (0-100, must sum to 100). Circuit breaking triggers when error_rate exceeds auralis.circuit.threshold (default 0.5) over auralis.circuit.window_sec (default 30). The mesh supports canary deployments via header-based routing: requests with X-Auralis-Canary: true are routed to canary backends. Rate limiting is per-service with auralis.ratelimit.rps (default 1000) and auralis.ratelimit.burst (default 50). Auralis uses sidecar proxies based on the Luminex engine, which processes L4/L7 traffic with sub-millisecond overhead. Mutual TLS is enforced by default between all mesh services using SPIFFE identities (spiffe://auralis.local/service/&lt;name&gt;).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>Know Only</td><td>eval-005</td><td class="pass">YES</td><td class="conf-high">0.569</td><td>15.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:5/6</span><span class="tag tag-phrase">phrase:Auralis service</span><span class="tag tag-tag">tag:auralis</span><span class="tag tag-tag">tag:service-mesh</span><span class="tag tag-tag">tag:traffic-shaping</span><span class="tag tag-tag">tag:luminex</span><span class="tag">term:ratelimit</span><span class="tag">term:specified</span><span class="tag">term:weighted</span><span class="tag">term:splitting</span><span class="tag">term:identities</span><span class="tag">term:mesh</span><span class="tag">term:traffic</span><span class="tag">term:defined</span><span class="tag">term:services</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>Know Only — recall 100%</summary>
+<div class="response-box agent">The Auralis service mesh supports the following traffic shaping policies, all defined declaratively via **AuralisPolicy CRDs**:
+
+### Traffic Splitting
+- Weighted backends specified as `auralis.backends[].weight` (values 0–100, must sum to 100).
+
+### Circuit Breaking
+- Triggers when the error rate exceeds `auralis.circuit.threshold` (default **0.5**) over a window defined by `auralis.circuit.window_sec` (default **30** seconds).
+
+### Header-Based / Canary Routing
+- Supports canary deployments via header-based routing: requests with `X-Auralis-Canary: true` are routed to canary backends.
+
+### Rate Limiting
+- Per-service rate limiting with two knobs:
+  - `auralis.ratelimit.rps` — requests per second (default **1000**)
+  - `auralis.ratelimit.burst` — burst allowance (default **50**)
+
+### Underlying Engine
+Traffic is processed by sidecar proxies based on the **Luminex engine**, handling L4/L7 traffic with sub-millisecond overhead. **Mutual TLS** is enforced by default between all mesh services using SPIFFE identities (`spiffe://auralis.local/service/&lt;name&gt;`).
+</div>
+</details>
+</details>
+<details><summary><strong>q-007</strong> — Describe the Prismoid cache coherence protocol and its gossip-based invalidation</summary>
+<div class="response-section"><div class="response-label">Expected: eval-007 — Prismoid Cache Coherence Protocol</div><div class="response-box expected">The Prismoid protocol maintains cache coherence across distributed proxy nodes using a gossip-based invalidation scheme. Each cache entry carries a vector clock (prismoid.vclock) that tracks the last-write timestamp per node. On cache miss, Prismoid performs a quorum read: it queries prismoid.quorum_size (default 3) peer nodes and returns the entry with the highest vector clock. Invalidation messages are propagated via anti-entropy gossip every prismoid.gossip_interval_ms (default 100). Conflict resolution uses last-writer-wins (LWW) with tie-breaking on node_id. The protocol supports two consistency modes: 'strong' (synchronous quorum writes) and 'eventual' (async gossip propagation). Memory overhead per entry is 24 bytes (8-byte vclock + 8-byte hash + 8-byte expiry). Prismoid integrates with conpack's CacheProxy via the PrismoidAdapter trait.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>CLI Search</td><td>eval-007</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-010</strong> — Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files</summary>
+<div class="response-section"><div class="response-label">Expected: eval-010 — Obsidian Vault Sync Protocol for Knowledge Files</div><div class="response-box expected">The Obsidian Vault Sync protocol synchronizes knowledge files between conpack's local knowledge folder and a remote vault. Sync operates in three modes: obsidian.sync_mode = 'pull' (read-only from vault), 'push' (write local changes to vault), or 'bidirectional' (merge with conflict detection). File identity uses content-addressed hashing: obsidian.hash_algorithm (default 'blake3'). Delta sync transfers only changed blocks using rolling checksums with obsidian.block_size (default 4KB). Conflict resolution in bidirectional mode creates .conflict files with timestamps. The vault manifest (vault.json) tracks file metadata: path, hash, last_modified, size_bytes. Sync scheduling uses obsidian.sync_interval_sec (default 60) with jitter of ±10%. Authentication to remote vaults uses Ed25519 key pairs stored in obsidian.key_path (default '~/.conpack/vault_key').</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>CLI Search</td><td>eval-010</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>60.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>CLI Search — TIMEOUT</summary>
+<p class="no-response">No response captured</p>
+</details>
+</details>
+<details><summary><strong>q-009</strong> — How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-009 — Spectral Query Analyzer: Execution Plan Optimization</div><div class="response-box expected">The Spectral Query Analyzer optimizes query execution plans for multi-upstream searches. It decomposes queries into sub-plans using cost-based optimization with the Spectral cost model. Cost factors include: upstream_latency_p99 (measured), result_cardinality (estimated via histogram sketches), and network_hop_count. The analyzer supports three plan strategies: spectral.strategy = 'parallel' (fan-out all upstreams simultaneously), 'sequential' (try upstreams in cost order, stop on threshold), or 'adaptive' (start parallel, switch to sequential after first result). Plan caching uses spectral.plan_cache_size (default 1000) with LRU eviction. The EXPLAIN command outputs the chosen plan: EXPLAIN QUERY 'search terms' shows estimated costs per upstream, chosen strategy, and predicted latency. Statistics are refreshed every spectral.stats_refresh_interval_sec (default 300).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>CLI Search</td><td>eval-009</td><td class="pass">YES</td><td class="conf-high">0.636</td><td>37.1s</td><td><div class="tags"><span class="tag tag-title">title:Spectral Query Analyzer: Execution Plan Optimization</span><span class="tag tag-phrase">phrase:Analyzer optimizes</span><span class="tag tag-phrase">phrase:Cost factors</span><span class="tag tag-tag">tag:spectral</span><span class="tag tag-tag">tag:query-analyzer</span><span class="tag tag-tag">tag:cost-based</span><span class="tag tag-tag">tag:execution-plan</span><span class="tag">term:strategy</span><span class="tag">term:optimizes</span><span class="tag">term:execution</span><span class="tag">term:optimization</span><span class="tag">term:query</span><span class="tag">term:multi-upstream</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>CLI Search — recall 100%</summary>
+<div class="response-box agent">Based on the search results, here is what the documentation reveals about the Spectral Query Analyzer:
+
+## Spectral Query Analyzer: Execution Plan Optimization
+
+The Spectral Query Analyzer optimizes query execution plans for **multi-upstream searches** through a **cost-based optimization** approach using the **Spectral cost model**. Here's how it works:
+
+### Query Decomposition
+The analyzer **decomposes queries into sub-plans** — breaking a single multi-upstream query into smaller, targeted sub-plans that can each be routed and executed against individual upstreams.
+
+### Cost-Based Optimization
+The Spectral cost model drives the optimization decisions. The cost factors it considers include (based on what the document enumerates):
+
+- **Upstream latency** — expected round-trip time to each upstream source
+- **Cardinality** — estimated result set sizes which influence join/merge strategies
+- **Index availability** — whether an upstream can leverage indexes for the query predicates
+- **Network bandwidth** — throughput constraints between the analyzer and upstream sources
+
+These factors are weighed to produce an optimal execution plan that minimizes total query cost across all upstreams.
+
+### Key Optimization Techniques
+The Spectral Analyzer applies several optimization strategies:
+
+1. **Predicate pushdown** — filters are pushed as close to the upstream data sources as possible, reducing the volume of data transferred and processed
+2. **Sub-plan parallelization** — independent sub-plans are scheduled for parallel execution across upstreams (scatter-gather style), reducing wall-clock latency
+3. **Plan pruning** — sub-plans or upstreams that are estimated to be too costly or unlikely to contribute meaningful results can be eliminated early
+4. **Result aggregation/merging** — results from parallel sub-plans are merged using strategies informed by the cost model's cardinality estimates
+
+### How It Fits Together
+The overall flow is: **parse query → decompose into sub-plans → cost-estimate each sub-plan per upstream → apply rewrite/optimization rules → execute optimized plan → merge results**. The cost model ensures that the analyzer picks the cheapest execution strategy given the current state of all upstream sources (their latency, load, available indexes, etc.).
+
+This approach is analogous to how distributed SQL query planners (e.g., in CockroachDB or Presto/Trino) optimize federated queries, but tailored specifically to conpack's multi-upstream search architecture.
+</div>
+</details>
+</details>
+<details><summary><strong>q-008</strong> — What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-008 — Terraform Module: ConpackCluster Deployment</div><div class="response-box expected">The conpack-cluster Terraform module deploys a production-ready conpack proxy cluster on AWS. Resources provisioned: ALB (conpack_alb), ECS Fargate tasks (conpack_proxy, 3 replicas), ElastiCache Redis (conpack_cache), and CloudWatch alarms. Required variables: cluster_name, vpc_id, subnet_ids[], conpack_image, upstream_urls[]. Optional variables: proxy_cpu (default 1024), proxy_memory (default 2048), cache_node_type (default 'cache.r6g.large'), min_tasks (default 3), max_tasks (default 12). Auto-scaling triggers on CloudWatch metric ConpackProxyCacheHitRate: scales out when hit rate drops below 70% for 5 minutes, scales in when above 90% for 15 minutes. Health checks use /ready endpoint with 30-second interval. The module outputs: alb_dns_name, ecs_cluster_arn, redis_endpoint, cloudwatch_dashboard_url.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>MCP+Tools</td><td>eval-008</td><td class="pass">YES</td><td class="conf-high">0.500</td><td>15.8s</td><td><div class="tags"><span class="tag tag-phrase">phrase:30-second interval</span><span class="tag tag-tag">tag:terraform</span><span class="tag tag-tag">tag:conpack-cluster</span><span class="tag tag-tag">tag:aws</span><span class="tag tag-tag">tag:ecs-fargate</span><span class="tag">term:cache_node_type</span><span class="tag">term:tasks</span><span class="tag">term:cache</span><span class="tag">term:variables</span><span class="tag">term:above</span><span class="tag">term:elasticache</span><span class="tag">term:proxy_memory</span><span class="tag">term:replicas</span><span class="tag">term:drops</span><span class="tag">term:optional</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>MCP+Tools — recall 100%</summary>
+<div class="response-box agent">## conpack-cluster Terraform Module
+
+The `conpack-cluster` module deploys a **production-ready conpack proxy cluster on AWS**. Here's the breakdown:
+
+### Resources Provisioned
+
+| Resource | Name/Details |
+|---|---|
+| **ALB** (Application Load Balancer) | `conpack_alb` |
+| **ECS Fargate tasks** | `conpack_proxy` — 3 replicas by default |
+| **ElastiCache Redis** | `conpack_cache` |
+| **CloudWatch alarms** | Monitoring for scaling and health |
+
+### Auto-Scaling Triggers
+
+Scaling is driven by the CloudWatch metric **`ConpackProxyCacheHitRate`**:
+
+- **Scale out** — when cache hit rate drops **below 70%** for **5 minutes**
+- **Scale in** — when cache hit rate rises **above 90%** for **15 minutes**
+
+Task count ranges from `min_tasks` (default **3**) to `max_tasks` (default **12**).
+
+### Required Variables
+
+- `cluster_name`, `vpc_id`, `subnet_ids[]`, `conpack_image`, `upstream_urls[]`
+
+### Optional Variables (with defaults)
+
+| Variable | Default |
+|---|---|
+| `proxy_cpu` | 1024 |
+| `proxy_memory` | 2048 |
+| `cache_node_type` | `cache.r6g.large` |
+| `min_tasks` | 3 |
+| `max_tasks` | 12 |
+
+### Health Checks
+
+Uses the `/ready` endpoint with a **30-second interval**.
+
+### Module Outputs
+
+- `alb_dns_name`
+- `ecs_cluster_arn`
+- `redis_endpoint`
+- `cloudwatch_dashboard_url`
+</div>
+</details>
+</details>
+<details><summary><strong>q-011</strong> — How does the Crystalline engine perform Tucker decomposition on high-dimensional tensors?</summary>
+<div class="response-section"><div class="response-label">Expected: eval-011 — Crystalline Tensor Decomposition Engine</div><div class="response-box expected">The Crystalline Tensor Decomposition Engine performs high-dimensional tensor factorization using Higher-Order Singular Value Decomposition (HOSVD) and Tucker factorization. Crystalline operates on tensors up to rank 12 with configurable decomposition strategies: crystalline.strategy = 'hosvd' (exact, O(n^d) complexity), 'tucker' (approximate, iterative ALS with crystalline.max_iterations default 200), or 'hybrid' (HOSVD initialization + Tucker refinement). The engine uses tiled memory layouts with crystalline.tile_size (default 64) for cache-optimal traversal. Core decomposition produces factor matrices U_1..U_d and a core tensor G, stored in Crystalline Archive Format (.caf). Compression ratios of 50-200x are typical for sparse scientific datasets. Parallel decomposition distributes mode-n unfoldings across crystalline.worker_threads (default 8) using work-stealing schedulers. The crystalline.convergence_threshold (default 1e-6) controls Tucker iteration termination. Reconstruction error is measured via normalized Frobenius norm: ||T - T_approx||_F / ||T||_F.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>MCP+Tools</td><td>eval-011</td><td class="pass">YES</td><td class="conf-high">0.773</td><td>19.7s</td><td><div class="tags"><span class="tag tag-title">title:Crystalline Tensor Decomposition Engine</span><span class="tag tag-phrase">phrase:Archive Format</span><span class="tag tag-phrase">phrase:Compression ratios</span><span class="tag tag-phrase">phrase:Crystalline Archive</span><span class="tag tag-tag">tag:crystalline</span><span class="tag tag-tag">tag:tensor-decomposition</span><span class="tag tag-tag">tag:hosvd</span><span class="tag tag-tag">tag:tucker</span><span class="tag">term:worker_threads</span><span class="tag">term:iteration</span><span class="tag">term:norm</span><span class="tag">term:crystalline</span><span class="tag">term:termination</span><span class="tag">term:core</span><span class="tag">term:higher-order</span><span class="tag">term:tucker</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>MCP+Tools — recall 100%</summary>
+<div class="response-box agent">## Crystalline Engine: Tucker Decomposition on High-Dimensional Tensors
+
+The Crystalline Tensor Decomposition Engine supports tensors **up to rank 12** and offers three configurable decomposition strategies, with Tucker decomposition being one of the core methods.
+
+### Decomposition Strategies
+
+| Strategy | Mode | Details |
+|----------|------|---------|
+| `hosvd` | Exact | Higher-Order SVD with O(n^d) complexity |
+| `tucker` | Approximate | Iterative ALS (Alternating Least Squares), up to `crystalline.max_iterations` (default **200**) |
+| `hybrid` | Combined | HOSVD initialization followed by Tucker refinement |
+
+For Tucker specifically, Crystalline uses **iterative Alternating Least Squares (ALS)**. The iteration loop terminates when the change falls below `crystalline.convergence_threshold` (default **1e-6**) or the max iteration count is reached.
+
+### Core Output
+
+The decomposition produces:
+- **Factor matrices** `U_1 .. U_d` (one per mode/dimension)
+- A **core tensor** `G`
+
+These are stored in **Crystalline Archive Format (`.caf`)**. Typical compression ratios are **50–200x** for sparse scientific datasets.
+
+### Performance Optimizations
+
+- **Tiled memory layout** — `crystalline.tile_size` (default **64**) enables cache-optimal traversal of tensor data, which is critical for high-dimensional operations.
+- **Parallel mode-n unfoldings** — Mode-n unfoldings (matricizations) are distributed across `crystalline.worker_threads` (default **8**) using a **work-stealing scheduler**.
+
+### Reconstruction Quality
+
+Reconstruction error is measured via the **normalized Frobenius norm**:
+
+```
+||T - T_approx||_F / ||T||_F
+```
+
+This gives a scale-independent measure of how well the Tucker approximation represents the original tensor.
+
+### Key Configuration Summary
+
+| Parameter | Default | Purpose |
+|-----------|---------|---------|
+| `crystalline.strategy` | — | `'hosvd'`, `'tucker'`, or `'hybrid'` |
+| `crystalline.max_iterations` | 200 | Max ALS iterations for Tucker |
+| `crystalline.convergence_threshold` | 1e-6 | Tucker iteration termination |
+| `crystalline.tile_size` | 64 | Cache-optimal memory tiling |
+| `crystalline.worker_threads` | 8 | Parallel unfolding workers |
+
+The `hybrid` strategy is particularly effective: it uses HOSVD to compute an initial factorization (providing a good starting point for the factor matrices), then refines the result with Tucker ALS iterations for better approximation quality.
+</div>
+</details>
+</details>
+<details><summary><strong>q-012</strong> — Explain the Solaris Event Mesh causal ordering and topic partitioning approach</summary>
+<div class="response-section"><div class="response-label">Expected: eval-012 — Solaris Event Mesh: Distributed Event Routing</div><div class="response-box expected">The Solaris Event Mesh provides distributed event routing with causal ordering guarantees across geo-distributed clusters. Solaris uses topic partitioning to divide event streams into independent partitions, each assigned to a partition leader via the Solaris Raft-based coordinator. Causal ordering is enforced using vector timestamps: each event carries a solaris.vclock that tracks producer-side causality. Events within the same causal chain are delivered in order; independent events may be reordered for throughput. Topic partitioning supports three strategies: solaris.partition_strategy = 'hash' (consistent hashing on event key), 'range' (ordered key ranges), or 'custom' (user-defined partition function). The mesh routes events through relay nodes organized in a spanning tree topology, minimizing cross-region traffic. Configuration includes solaris.max_partitions_per_topic (default 64), solaris.relay_buffer_size (default 8192), and solaris.delivery_timeout_ms (default 5000). Dead letter routing sends undeliverable events to solaris.dlq_topic with full causal metadata preserved. The Solaris SDK provides at-least-once delivery with optional idempotency keys via solaris.idempotency_window_sec (default 300).</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>MCP+Tools</td><td>eval-012</td><td class="pass">YES</td><td class="conf-high">0.682</td><td>22.6s</td><td><div class="tags"><span class="tag tag-title">title-partial:6/6</span><span class="tag tag-phrase">phrase:Causal ordering</span><span class="tag tag-phrase">phrase:Dead letter</span><span class="tag tag-tag">tag:solaris</span><span class="tag tag-tag">tag:event-mesh</span><span class="tag tag-tag">tag:causal-ordering</span><span class="tag tag-tag">tag:topic-partitioning</span><span class="tag">term:partitions</span><span class="tag">term:relay_buffer_size</span><span class="tag">term:mesh</span><span class="tag">term:leader</span><span class="tag">term:tree</span><span class="tag">term:coordinator</span><span class="tag">term:idempotency_window_sec</span><span class="tag">term:causal</span><span class="tag">term:raft-based</span><span class="tag">term:timestamps</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details><summary>MCP+Tools — recall 100%</summary>
+<div class="response-box agent">## Solaris Event Mesh: Causal Ordering &amp; Topic Partitioning
+
+The Solaris Event Mesh is a distributed event routing system designed for **geo-distributed clusters**. Here's how its two core mechanisms work:
+
+### Causal Ordering via Vector Timestamps
+
+Solaris enforces causal ordering using **vector clocks**. Every event carries a `solaris.vclock` field that tracks producer-side causality. The guarantees are:
+
+- **Causally related events** (same causal chain) are always delivered in order.
+- **Independent events** (no causal relationship) may be freely reordered to maximize throughput.
+
+This is a deliberate trade-off — total ordering is expensive across geo-distributed nodes, so Solaris only enforces ordering where it semantically matters.
+
+### Topic Partitioning Strategies
+
+Event streams are divided into independent partitions, each assigned to a **partition leader** via a Raft-based coordinator. Three partitioning strategies are supported:
+
+| Strategy | Config Value | Description |
+|---|---|---|
+| **Hash** | `solaris.partition_strategy = 'hash'` | Consistent hashing on the event key |
+| **Range** | `solaris.partition_strategy = 'range'` | Ordered key ranges |
+| **Custom** | `solaris.partition_strategy = 'custom'` | User-defined partition function |
+
+The default maximum is **64 partitions per topic** (`solaris.max_partitions_per_topic`).
+
+### Network Topology &amp; Routing
+
+Events are routed through **relay nodes** organized in a **spanning tree topology**, which minimizes cross-region traffic. Each relay node has a configurable buffer (`solaris.relay_buffer_size`, default 8192).
+
+### Delivery Guarantees &amp; Error Handling
+
+- **At-least-once delivery** with optional idempotency via `solaris.idempotency_window_sec` (default 300 seconds).
+- **Delivery timeout**: `solaris.delivery_timeout_ms` (default 5000ms).
+- **Dead letter queue**: Undeliverable events are routed to `solaris.dlq_topic` with full causal metadata preserved, so the vector clock context is never lost.
+
+The key design insight is coupling vector-clock causality with partitioned parallelism — partitions can process independently and in parallel, while the vector timestamps ensure that events sharing a causal relationship within any partition are never misordered.
+</div>
+</details>
+</details>
+
+</body>
+</html>

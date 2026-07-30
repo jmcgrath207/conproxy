@@ -1,0 +1,314 @@
+# conproxy release workflow — tag / manual only.
+#
+# Triggered on `v*` tags (e.g. v0.1.0) and `workflow_dispatch`. Verifies the
+# installable artifact, cross-compiles for x86_64-musl and aarch64-gnu,
+# runs a smoke binary on aarch64 (qemu), builds + publishes a multi-arch
+# container image (amd64 + arm64) to GHCR, builds + publishes a Helm
+# chart to OCI on GHCR, and attaches binaries + chart to a GitHub Release.
+#
+# Re-runs the PR `release-gate` job (clippy/test/build/install-sim) to
+# guarantee a green on a clean tree before publishing artifacts.
+#
+# Heavier steps (PGO, DHAT, full integration suite, ignored e2e) remain
+# manual / local — see AGENTS.md §"Tier 3".
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create GitHub Release + attach assets
+  packages: write   # push to ghcr.io
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  REGISTRY_IMAGE: ghcr.io/jmcgrath207/conproxy
+  HELM_OCI: oci://ghcr.io/jmcgrath207/charts
+
+jobs:
+  # Re-run the PR release gate on the tagged tree to guarantee the
+  # published artifacts come from a clean green build.
+  release-gate:
+    name: release-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-gate-${{ runner.os }}
+          cache-on-failure: true
+      - name: Lint (release meta)
+        run: cargo clippy --features release --lib -- -D warnings
+      - name: Test (release meta)
+        run: cargo test --features release --lib
+      - name: Build + smoke shipped binary
+        run: |
+          cargo build --release --features release --bin conproxy
+          ./target/release/conproxy --version
+          ./target/release/conproxy --help 2>&1 | head -40
+      - name: Workspace release build (catches sdk breakage)
+        run: cargo build --workspace --release --features release
+      - name: MCP test on release bundle
+        run: cargo test --features release --test mcp_test
+      - name: Install simulation (isolated --root)
+        run: |
+          cargo install --locked --path . --features release --root /tmp/conproxy-install
+          /tmp/conproxy-install/bin/conproxy --version
+          rm -rf /tmp/conproxy-install
+
+  # Cross-compile for the two Linux targets documented for the
+  # installable artifact. Skipped on workflow_dispatch by default to keep
+  # manual runs fast; trigger via tag push for real releases.
+  cross:
+    name: cross (${{ matrix.target }})
+    needs: release-gate
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            description: x86_64 Linux (musl, static)
+          - target: aarch64-unknown-linux-gnu
+            description: aarch64 Linux (glibc)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install cross
+        run: cargo install cross --locked
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-cross-${{ matrix.target }}-${{ runner.os }}
+          cache-on-failure: true
+      - name: Cross build (release bundle)
+        run: cross build --release --features release --target ${{ matrix.target }} --bin conproxy
+      - name: Upload cross artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: conproxy-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/conproxy
+          if-no-files-found: error
+          retention-days: 30
+
+  # Smoke the aarch64 build under qemu. Skipped on workflow_dispatch to
+  # keep manual runs fast.
+  aarch64-smoke:
+    name: aarch64 smoke (qemu)
+    needs: cross
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+      - name: Install cross
+        run: cargo install cross --locked
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-cross-aarch64-smoke-${{ runner.os }}
+          cache-on-failure: true
+      - name: Register qemu binfmt
+        run: docker run --privileged --rm tonistiigi/binfmt --install all
+      - name: Smoke aarch64 binary
+        run: cross run --release --features release --target aarch64-unknown-linux-gnu --bin conproxy -- --version
+
+  # Build + publish multi-arch container image to GHCR.
+  # linux/amd64 (host) + linux/arm64 (qemu buildx).
+  # Tag-only by default; dispatch skips to keep manual runs fast.
+  container:
+    name: container (${{ matrix.platform }})
+    needs: release-gate
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            description: x86_64
+          - platform: linux/arm64
+            description: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set VERSION from tag
+        id: v
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build + push (per arch, multi-arch manifest assembled in publish job)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-${{ matrix.platform }}
+          labels: |
+            org.opencontainers.image.title=conproxy
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.v.outputs.VERSION }}
+          cache-from: type=gha,scope=container-${{ matrix.platform }}
+          cache-to: type=gha,scope=container-${{ matrix.platform }},mode=max
+      - name: Smoke amd64 image
+        if: matrix.platform == 'linux/amd64'
+        run: |
+          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/amd64 --version
+          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/amd64 --help 2>&1 | head -20
+
+  # Assemble the multi-arch manifest + re-tag with the version-only
+  # tags. Runs once per tag after every per-arch image is pushed.
+  container-publish:
+    name: container (manifest)
+    needs: container
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set VERSION from tag
+        id: v
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create + push multi-arch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }} \
+            --tag ${{ env.REGISTRY_IMAGE }}:v${{ steps.v.outputs.VERSION }} \
+            --tag ${{ env.REGISTRY_IMAGE }}:latest \
+            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/amd64 \
+            ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux/arm64
+      - name: Inspect manifest
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}
+
+  # Build + publish the Helm chart as an OCI artifact on GHCR.
+  # Also stages the .tgz so github-release can attach it.
+  helm:
+    name: helm
+    needs: release-gate
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set VERSION from tag
+        id: v
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Install helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - name: Stamp chart version + appVersion
+        working-directory: deploy/helm/conproxy
+        run: |
+          VERSION=${{ steps.v.outputs.VERSION }}
+          sed -i.bak -E "s/^version:.*/version: ${VERSION}/" Chart.yaml
+          sed -i.bak -E 's/^appVersion:.*/appVersion: "'"${VERSION}"'"/' Chart.yaml
+          rm -f Chart.yaml.bak
+          cat Chart.yaml
+      - name: helm lint
+        working-directory: deploy/helm/conproxy
+        run: helm lint .
+      - name: helm template (smoke)
+        working-directory: deploy/helm/conproxy
+        run: |
+          helm template test . --set hostIP=127.0.0.1 > /tmp/rendered.yaml
+          echo "--- rendered ---"; head -30 /tmp/rendered.yaml
+      - name: helm package
+        working-directory: deploy/helm/conproxy
+        run: |
+          helm package . --version ${{ steps.v.outputs.VERSION }} \
+            --app-version ${{ steps.v.outputs.VERSION }} -d dist/
+          ls -la dist/
+      - name: Log in to GHCR (helm)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username ${{ github.actor }} --password-stdin
+      - name: helm push (OCI)
+        working-directory: deploy/helm/conproxy
+        run: |
+          helm push dist/conproxy-${{ steps.v.outputs.VERSION }}.tgz ${{ env.HELM_OCI }}
+      - name: Upload chart artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: conproxy-chart
+          path: deploy/helm/conproxy/dist/conproxy-${{ steps.v.outputs.VERSION }}.tgz
+          if-no-files-found: error
+          retention-days: 30
+
+  # Create the GitHub Release and attach cross binaries + chart .tgz.
+  github-release:
+    name: github-release
+    needs: [cross, helm, container-publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: List artifacts
+        run: find artifacts -maxdepth 3 -type f | sort
+      - name: Set VERSION
+        id: v
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Create release + attach assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## conproxy ${{ steps.v.outputs.VERSION }}
+
+            Install:
+
+            ```bash
+            # cargo (binary)
+            cargo install --git https://github.com/${{ github.repository }} \
+              --tag ${{ github.ref_name }} --locked --features release
+
+            # docker (multi-arch: amd64 + arm64)
+            docker pull ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}
+
+            # helm (OCI)
+            helm install conproxy ${{ env.HELM_OCI }}/conproxy \
+              --version ${{ steps.v.outputs.VERSION }}
+            ```
+          files: |
+            artifacts/conproxy-x86_64-unknown-linux-musl/conproxy
+            artifacts/conproxy-aarch64-unknown-linux-gnu/conproxy
+            artifacts/conproxy-chart/conproxy-${{ steps.v.outputs.VERSION }}.tgz
+          fail_on_unmatched_files: false

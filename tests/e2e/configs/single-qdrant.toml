@@ -1,0 +1,11 @@
+[proxy]
+listen = "127.0.0.1:8080"
+
+[[proxy.upstreams]]
+id = "qdrant"
+url = "http://localhost:6333"
+upstream_type = "qdrant"
+index = "conproxy_test"
+weight = 1
+priority = 0
+enabled = true

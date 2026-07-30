@@ -1,0 +1,272 @@
+# conproxy CI — Tier-2 + PR release gate.
+#
+# Runs on every PR and push to the default branch. Verifies:
+#   1. Format (cargo fmt --check)
+#   2. Lint (clippy -D warnings across all feature surfaces + bins)
+#   3. Unit tests (lib, default + embed-api + mcp + release features)
+#   4. Workspace build (catches sdk/python proto breakage)
+#   5. Embed linker (ort deps, hard gate)
+#   6. MCP integration tests
+#   7. E2E proxy tests against the release bundle (release,e2e)
+#   8. PR release gate (release-feature clippy + tests + binary smoke
+#      + workspace release build + install simulation). Mirrors the
+#      GitHub-installable artifact users get from `cargo install`.
+#
+# Heavy Tier-3 steps (cross-compile, PGO, DHAT, benches, full ignored
+# e2e) live in `.github/workflows/release.yml` and run on tag /
+# workflow_dispatch only. See AGENTS.md §"Tier 3".
+#
+# Cache strategy:
+#   - Swatinem/rust-cache@v2 on every cargo job.
+#   - `shared-key: "ci-<job>-<os>"` so cache keys are stable across matrix
+#     renames but isolated per feature surface (different feature graphs
+#     must not share a registry).
+#   - `cache-on-failure: true` so a failing build still leaves a warm
+#     cache for the next attempt.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt -- --check
+
+  lint:
+    name: clippy (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: lib default
+            cmd: cargo clippy --lib -- -D warnings
+          - name: lib embed-api
+            cmd: cargo clippy --features embed-api --lib -- -D warnings
+          - name: lib persistence
+            cmd: cargo clippy --features persistence --lib -- -D warnings
+          - name: lib mcp
+            cmd: cargo clippy --features mcp --lib -- -D warnings
+          - name: lib pgvector
+            cmd: cargo clippy --features pgvector --lib -- -D warnings
+          - name: lib linux-sandbox
+            cmd: cargo clippy --features linux-sandbox --lib -- -D warnings
+          - name: bin perf_summarize
+            cmd: cargo clippy --bin perf_summarize -- -D warnings
+          - name: bin conproxy (tokio-console)
+            cmd: cargo clippy --features tokio-console --bin conproxy -- -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-lint-${{ runner.os }}
+          cache-on-failure: true
+      - run: ${{ matrix.cmd }}
+
+  test:
+    name: test (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: lib default
+            cmd: cargo test --lib
+          - name: lib embed-api
+            cmd: cargo test --features embed-api --lib
+          - name: lib mcp
+            cmd: cargo test --features mcp --lib
+          - name: lib release meta
+            cmd: cargo test --features release --lib
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-test-${{ runner.os }}
+          cache-on-failure: true
+      - run: ${{ matrix.cmd }}
+
+  build-workspace:
+    name: build --workspace
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-build-workspace-${{ runner.os }}
+          cache-on-failure: true
+      - run: cargo build --workspace
+
+  build-embed:
+    name: build --features embed
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-build-embed-${{ runner.os }}
+          cache-on-failure: true
+      - run: cargo build --features embed --lib
+
+  mcp-test:
+    name: mcp_test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-mcp-test-${{ runner.os }}
+          cache-on-failure: true
+      - run: cargo test --features mcp --test mcp_test
+
+  e2e:
+    name: e2e (release bundle)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      qdrant:
+        image: qdrant/qdrant
+        ports:
+          - 6333:6333
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: false
+        ports:
+          - 9200:9200
+      opensearch:
+        image: opensearchproject/opensearch:2.14.0
+        env:
+          discovery.type: single-node
+          DISABLE_SECURITY_PLUGIN: true
+          DISABLE_INSTALL_DEMO_CONFIG: true
+        ports:
+          - 9201:9200
+      meili1:
+        image: getmeili/meilisearch:v1.9
+        env:
+          MEILI_MASTER_KEY: conproxy_test_key
+        ports:
+          - 7700:7700
+      meili2:
+        image: getmeili/meilisearch:v1.9
+        env:
+          MEILI_MASTER_KEY: conproxy_test_key
+        ports:
+          - 7701:7700
+      pgvector:
+        image: ankane/pgvector:v0.5.1
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: conproxy_test
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-e2e-${{ runner.os }}
+          cache-on-failure: true
+      - name: Wait for backends
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:6333/readyz >/dev/null 2>&1 && break || true
+            sleep 2
+          done
+      # Run e2e against the release bundle so this matches what `cargo install`
+      # users actually get. Avoids the duplicate `cargo build --features e2e`
+      # in the release-gate job.
+      - run: cargo test --features "release,e2e" --tests
+
+  # PR release gate — must pass on every PR + default branch push.
+  # Mirrors the GitHub-installable artifact users get from
+  # `cargo install --git ... --features release`. Heavy Tier-3 work
+  # (cross-compile, PGO, DHAT, benches, ignored e2e) lives in
+  # `.github/workflows/release.yml` and runs on tag / workflow_dispatch.
+  release-gate:
+    name: release-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protoc + python3-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler python3-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-release-gate-${{ runner.os }}
+          cache-on-failure: true
+      - name: Lint (release meta)
+        run: cargo clippy --features release --lib -- -D warnings
+      - name: Test (release meta)
+        run: cargo test --features release --lib
+      - name: Build + smoke shipped binary
+        run: |
+          cargo build --release --features release --bin conproxy
+          ./target/release/conproxy --version
+          ./target/release/conproxy --help 2>&1 | head -40
+      - name: Workspace release build (catches sdk breakage)
+        run: cargo build --workspace --release --features release
+      - name: MCP test on release bundle
+        run: cargo test --features release --test mcp_test
+      - name: Install simulation (isolated --root)
+        run: |
+          cargo install --locked --path . --features release --root /tmp/conproxy-install
+          /tmp/conproxy-install/bin/conproxy --version
+          rm -rf /tmp/conproxy-install
+      - name: Known-gaps inventory
+        continue-on-error: true
+        run: make audit-known-gaps

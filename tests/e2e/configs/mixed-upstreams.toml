@@ -1,0 +1,21 @@
+[proxy]
+listen = "127.0.0.1:8080"
+
+[[proxy.upstreams]]
+id = "qdrant"
+url = "http://localhost:6333"
+upstream_type = "qdrant"
+index = "conproxy_test"
+weight = 1
+priority = 0
+enabled = true
+
+[[proxy.upstreams]]
+id = "meili"
+url = "http://localhost:7700"
+upstream_type = "meilisearch"
+index = "conproxy_test"
+api_key = "conproxy_test_key"
+weight = 1
+priority = 0
+enabled = true

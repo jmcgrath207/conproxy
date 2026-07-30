@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conproxy Dashboard</title>
+  <link rel="stylesheet" href="/dashboard/style.css">
+</head>
+<body>
+  <header>
+    <h1>Conproxy</h1>
+    <nav id="nav">
+      <a href="#" data-panel="overview" class="active">Overview</a>
+      <a href="#" data-panel="cache">Cache</a>
+      <a href="#" data-panel="pool">Pool</a>
+      <a href="#" data-panel="circuit">Circuit/Queue</a>
+      <a href="#" data-panel="metrics">Metrics</a>
+      <a href="#" data-panel="contexts">Contexts</a>
+      <a href="#" data-panel="peer">Peer</a>
+      <a href="#" data-panel="tokio">Tokio</a>
+    </nav>
+    <span id="status-dot" title="Loading..."></span>
+  </header>
+
+  <main id="panels">
+    <!-- Overview -->
+    <section id="panel-overview" class="panel active">
+      <h2>Overview</h2>
+      <div class="cards" id="overview-cards"></div>
+    </section>
+
+    <!-- Cache -->
+    <section id="panel-cache" class="panel">
+      <h2>Cache</h2>
+      <div class="cards" id="cache-cards"></div>
+      <h3>Upstreams</h3>
+      <table id="cache-upstreams-table"><thead><tr><th>ID</th><th>Status</th><th>Requests</th><th>Failures</th><th>Failure Rate</th></tr></thead><tbody></tbody></table>
+      <h3>Integrity</h3>
+      <pre id="cache-integrity"></pre>
+    </section>
+
+    <!-- Pool -->
+    <section id="panel-pool" class="panel">
+      <h2>Connection Pool</h2>
+      <pre id="pool-data"></pre>
+    </section>
+
+    <!-- Circuit / Queue -->
+    <section id="panel-circuit" class="panel">
+      <h2>Circuit Breaker</h2>
+      <pre id="circuit-data"></pre>
+      <h2>Request Queue</h2>
+      <pre id="queue-data"></pre>
+    </section>
+
+    <!-- Metrics -->
+    <section id="panel-metrics" class="panel">
+      <h2>Metrics</h2>
+      <div class="cards" id="metrics-cards"></div>
+      <h3>Query Stats</h3>
+      <table id="query-stats-table"><thead><tr><th>Query</th><th>Count</th><th>Hits</th><th>Misses</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <!-- Contexts -->
+    <section id="panel-contexts" class="panel">
+      <h2>Contexts</h2>
+      <div id="current-context"></div>
+      <h3>All Contexts</h3>
+      <div id="contexts-list"></div>
+    </section>
+
+    <!-- Peer -->
+    <section id="panel-peer" class="panel">
+      <h2>Peer Status</h2>
+      <pre id="peer-data"></pre>
+    </section>
+
+    <!-- Tokio -->
+    <section id="panel-tokio" class="panel">
+      <h2>Tokio Runtime</h2>
+      <pre id="tokio-data"></pre>
+    </section>
+  </main>
+
+  <footer>conproxy dashboard &mdash; read-only</footer>
+  <script src="/dashboard/app.js"></script>
+</body>
+</html>

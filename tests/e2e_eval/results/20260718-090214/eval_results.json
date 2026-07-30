@@ -1,0 +1,238 @@
+{
+  "comparison": {
+    "best_confidence": "0.359",
+    "best_confidence_vertical": "no_context",
+    "best_time_avg_ms": 11723,
+    "best_time_vertical": "mcp_tools",
+    "worst_vertical": "mcp_tools"
+  },
+  "duration_secs": 0,
+  "model": "auto",
+  "strategy_matrix": {
+    "cascade": {
+      "mcp_tools": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    },
+    "fts": {
+      "mcp_tools": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    },
+    "vector": {
+      "mcp_tools": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    }
+  },
+  "timestamp": "2026-07-18 14:03:18 UTC",
+  "type": "eval",
+  "verticals": [
+    {
+      "avg_confidence": "0.359",
+      "avg_response_time_ms": 19867,
+      "failed_queries": 0,
+      "name": "no_context",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.412",
+              "doc_id": "doc-001",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:3/4",
+                "tag:async",
+                "tag:tokio",
+                "tag:runtime",
+                "term:tokio",
+                "term:async",
+                "term:applications",
+                "term:runtime"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-fts-1",
+          "query_text": "Tokio async runtime scheduler",
+          "recall": "1.000",
+          "response_text": "1. **Dependency Injection**: The dependency injection (DI) pattern is a design pattern in which an object relies on other objects rather than being a subject of their own creation. It allows for code reuse and facilitates the creation of complex, object-oriented systems.\n\n2. **Event Loop**: An event loop is a programming mechanism that waits for events such as timer intervals or user input to occur. It processes these events and performs the appropriate actions.\n\n3. **C++11**: C++11 introduced several features that improved the performance and usability of the C++ runtime environment, including the introduction of the `async` and `async_await` keywords, the `async_return` function, and the `async` function.\n\n4. **Future**: A future represents an asynchronous operation that returns a result. It is an object that represents the result of an asynchronous operation.\n\n5. **Task Parallel Library (TPL)**: The TPL is a library for parallel programming that allows developers to write parallel code that can be executed on multiple threads or processes simultaneously.\n\n6. **Timer Intervals**: Timer intervals are used to schedule asynchronous operations, such as tasks, threads, or coroutines, to run at specific times. The interval is typically defined in milliseconds or microseconds.\n\n7. **Event-Driven Programming**: Event-driven programming is a programming paradigm in which the program is controlled by events, such as timer intervals or user input. It allows for more responsive and dynamic behavior.\n\n8. **Synchronization Primitives**: Synchronization primitives, such as locks and atomic operations, are used to manage shared resources and prevent concurrent access to them.\n\n9. **Native C++ Code**: The native C++ code is the code that is compiled to native code by a C++ compiler (such as GCC). This code is executed directly by the underlying operating system.\n\n10. **Async/Await**: Async/await is a programming pattern that allows asynchronous code to be executed in a synchronous manner. It is used to handle asynchronous operations that can take a significant amount of time to complete.\n\nBy implementing the above concepts, the Tokio async runtime scheduler can be utilized to create asynchronous applications that are scalable, responsive, and efficient.",
+          "response_time_ms": 20433,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.310",
+              "doc_id": "doc-004",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:2/3",
+                "tag:vector",
+                "tag:embeddings",
+                "term:high-dimensional",
+                "term:vector",
+                "term:similarity",
+                "term:systems",
+                "term:cosine"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-vector-1",
+          "query_text": "similarity search over high-dimensional embeddings",
+          "recall": "1.000",
+          "response_text": "The similarity search over high-dimensional embeddings is a technique used in natural language processing and information retrieval systems. Here are the technical details:\n\n**Technique:**\nThe similarity search over high-dimensional embeddings is a technique that compares the similarity between a given input document or query and the top-k most similar documents in a high-dimensional vector space. This is done using the cosine similarity formula, which calculates the similarity between two vectors as the cosine of the angle between them. The similarity score is then normalized by the maximum possible value to obtain a similarity score for each document. The similarity score is used to identify documents that are similar to the given query, and the top-k most similar documents are returned as the results.\n\n**Methodology:**\nThe similarity search over high-dimensional embeddings is performed using a combination of dimensionality reduction techniques and machine learning algorithms. One common method is to use the K-Nearest Neighbors (KNN) algorithm, which calculates the similarity between each document and all other documents in the training dataset. The most similar documents are then selected to form a K-nearest neighbors set. The similarity score between each document and the K-nearest neighbors is calculated using the cosine similarity formula. The top-k most similar documents are then selected as the results of the similarity search.\n\n**Hardware and Software:**\nThe similarity search over high-dimensional embeddings is performed on a wide range of hardware and software platforms, including large-scale distributed computing systems, cloud computing platforms, and specialized hardware devices. For example, Google's Cloud AI Platform provides an SDK for Python to perform similarity search over high-dimensional embeddings, while Amazon's SageMaker platform provides a framework for building and deploying machine learning models.\n\n**Implementation:**\nThe implementation of the similarity search over high-dimensional embeddings typically involves the following steps:\n\n1. Pre-processing: The input data is pre-processed to reduce the dimensionality of the data, such as through PCA or t-SNE.\n2. Feature extraction: The data is extracted from the pre-processed data to obtain the high-dimensional representation of the data.\n3. K-Nearest Neighbors algorithm: The similarity score is calculated using the cosine similarity formula for each document to form a K-nearest neighbors set.\n4. Top-k selection: The K-nearest neighbors are selected as the top-k most similar documents.\n5. Similarity search: The similarity score between the input document and the top-k most similar documents is calculated using the cosine similarity formula.\n\n**Datasets:**\nThe similarity search over high-dimensional embeddings is typically performed on large datasets, such as labeled documents or large-scale text corpora. Examples of datasets include:\n\n* Word embeddings: Word embeddings, such as Word2Vec and GloVe, are used to represent words as dense vectors in a high-dimensional space.\n* Text documents: Text documents, such as articles and books, are used to perform similarity search over high-dimensional embeddings.\n* Machine learning datasets: Machine learning datasets, such as ImageNet and Stanford Question Answering Dataset, are used to perform similarity search over high-dimensional embeddings.\n\n**Conclusion:**\nThe similarity search over high-dimensional embeddings is a powerful technique used in natural language processing and information retrieval systems to identify documents that are similar to a given query. The technique is performed using a combination of dimensionality reduction techniques and machine learning algorithms, such as the K-Nearest Neighbors (KNN) algorithm. The implementation of the similarity search over high-dimensional embeddings typically involves the use of large-scale distributed computing systems, cloud computing platforms, and specialized hardware devices.",
+          "response_time_ms": 31614,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.354",
+              "doc_id": "doc-002",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:2/3",
+                "tag:meilisearch",
+                "tag:search",
+                "term:tolerance",
+                "term:engine",
+                "term:ranking",
+                "term:typo"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-cascade-1",
+          "query_text": "Meilisearch typo tolerance ranking",
+          "recall": "1.000",
+          "response_text": "Meilisearch typo tolerance ranking is a feature in Meilisearch that allows users to customize the tolerance values for different types of typos. Here's how it works:\n\n1. The Meilisearch engine can be configured to use different tolerance values for different types of typos, such as \"exact\", \"close enough\", \"no change\", \"minimal change\", \"maximal change\", \"exact matching\", and \"no matching\".\n\n2. When a typo is detected, Meilisearch checks the type of typo and its corresponding tolerance value. For example, \"exact\" typos are penalized by a small increase in the matching percentage.\n\n3. Meilisearch then adjusts the matching percentage based on the type of typo and the tolerance value. If a typo is a \"exact\" match, the matching percentage will be adjusted to match the default value. If a typo is a \"close enough\" match, the matching percentage will be adjusted to the default value, but the actual matching percentage will be slightly lower due to the tolerance.\n\n4. The user can then view the ranking of the typos based on their tolerance values, with \"exact\" typos being the top tier and \"no matching\" typos being the lowest.\n\nBy adjusting the tolerance values, users can tailor Meilisearch to their specific needs and preferences. For example, a user may want to focus on typos with a low matching percentage, while another user may prefer to focus on typos with a high matching percentage.",
+          "response_time_ms": 7553,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "7.55",
+      "time_p95_secs": "30.50",
+      "time_p97_secs": "30.94",
+      "time_p99_secs": "31.39",
+      "timed_out_queries": 0,
+      "total_recall": "1.000"
+    },
+    {
+      "avg_confidence": "0.103",
+      "avg_response_time_ms": 11723,
+      "failed_queries": 0,
+      "name": "mcp_tools",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.286",
+              "doc_id": "doc-005",
+              "matched": false,
+              "matched_terms": [
+                "phrase:Cache-Control ETag",
+                "tag:http",
+                "tag:cache",
+                "tag:headers",
+                "term:headers",
+                "term:vary"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-fts-2",
+          "query_text": "Cache-Control ETag header freshness",
+          "recall": "0.000",
+          "response_text": "To find relevant documents using the cache-control ETag header freshness, I would use the following command:\n\n```bash\ncurl -H \"Cache-Control: max-age=3600\" -H \"ETag: 1\" -H \"Content-Type: application/json\" http://my-service.com/api/documents\n```\n\nIn this command:\n\n- `curl` is the client tool for curl.\n- `-H` is a syntax used in curl commands to set headers. In this case, we're setting the cache-control header to `max-age=3600`. This means the document will expire after 1 hour.\n- `-H \"ETag: 1\"` sets the ETag header to `1`.\n- `-H \"Content-Type: application/json\"` sets the Content-Type header to `application/json`, allowing us to pass JSON data as the response.\n- `http://my-service.com/api/documents` specifies the endpoint we're trying to reach.\n\nOnce we run this command, the cache-control header will be updated to `max-age=3600` and the ETag header set to `1`. This indicates that the document has been aged and is now fresh.\n\nNote: The exact format of the JSON response may vary based on the specific endpoint, but the basic syntax should remain the same.",
+          "response_time_ms": 12918,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.024",
+              "doc_id": "doc-003",
+              "matched": false,
+              "matched_terms": [
+                "term:eviction"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-vector-2",
+          "query_text": "in-memory data store with TTL eviction",
+          "recall": "0.000",
+          "response_text": "To find relevant documents in a in-memory data store with TTL eviction, you can use the following conproxy tools:\n\n1. conproxy_search: This command provides a search interface for searching in-memory data stores. It can be used to find relevant documents and retrieve specific information.\n\n2. conproxy_search_by_id: This command can be used to search for documents by their unique identifiers.\n\n3. conproxy_search_by_id_and_authority: This command can be used to search for documents that match both their unique identifiers and a specific authority.\n\nHere are some examples of using these commands to find relevant documents in an in-memory data store with TTL eviction:\n\n```\n# Search for documents by their unique identifier\nconproxy_search_by_id 12345\n\n# Search for documents that match their unique identifier and a specific authority\nconproxy_search_by_id_and_authority 12345 abc\n```\n\nTo retrieve specific information from a document, you can use the `doc` command. Here's an example:\n\n```\n# Retrieve the title of a document\ndoc 12345\n```\n\nTo retrieve the author of a document, you can use the `author` command:\n\n```\n# Retrieve the author of a document\nauthor 12345\n```\n\nTo retrieve a list of documents that match a specific search criteria, you can use the `search` command:\n\n```\n# Search for documents that match a specific search criteria\nsearch -d 12345 -t 12345 -a \"abc\"\n```\n\nTo get the TTL of a document, you can use the `ttl` command:\n\n```\n# Get the TTL of a document\nttl 12345\n```\n\nTo verify the existence of a document, you can use the `exists` command:\n\n```\n# Verify if a document exists\nexists 12345\n```",
+          "response_time_ms": 20438,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "doc-006",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-cascade-2",
+          "query_text": "Result enum pattern matching errors",
+          "recall": "0.000",
+          "response_text": "Sorry for the misunderstanding, but I don't have access to the conproxy MCP tools mentioned in your question. I'm here to help you find relevant documents and answer with specific technical details.",
+          "response_time_ms": 1812,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "1.81",
+      "time_p95_secs": "19.69",
+      "time_p97_secs": "19.99",
+      "time_p99_secs": "20.29",
+      "timed_out_queries": 0,
+      "total_recall": "0.000"
+    }
+  ]
+}

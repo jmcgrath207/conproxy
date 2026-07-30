@@ -1,0 +1,74 @@
+{
+  "documents": [
+    {
+      "id": "doc-001",
+      "title": "Rust async tokio runtime",
+      "content": "Tokio is an async runtime for the Rust programming language, providing the building blocks for writing network applications. It offers a multi-threaded work-stealing scheduler and supports both TCP and UDP protocols.",
+      "category": "rust",
+      "tags": ["async", "tokio", "runtime"]
+    },
+    {
+      "id": "doc-002",
+      "title": "Meilisearch full-text search",
+      "content": "Meilisearch is a lightweight, fast, and open-source search engine that delivers instant and relevant search results out of the box. It uses BM25-like ranking and supports typo tolerance, filters, and faceting.",
+      "category": "search",
+      "tags": ["meilisearch", "search", "fts"]
+    },
+    {
+      "id": "doc-003",
+      "title": "Caching strategies in distributed systems",
+      "content": "Distributed caches reduce latency and backend load. Strategies include read-through, write-through, write-behind, and cache-aside. TTL and eviction policies determine freshness versus memory pressure.",
+      "category": "caching",
+      "tags": ["cache", "distributed", "performance"]
+    },
+    {
+      "id": "doc-004",
+      "title": "Vector databases for embeddings",
+      "content": "Vector databases like Qdrant, Pinecone, and Milvus store high-dimensional embeddings and enable similarity search using cosine distance, dot product, or Euclidean distance. They power modern RAG and recommendation systems.",
+      "category": "vector",
+      "tags": ["vector", "embeddings", "rag"]
+    },
+    {
+      "id": "doc-005",
+      "title": "HTTP caching headers explained",
+      "content": "Cache-Control, ETag, Last-Modified, and Vary headers control how HTTP responses are cached by browsers and CDNs. Cache-Control: max-age=N sets freshness in seconds. Must-revalidate forces rechecking stale entries.",
+      "category": "caching",
+      "tags": ["http", "cache", "headers"]
+    },
+    {
+      "id": "doc-006",
+      "title": "Rust error handling with Result",
+      "content": "Rust uses Result<T, E> for recoverable errors and panic! for unrecoverable ones. The ? operator propagates errors up the call stack. anyhow::Result is a common choice for application code; thiserror for library code.",
+      "category": "rust",
+      "tags": ["rust", "errors", "result"]
+    },
+    {
+      "id": "doc-007",
+      "title": "PostgreSQL pgvector extension",
+      "content": "pgvector is a PostgreSQL extension for vector similarity search. It supports exact nearest neighbor search via ORDER BY embedding <-> query, and approximate search using ivfflat or hnsw indexes.",
+      "category": "vector",
+      "tags": ["postgres", "pgvector", "sql"]
+    },
+    {
+      "id": "doc-008",
+      "title": "gRPC and Protocol Buffers",
+      "content": "gRPC is a high-performance RPC framework that uses HTTP/2 for transport and Protocol Buffers for serialization. It supports streaming, deadlines, cancellation, and bidirectional communication.",
+      "category": "rpc",
+      "tags": ["grpc", "protobuf", "rpc"]
+    },
+    {
+      "id": "doc-009",
+      "title": "BM25 ranking algorithm",
+      "content": "BM25 (Best Matching 25) is a probabilistic ranking function used by search engines to score document relevance. It considers term frequency, document length, and inverse document frequency across a corpus.",
+      "category": "search",
+      "tags": ["bm25", "ranking", "search"]
+    },
+    {
+      "id": "doc-010",
+      "title": "Docker multi-stage builds",
+      "content": "Multi-stage Docker builds use multiple FROM statements in a single Dockerfile to compile artifacts in one stage and copy only the necessary binaries to a smaller runtime image. This dramatically reduces final image size.",
+      "category": "devops",
+      "tags": ["docker", "build", "containers"]
+    }
+  ]
+}

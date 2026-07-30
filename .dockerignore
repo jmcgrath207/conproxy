@@ -1,0 +1,46 @@
+# Cargo build artifacts.
+target/
+**/target/
+
+# VCS.
+.git/
+.gitignore
+.github/
+
+# Editor / OS noise.
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*~
+*.log
+
+# Test output / coverage.
+coverage/
+*.profraw
+*.profdata
+dhat-heap.json
+.criterion/
+
+# Runtime state.
+.conproxy/
+*.pid
+
+# Rust-lang-related: only need the workspace manifest + src for a conproxy build.
+benches/
+docs/
+examples/
+tests/
+results/
+*.md
+!README.md
+!LICENSE
+!CHANGELOG.md
+
+# Build assets we don't need in the image.
+.dockerignore
+Dockerfile
+Cross.toml
+AGENTS.md
+.opencode/
+.skill/

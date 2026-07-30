@@ -1,0 +1,83 @@
+# Perf regression gate.
+#
+# How it works:
+#   - The criterion baseline (target/criterion/**/main/) is refreshed on every
+#     push to the default branch via `make bench-save`, and persisted with
+#     actions/cache.
+#   - Pull requests restore that baseline and run `make perf-tuning-quick`,
+#     which benches core_ops + cascade_scope and invokes perf_summarize with
+#     --fail-on-regression: any bench whose 95% CI lower bound regresses by
+#     >= 15% exits non-zero and fails the job.
+#
+# Bench noise note: CI runners are shared/noisy. The 15% + CI-bound verdict is
+# deliberately conservative; a FAIL should first be reproduced locally with
+# `make perf-tuning-quick` before treating it as real.
+name: perf
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # build.rs runs tonic_prost_build; the Ubuntu runner image does not
+      # ship protoc, so install it before any cargo invocation.
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+
+      # Cargo dep + build cache (separate from the criterion baseline cache).
+      # Cache key is stable across matrix renames but isolated from ci.yml's
+      # cache to avoid cross-job contamination.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: perf-bench-${{ runner.os }}
+          cache-on-failure: true
+
+      # Criterion baseline cache: PRs restore-only from the latest
+      # default-branch push; default-branch pushes refresh the cache. The
+      # restore/save split avoids the "PR saves stale copy-of-a-copy" foot-gun
+      # where later PRs would restore a PR-saved cache instead of the real
+      # main-branch baseline.
+      - name: Restore criterion baseline (PRs only)
+        if: github.event_name == 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: target/criterion
+          key: criterion-baseline-master
+          restore-keys: |
+            criterion-baseline-master
+
+      - name: Save criterion baseline (default branch only)
+        if: github.event_name == 'push'
+        uses: actions/cache/save@v4
+        with:
+          path: target/criterion
+          key: criterion-baseline-master
+
+      - name: Run benches + refresh baseline (default branch)
+        if: github.event_name == 'push'
+        run: make bench-save
+
+      - name: Perf regression gate (PR)
+        if: github.event_name == 'pull_request'
+        run: make perf-tuning-quick
+
+      - name: Upload perf results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-tuning-results
+          path: tests/results/perf-tuning/
+          if-no-files-found: ignore
+          retention-days: 14

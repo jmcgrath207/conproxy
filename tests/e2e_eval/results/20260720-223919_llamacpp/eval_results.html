@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conpack E2E Eval Results</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --fg: #e6edf3;
+          --fg2: #8b949e; --green: #3fb950; --red: #f85149; --yellow: #d29922;
+          --blue: #58a6ff; --purple: #bc8cff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+         background: var(--bg); color: var(--fg); padding: 2rem; line-height: 1.5; }
+  h1 { font-size: 1.6rem; margin-bottom: .3rem; }
+  .subtitle { color: var(--fg2); font-size: .85rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.15rem; margin: 1.8rem 0 .8rem; color: var(--blue); }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.2rem; }
+  th, td { padding: .55rem .75rem; text-align: left; border: 1px solid var(--border); }
+  th { background: var(--surface); font-weight: 600; font-size: .85rem; color: var(--fg2); }
+  td { font-size: .85rem; }
+  tr:hover td { background: #1c2333; }
+  .best { background: #0d2818; }
+  .worst { background: #2d1114; }
+  .pass { color: var(--green); font-weight: 600; }
+  .fail { color: var(--red); font-weight: 600; }
+  .timeout { color: var(--yellow); font-weight: 600; }
+  .conf-high { color: var(--green); }
+  .conf-mid { color: var(--yellow); }
+  .conf-low { color: var(--red); }
+  .badge { display: inline-block; padding: .15rem .5rem; border-radius: 3px;
+           font-size: .75rem; font-weight: 600; }
+  .badge-best { background: #0d2818; color: var(--green); border: 1px solid var(--green); }
+  .badge-fast { background: #0d1b2a; color: var(--blue); border: 1px solid var(--blue); }
+  .badge-worst { background: #2d1114; color: var(--red); border: 1px solid var(--red); }
+  .bar-cell { position: relative; }
+  .bar { position: absolute; top: 0; left: 0; bottom: 0; opacity: .15; border-radius: 2px; }
+  .bar-green { background: var(--green); }
+  .bar-red { background: var(--red); }
+  .bar-yellow { background: var(--yellow); }
+  .bar-label { position: relative; z-index: 1; }
+  details { margin: .4rem 0; }
+  summary { cursor: pointer; font-size: .8rem; color: var(--fg2); padding: .2rem 0; }
+  summary:hover { color: var(--fg); }
+  .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+  .tag { font-size: .7rem; padding: .1rem .4rem; border-radius: 3px;
+         background: var(--surface); border: 1px solid var(--border); color: var(--fg2); }
+  .tag-phrase { border-color: var(--purple); color: var(--purple); }
+  .tag-title { border-color: var(--blue); color: var(--blue); }
+  .tag-tag { border-color: var(--green); color: var(--green); }
+  .query-text { color: var(--fg2); font-size: .8rem; font-style: italic; display: block;
+                margin-top: .2rem; max-width: 60ch; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+          padding: 1rem 1.2rem; margin-bottom: 1rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .metric-val { font-size: 1.8rem; font-weight: 700; }
+  .metric-label { font-size: .75rem; color: var(--fg2); text-transform: uppercase; letter-spacing: .05em; }
+  .response-section { margin-top: .6rem; }
+  .response-label { font-size: .75rem; font-weight: 600; color: var(--fg2); text-transform: uppercase;
+                     letter-spacing: .05em; margin-bottom: .3rem; }
+  .response-box { background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+                  padding: .6rem .8rem; font-size: .8rem; white-space: pre-wrap; word-break: break-word;
+                  max-height: 20rem; overflow-y: auto; line-height: 1.5; }
+  .response-box.expected { border-left: 3px solid var(--green); }
+  .response-box.agent { border-left: 3px solid var(--blue); }
+  .response-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .5rem; }
+  @media (max-width: 900px) { .response-grid { grid-template-columns: 1fr; } }
+  .no-response { color: var(--fg2); font-style: italic; font-size: .8rem; }
+</style>
+</head>
+<body>
+<h1>Conpack E2E Eval Results</h1>
+<p class="subtitle">Generated: 2026-07-21 03:39:57 UTC</p>
+<h2>Summary</h2>
+<div class="grid-2">
+<div class="card"><div class="metric-label">No Ctx <span class="badge badge-best">BEST CONFIDENCE</span> <span class="badge badge-fast">BEST TIME</span></div><div class="metric-val conf-mid">37.9%</div><div class="metric-label">confidence &nbsp;|&nbsp; pass rate: 100%</div><div class="metric-val conf-high">10.5s</div><div class="metric-label">avg time &nbsp;|&nbsp; p95: 12.2s &nbsp;|&nbsp; p99: 12.4s &nbsp;|&nbsp; best: 9.2s</div></div>
+<div class="card"><div class="metric-label">MCP Tools <span class="badge badge-worst">WORST</span></div><div class="metric-val conf-low">7.9%</div><div class="metric-label">confidence &nbsp;|&nbsp; pass rate: 0%</div><div class="metric-val conf-high">12.3s</div><div class="metric-label">avg time &nbsp;|&nbsp; p95: 18.4s &nbsp;|&nbsp; p99: 19.1s &nbsp;|&nbsp; best: 7.5s</div></div>
+</div>
+<h2>Comparison</h2>
+<table>
+<tr><th>Metric</th><th>No Ctx</th><th>MCP Tools</th></tr>
+<tr><td>Avg Confidence</td><td class="bar-cell best"><span class="bar bar-green" style="width:38%"></span><span class="bar-label">37.9%</span></td><td class="bar-cell worst"><span class="bar bar-green" style="width:8%"></span><span class="bar-label">7.9%</span></td></tr>
+<tr><td>Pass Rate</td><td class="pass">100%</td><td class="fail">0%</td></tr>
+<tr><td>Avg Time</td><td>10.5s</td><td>12.3s</td></tr>
+<tr><td>Time P95</td><td>12.2s</td><td>18.4s</td></tr>
+<tr><td>Time P97</td><td>12.3s</td><td>18.7s</td></tr>
+<tr><td>Time P99</td><td>12.4s</td><td>19.1s</td></tr>
+<tr><td>Best Time</td><td>9.2s</td><td>7.5s</td></tr>
+<tr><td>Success Rate</td><td>3/3</td><td>3/3</td></tr>
+<tr><td>Timeouts</td><td class="">0</td><td class="">0</td></tr>
+<tr><td>Errors</td><td class="">0</td><td class="">0</td></tr>
+</table>
+<h2>Coverage Matrix (Strategy × Vertical)</h2>
+<table>
+<tr><th>Strategy</th><th>No Ctx</th><th>MCP Tools</th></tr>
+<tr><td><strong>fts</strong></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td></tr>
+<tr><td><strong>vector</strong></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td></tr>
+<tr><td><strong>cascade</strong></td><td class="bar-cell pass"><span class="bar bar-green" style="width:100%"></span><span class="bar-label">100% (1/1)</span></td><td class="bar-cell fail"><span class="bar bar-red" style="width:0%"></span><span class="bar-label">0% (0/1)</span></td></tr>
+</table>
+<h2>Per-Strategy Recall</h2>
+<table>
+<tr><th>Strategy</th><th>No Ctx</th><th>MCP Tools</th></tr>
+<tr><td><strong>fts</strong></td><td class="pass">100% (1/1)</td><td class="fail">0% (0/1)</td></tr>
+<tr><td><strong>vector</strong></td><td class="pass">100% (1/1)</td><td class="fail">0% (0/1)</td></tr>
+<tr><td><strong>cascade</strong></td><td class="pass">100% (1/1)</td><td class="fail">0% (0/1)</td></tr>
+</table>
+<h2>Per-Query Confidence</h2>
+<table>
+<tr><th>Query</th><th>Strategy</th><th>No Ctx</th><th>MCP Tools</th></tr>
+<tr><td><strong>q-fts-1</strong><span class="query-text">Tokio async runtime scheduler</span></td><td class="conf-high">fts</td><td class="conf-mid">35%</td><td>-</td></tr>
+<tr><td><strong>q-vector-1</strong><span class="query-text">similarity search over high-dimensional embeddings</span></td><td class="" style="color: var(--purple)">vector</td><td class="conf-mid">43%</td><td>-</td></tr>
+<tr><td><strong>q-cascade-1</strong><span class="query-text">Meilisearch typo tolerance ranking</span></td><td class="" style="color: var(--blue)">cascade</td><td class="conf-mid">35%</td><td>-</td></tr>
+<tr><td><strong>q-fts-2</strong><span class="query-text">Cache-Control ETag header freshness</span></td><td class="conf-high">fts</td><td>-</td><td class="fail">14%</td></tr>
+<tr><td><strong>q-vector-2</strong><span class="query-text">in-memory data store with TTL eviction</span></td><td class="" style="color: var(--purple)">vector</td><td>-</td><td class="fail">10%</td></tr>
+<tr><td><strong>q-cascade-2</strong><span class="query-text">Result enum pattern matching errors</span></td><td class="" style="color: var(--blue)">cascade</td><td>-</td><td class="fail">0%</td></tr>
+</table>
+<h2>Query Details</h2>
+<details><summary><strong>q-fts-1</strong> <span class="tag" style="margin-left:.4rem">No Ctx</span> — Tokio async runtime scheduler</summary>
+<div class="response-section"><div class="response-label">Expected: doc-001 — Rust async tokio runtime</div><div class="response-box expected">Tokio is an async runtime for the Rust programming language, providing the building blocks for writing network applications. It offers a multi-threaded work-stealing scheduler and supports both TCP and UDP protocols.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>doc-001</td><td class="pass">YES</td><td class="conf-mid">0.354</td><td>9.2s</td><td><div class="tags"><span class="tag tag-title">title-partial:3/4</span><span class="tag tag-tag">tag:async</span><span class="tag tag-tag">tag:tokio</span><span class="tag tag-tag">tag:runtime</span><span class="tag">term:runtime</span><span class="tag">term:tokio</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details open><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">To create a Tokio async runtime scheduler for your project, you can follow these specific steps:
+
+1. Install the Tokio async runtime scheduler from the official GitHub repository:
+
+```bash
+npm install tokio-async @types/async-runtime-scheduler
+```
+
+2. Import the necessary modules in your JavaScript file:
+
+```javascript
+import { async } from '@types/async-runtime-scheduler';
+```
+
+3. Implement the scheduler function:
+
+```javascript
+async function main() {
+  const { getCount, getTasks, setTasks, startScheduling } = await async.runtimeScheduler;
+  const count = getCount();
+  const tasks = getTasks();
+
+  if (count &gt; 0) {
+    setTasks(tasks);
+  }
+
+  if (tasks.length &gt; 0) {
+    startScheduling();
+  }
+}
+```
+
+4. Test the scheduler function using a simple example:
+
+```javascript
+main();
+```
+
+This code snippet demonstrates how to use the async runtime scheduler to create a simple scheduler that runs tasks on a set schedule.</div>
+</details>
+</details>
+<details><summary><strong>q-vector-1</strong> <span class="tag" style="margin-left:.4rem">No Ctx</span> — similarity search over high-dimensional embeddings</summary>
+<div class="response-section"><div class="response-label">Expected: doc-004 — Vector databases for embeddings</div><div class="response-box expected">Vector databases like Qdrant, Pinecone, and Milvus store high-dimensional embeddings and enable similarity search using cosine distance, dot product, or Euclidean distance. They power modern RAG and recommendation systems.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>doc-004</td><td class="pass">YES</td><td class="conf-mid">0.429</td><td>10.0s</td><td><div class="tags"><span class="tag tag-title">title-partial:2/3</span><span class="tag tag-phrase">phrase:Euclidean distance</span><span class="tag tag-tag">tag:vector</span><span class="tag tag-tag">tag:embeddings</span><span class="tag">term:embeddings</span><span class="tag">term:euclidean</span><span class="tag">term:high-dimensional</span><span class="tag">term:similarity</span><span class="tag">term:product</span><span class="tag">term:vector</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details open><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">The similarity search over high-dimensional embeddings can be performed using various algorithms, including:
+
+1. K-Nearest Neighbors (KNN): This algorithm finds the most similar documents or points to a given point in the high-dimensional space. It works by finding the k most similar points to the given point and then returns the k most similar documents or points.
+
+2. Cosine Similarity: This algorithm measures the similarity between two vectors based on their dot product and the cosine of their angle. It is a widely used similarity measure and is useful for high-dimensional data.
+
+3. Distance-based Similarity Measures: These measures, such as Euclidean distance, Manhattan distance, and Minkowski distance, are used to compare vectors in high-dimensional spaces. These measures provide a quantitative measure of similarity between vectors, which is useful for high-dimensional data.
+
+4. Mutual Information: This algorithm measures the amount of information that one vector has about another. It is used in various applications, such as feature selection and dimensionality reduction.
+
+These algorithms can be used for similarity search over high-dimensional embeddings. For example, a KNN algorithm can be used to find the most similar documents in a high-dimensional space, while a cosine similarity algorithm can be used to compare two vectors and measure their similarity.</div>
+</details>
+</details>
+<details><summary><strong>q-cascade-1</strong> <span class="tag" style="margin-left:.4rem">No Ctx</span> — Meilisearch typo tolerance ranking</summary>
+<div class="response-section"><div class="response-label">Expected: doc-002 — Meilisearch full-text search</div><div class="response-box expected">Meilisearch is a lightweight, fast, and open-source search engine that delivers instant and relevant search results out of the box. It uses BM25-like ranking and supports typo tolerance, filters, and faceting.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>No Ctx</td><td>doc-002</td><td class="pass">YES</td><td class="conf-mid">0.354</td><td>12.4s</td><td><div class="tags"><span class="tag tag-title">title-partial:2/3</span><span class="tag tag-tag">tag:meilisearch</span><span class="tag tag-tag">tag:search</span><span class="tag">term:tolerance</span><span class="tag">term:results</span><span class="tag">term:meilisearch</span><span class="tag">term:ranking</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details open><summary>No Ctx — recall 100%</summary>
+<div class="response-box agent">Meilisearch is a web search engine that provides users with a search interface. Meilisearch typo tolerance ranking is a feature that allows users to adjust the type of characters to which search engines can search. This feature is designed to ensure that users get the most accurate results possible, by using alternative character variations that may be overlooked by conventional search engines.
+
+Meilisearch typo tolerance ranking is based on the following technical details:
+
+- Meilisearch uses a database of over 200 million web pages to provide users with accurate search results.
+- Meilisearch uses a search algorithm that is specifically designed for search engines.
+- Meilisearch uses machine learning algorithms to improve the accuracy of search results.
+
+Meilisearch typo tolerance ranking is achieved through the following technical details:
+
+- Meilisearch uses a technique called &quot;partial matching&quot; to search for variations of characters in search queries.
+- Meilisearch uses a technique called &quot;substring matching&quot; to search for variations of characters in search queries.
+- Meilisearch uses a technique called &quot;fuzzy matching&quot; to search for variations of characters in search queries.
+
+Meilisearch typo tolerance ranking is designed to improve the accuracy of search results by reducing the impact of typos and variations in search queries. By using alternative character variations, Meilisearch ensures that users get the most accurate results possible, while also providing a better user experience.</div>
+</details>
+</details>
+<details><summary><strong>q-fts-2</strong> <span class="tag" style="margin-left:.4rem">MCP Tools</span> — Cache-Control ETag header freshness</summary>
+<div class="response-section"><div class="response-label">Expected: doc-005 — HTTP caching headers explained</div><div class="response-box expected">Cache-Control, ETag, Last-Modified, and Vary headers control how HTTP responses are cached by browsers and CDNs. Cache-Control: max-age=N sets freshness in seconds. Must-revalidate forces rechecking stale entries.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>MCP Tools</td><td>doc-005</td><td class="fail">NO</td><td class="conf-low">0.143</td><td>7.5s</td><td><div class="tags"><span class="tag tag-tag">tag:http</span><span class="tag tag-tag">tag:cache</span><span class="tag">term:cache-control</span><span class="tag">term:http</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details open><summary>MCP Tools — recall 0%</summary>
+<div class="response-box agent">To find relevant documents, I will use the conproxy_search command. Here is an example of how to use it:
+
+```
+# Usage: conproxy_search &quot;https://www.example.com/cache-control/2015-08-10/ {key} {doc_name} {doc_url}&quot;
+# Output:
+```
+
+In this example, the query parameter `{key}` should be replaced with the desired key. The query parameters `{doc_name}` and `{doc_url}` will be used to retrieve the relevant document(s) from the cache control list.
+
+```
+# Output:
+```
+
+If the cache control list is not found, the output will be an error message indicating that the key does not exist in the cache control list. If the cache list is found, the output will contain the relevant document(s) with the specified key.</div>
+</details>
+</details>
+<details><summary><strong>q-vector-2</strong> <span class="tag" style="margin-left:.4rem">MCP Tools</span> — in-memory data store with TTL eviction</summary>
+<div class="response-section"><div class="response-label">Expected: doc-003 — Caching strategies in distributed systems</div><div class="response-box expected">Distributed caches reduce latency and backend load. Strategies include read-through, write-through, write-behind, and cache-aside. TTL and eviction policies determine freshness versus memory pressure.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>MCP Tools</td><td>doc-003</td><td class="fail">NO</td><td class="conf-low">0.095</td><td>19.3s</td><td><div class="tags"><span class="tag tag-tag">tag:performance</span><span class="tag">term:memory</span><span class="tag">term:systems</span></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details open><summary>MCP Tools — recall 0%</summary>
+<div class="response-box agent">I can help you search for relevant documents and answer with specific technical details.
+
+Question: in-memory data store with TTL eviction
+
+Answer:
+
+Answer:
+
+This is a specific type of data store known as an In-Memory Data Store (IMDS) with a Time-to-Live (TTL) eviction mechanism. IMDS data stores are designed to store data in memory, allowing for fast access, but also requiring periodic flushing to reduce memory usage.
+
+In-Memory Data Store (IMDS) with TTL eviction:
+
+IMDS data stores are designed to store data in memory, allowing for fast access, but also requiring periodic flushing to reduce memory usage. In-Memory Data Store (IMDS) with TTL eviction is a type of In-Memory Data Store (IMDS) that uses TTL eviction as a mechanism to reduce memory usage by periodically flushing data from the data store.
+
+This mechanism is based on the principle of Time-to-Live (TTL), which is used in many databases and data stores to track the expiration time of data. When a data block in a database is updated, the TTL is incremented. After a certain period of time (e.g., one hour), the TTL is decremented, and if the TTL has not expired, the data block is discarded and re-added to the data store. This mechanism helps to reduce memory usage by avoiding unnecessary data storage and freeing up memory for other tasks.
+
+In-Memory Data Store (IMDS) with TTL eviction is commonly used in systems that require high performance, low latency, and high availability. This is because it allows for fast access to data by minimizing the amount of memory used and the time it takes to flush data from the data store.
+
+It's worth noting that IMDS with TTL eviction is different from traditional databases, which use a data page-by-page approach to data storage. In IMDS with TTL eviction, data is stored in memory as a block, and the TTL is used to determine when the block should be flushed to the disk. This approach provides a trade-off between memory usage and the ability to quickly access data, but it can also lead to increased memory usage over time.</div>
+</details>
+</details>
+<details><summary><strong>q-cascade-2</strong> <span class="tag" style="margin-left:.4rem">MCP Tools</span> — Result enum pattern matching errors</summary>
+<div class="response-section"><div class="response-label">Expected: doc-006 — Rust error handling with Result</div><div class="response-box expected">Rust uses Result&lt;T, E&gt; for recoverable errors and panic! for unrecoverable ones. The ? operator propagates errors up the call stack. anyhow::Result is a common choice for application code; thiserror for library code.</div></div>
+<table>
+<tr><th>Vertical</th><th>Doc</th><th>Match</th><th>Confidence</th><th>Time</th><th>Matched Terms</th></tr>
+<tr><td>MCP Tools</td><td>doc-006</td><td class="fail">NO</td><td class="conf-low">0.000</td><td>10.0s</td><td><div class="tags"></div></td></tr>
+</table>
+<div class="response-section"><div class="response-label">Agent Responses</div></div>
+<details open><summary>MCP Tools — recall 0%</summary>
+<div class="response-box agent">Error: &quot;conproxy_search.cpp:19:10: error: ‘error’ cannot be found in the target platform. It is likely that the compiler was compiled with a different platform.&quot;
+
+Error message:
+
+```
+error: cannot find ‘error’ in the target platform. It is likely that the compiler was compiled with a different platform.
+```
+
+Error description:
+
+```
+error: cannot find ‘error’ in the target platform. It is likely that the compiler was compiled with a different platform.
+```
+
+The error occurs because the error is from the compiler, not conproxy. It's possible that the compiler was compiled with a different platform, which is why the error is present. Conproxy should be compiled with the target platform's compiler to resolve this issue.
+
+To resolve this error, you can try the following steps:
+
+1. Ensure that the compiler's target platform is correctly set in your conproxy.yaml file.
+2. Use the conproxy_search tool to search for relevant documents.
+
+Here's an example of how you can modify your conproxy.yaml file to set the target platform:
+
+```yaml
+# Conproxy.yaml
+
+# Set the target platform in the conproxy.yaml file
+
+# Conproxy.search.yml
+
+# Set the target platform in the Conproxy.search.yml file
+```</div>
+</details>
+</details>
+
+</body>
+</html>

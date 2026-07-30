@@ -1,0 +1,1083 @@
+{
+  "comparison": {
+    "best_vertical": "no_context",
+    "worst_vertical": "knowledge_cli"
+  },
+  "duration_secs": 0,
+  "timestamp": "1771918404s-since-epoch",
+  "type": "eval",
+  "verticals": [
+    {
+      "avg_response_time_ms": 29217,
+      "failed_queries": 0,
+      "name": "no_context",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.205",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:3/5",
+                "tag:zephyr",
+                "tag:query-protocol",
+                "term:phase"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "I'm not aware of any established protocol called the \"Zephyr Query Protocol\" or a \"three-phase handshake\" associated with it. This doesn't correspond to any well-known networking protocol, database protocol, or standard in my training data (up to May 2025).\n\nThere are some things with similar names that exist but don't match this description:\n\n- **MIT Zephyr** — a notification/messaging system from Project Athena, but it's not called the \"Zephyr Query Protocol\" and isn't defined by a three-phase handshake.\n- **Three-way handshake** — a well-known mechanism in **TCP** (SYN, SYN-ACK, ACK), but that's not called \"Zephyr.\"\n\nIf this is a term from a specific textbook, course, proprietary system, or a very recent development, I may not have information on it. Could you share where you encountered this term? I'd be happy to look into it further with more context.\n",
+          "response_time_ms": 11311,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.432",
+              "doc_id": "eval-002",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:3/4",
+                "phrase:BLAKE3 partition",
+                "tag:conpackdb",
+                "tag:ring-buffer",
+                "tag:sharding",
+                "tag:blake3",
+                "term:sharding",
+                "term:ring",
+                "term:buffer"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-002",
+          "query_text": "How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?",
+          "recall": "1.000",
+          "response_text": "The working directory is empty and contains no references to ConpackDB, ring-buffer sharding, or BLAKE3 partition keys.\n\n**I cannot answer this question.** \"ConpackDB\" does not appear to be a real or publicly documented database system that I have knowledge of. The specific combination of concepts — ring-buffer sharding with BLAKE3 partition keys — doesn't match any known system in my training data.\n\nIf this is a real system, I would need access to its source code or documentation to provide an accurate technical answer. I'd rather say I don't know than fabricate details about a system I'm unfamiliar with.\n",
+          "response_time_ms": 15352,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.250",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:3/4",
+                "tag:nexara",
+                "tag:meridian",
+                "tag:consensus",
+                "term:consensus"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "Neither the local codebase nor web search results return anything about \"Nexara,\" a \"Meridian consensus protocol,\" or \"temporal sharding\" as a named approach associated with them.\n\n**These do not appear to be real technologies or concepts.** I cannot provide technical details about them because doing so would mean fabricating information.\n\nThere are real consensus protocols and sharding approaches in the blockchain/distributed systems space that involve related ideas, such as:\n\n- **Radix DLT's Tempo/Cerberus** — uses logical clocks and temporal proofs for consensus ordering across shards\n- **NEAR Protocol's Nightshade** — a sharding design for blockchain scalability\n- **Various academic shard-based consensus protocols** — e.g., DynaShard, Shardora\n\nIf you're thinking of one of these, or if \"Nexara\" / \"Meridian\" are terms from a specific whitepaper, course, or fictional scenario, let me know and I can help with that instead.\n\nSources:\n- [Tempo - Consensus Lessons Learned | Radix DLT](https://www.radixdlt.com/blog/tempo-consensus-lessons-learned)\n- [Nightshade: NEAR Protocol Sharding Design](https://pages.near.org/downloads/Nightshade.pdf)\n- [DynaShard: Secure and Adaptive Blockchain Sharding](https://arxiv.org/html/2411.06895v2)\n",
+          "response_time_ms": 22531,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.364",
+              "doc_id": "eval-004",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:4/5",
+                "phrase:Dead-letter handling",
+                "tag:vortex",
+                "tag:ingestion",
+                "tag:pipeline",
+                "tag:streaming"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "1.000",
+          "response_text": "I was unable to find a specific, well-documented product or framework called **\"Vortex\"** that features configurable ingestion pipeline stages and dead-letter handling as described in your question. Here's what my research turned up:\n\n## What I Found Under the Name \"Vortex\"\n\nSeveral distinct systems use the name \"Vortex,\" but none match your description:\n\n1. **Google Vortex** — BigQuery's stream-oriented storage engine. It handles streaming ingestion via Streams, Streamlets, and Fragments, but its configuration is internal to Google/BigQuery and doesn't expose user-facing \"pipeline stages\" or dead-letter queue configuration. ([Research paper](https://research.google/pubs/vortex-a-stream-oriented-storage-engine-for-big-data-analytics/), [Medium deep-dive](https://medium.com/google-cloud/how-does-vortex-the-bigquery-storage-engine-work-behind-the-scenes-2698b37f8093))\n\n2. **ADLINK Vortex OpenSplice** — A Data Distribution Service (DDS) middleware implementation, focused on pub/sub messaging rather than ingestion pipelines with DLQ semantics. ([ADLINK site](https://www.adlinktech.com/en/vortex-opensplice-data-distribution-service))\n\n3. **Vortex Columnar Format** — An open-source columnar file format (formerly at SpiralDB, now under LF AI & Data). It's a storage format, not an ingestion pipeline. ([GitHub](https://github.com/vortex-data/vortex))\n\n4. **Dropbox Vortex** — A metrics monitoring system, not a data ingestion pipeline. ([Dropbox Engineering](https://dropbox.tech/infrastructure/monitoring-server-applications-with-vortex))\n\n## Could You Clarify?\n\nNone of these systems have documented \"ingestion pipeline stages\" with \"dead-letter handling\" as a user-configurable feature. The \"Vortex\" you're asking about may be:\n\n- A **proprietary/internal platform** at a specific company\n- A **very new or niche tool** without broad public documentation\n- Part of a **specific vendor's product suite** with a different full name\n\nCould you provide more context — such as the vendor, a documentation URL, or the ecosystem (e.g., Kafka, Spark, cloud provider) this \"Vortex\" belongs to? That would help me give you accurate, specific configuration details.\n",
+          "response_time_ms": 49923,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.364",
+              "doc_id": "eval-005",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:5/6",
+                "phrase:Auralis service",
+                "tag:auralis",
+                "tag:service-mesh",
+                "tag:traffic-shaping",
+                "term:traffic",
+                "term:name"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-005",
+          "query_text": "What traffic shaping policies does the Auralis service mesh support?",
+          "recall": "1.000",
+          "response_text": "I was unable to find any information about an \"Auralis service mesh.\" My search covered:\n\n- The current workspace (no files or references found)\n- Web searches (no results specific to \"Auralis\")\n\n**\"Auralis service mesh\" does not appear to be a recognized or publicly documented technology.** It doesn't appear in any open-source repositories, cloud provider documentation, or industry publications that I can find. It may be:\n\n1. A **fictional or hypothetical** product name\n2. A **misspelling** of another service mesh (e.g., Istio, Linkerd, Consul Connect, Kuma, Open Service Mesh)\n3. A **proprietary/internal** tool with no public documentation\n\nI cannot provide specific technical details about traffic shaping policies for a product I can't verify exists. If you can provide more context — such as a documentation URL, repository, or the correct product name — I'd be happy to research it further.\n",
+          "response_time_ms": 19484,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.273",
+              "doc_id": "eval-006",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:4/6",
+                "tag:helix",
+                "tag:embedder",
+                "tag:training",
+                "tag:onnx"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-006",
+          "query_text": "How do you train custom embeddings with the Helix Embedder and export to ONNX?",
+          "recall": "0.000",
+          "response_text": "I was unable to find any specific tool, library, or framework called **\"Helix Embedder\"** that trains custom embeddings and exports to ONNX. My searches across the web and the local repository turned up no matches.\n\nHere's what I did find under the \"Helix\" name in the ML space:\n\n- **[helix-py](https://github.com/HelixDB/helix-py)** — A Python client for HelixDB (a graph-vector database), which has embedder interfaces for providers like OpenAI, Gemini, and Voyage AI. It does not appear to support custom embedding training or ONNX export.\n- **[Helix 1.0](https://arxiv.org/abs/2507.17791)** — An open-source framework for reproducible ML on tabular data, unrelated to embeddings training.\n- **[HelixML](https://docs.helix.ml/)** — A GenAI platform for deploying AI agents, not an embeddings trainer.\n\nNone of these match a workflow for \"training custom embeddings and exporting to ONNX.\"\n\n**\"Helix Embedder\" does not appear to be a publicly documented tool or framework.** It's possible it is:\n1. A proprietary/internal tool\n2. Known by a different name\n3. A concept that doesn't exist as a named product\n\nI cannot provide specific technical details for something I can't verify exists. If you have a link to documentation or a repository for \"Helix Embedder,\" I'd be happy to review it and answer your question.\n",
+          "response_time_ms": 34887,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.250",
+              "doc_id": "eval-007",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:4/4",
+                "tag:prismoid",
+                "tag:cache-coherence",
+                "tag:gossip",
+                "term:distributed"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-007",
+          "query_text": "Describe the Prismoid cache coherence protocol and its gossip-based invalidation",
+          "recall": "0.000",
+          "response_text": "I don't have any knowledge of a cache coherence protocol called \"Prismoid\" or an associated gossip-based invalidation mechanism. This does not appear to be a recognized protocol in the cache coherence literature I'm aware of.\n\nWell-known cache coherence protocols include **MSI**, **MESI**, **MOESI**, **Dragon**, and **Firefly**, among others. Some distributed systems do use **gossip protocols** (e.g., epidemic-style dissemination) for state propagation or invalidation, but I'm not aware of a specific protocol that combines these under the name \"Prismoid.\"\n\nIf this is a term from a specific paper, course, or proprietary system, I'd need a reference to provide accurate details. I'd rather tell you I don't know than fabricate an answer with plausible-sounding but incorrect technical details.\n",
+          "response_time_ms": 11043,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.159",
+              "doc_id": "eval-008",
+              "matched": false,
+              "matched_terms": [
+                "tag:terraform",
+                "tag:conpack-cluster",
+                "term:module",
+                "term:triggers",
+                "term:auto-scaling"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-008",
+          "query_text": "What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?",
+          "recall": "0.000",
+          "response_text": "I don't have enough information to answer this question. The current repository (`no_context`) is an empty git repo with no source files, and there is no conpack-cluster Terraform module present in the codebase. The term \"conpack-cluster Terraform\" appears only as a knowledge seed query in configuration files in other directories, but no actual Terraform code (`.tf` files) or module definitions exist anywhere in this repository.\n\nI cannot provide specific technical details about what resources the conpack-cluster Terraform module provisions or what its auto-scaling triggers are, because:\n\n1. **No Terraform files exist** in this repository.\n2. **No documentation** describing the module is available in the codebase.\n3. This appears to be an evaluation/test repository, and the `no_context` vertical I'm working in is intentionally empty — it contains only a `.git` directory with no files.\n\nTo answer this question, I would need access to either the actual Terraform module source code or documentation describing it. If this information exists in an external knowledge base or another repository, could you point me to it?\n",
+          "response_time_ms": 53156,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.273",
+              "doc_id": "eval-009",
+              "matched": false,
+              "matched_terms": [
+                "title-partial:5/6",
+                "tag:spectral",
+                "tag:query-analyzer",
+                "tag:execution-plan",
+                "term:searches",
+                "term:multi-upstream"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-009",
+          "query_text": "How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?",
+          "recall": "0.000",
+          "response_text": "There's nothing in this project related to that term either.\n\n**I don't have reliable information about a \"Spectral Query Analyzer\" or its optimization of execution plans for \"multi-upstream searches.\"** This term doesn't match any widely known query optimization technique, database system, or search framework in my knowledge.\n\nIf this is a concept from a specific product, research paper, or internal system you're working with, could you share more context (e.g., documentation, a link, or the system it belongs to)? I'd be happy to help analyze it with that additional information.\n\nI'd rather be upfront about not knowing than risk giving you fabricated technical details.\n",
+          "response_time_ms": 15005,
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.523",
+              "doc_id": "eval-010",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:6/6",
+                "phrase:Conflict resolution",
+                "phrase:Delta sync",
+                "tag:obsidian",
+                "tag:vault-sync",
+                "tag:knowledge",
+                "tag:delta-sync",
+                "term:vaults",
+                "term:file",
+                "term:sync"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-010",
+          "query_text": "Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files",
+          "recall": "1.000",
+          "response_text": "Based on my research, I need to be straightforward: **\"Obsidian Vault Sync protocol modes\" and \"delta sync mechanism for knowledge files\" are not established technical concepts in Obsidian's documented architecture.** The question uses terminology that doesn't map to Obsidian Sync's actual design. Here's what Obsidian Sync actually implements:\n\n## Encryption Modes (Not \"Protocol Modes\")\n\nWhen creating a remote vault, Obsidian Sync offers two **encryption models**:\n\n1. **End-to-End Encryption (E2EE)** — Uses **AES-256 with GCM** (Galois/Counter Mode) and **scrypt key derivation**. The encryption password is user-controlled; the server has zero-knowledge access and cannot decrypt vault contents.\n2. **Managed Encryption** — Uses AES-256 with Obsidian-managed keys. The server can decrypt data for service operations (e.g., Obsidian Publish integration).\n\nTransport security uses **TLS 1.3**.\n\n## Synchronization Architecture (Not \"Delta Sync\")\n\nObsidian Sync operates on a **hub-and-spoke, file-level sync model** — not a byte-level delta sync protocol:\n\n- **File-level granularity**: Only modified *files* are transferred, not byte-level diffs/deltas within files. This is explicitly described as \"file-level (not byte-level) change tracking.\"\n- **Deterministic file-hash deduplication**: Identical content with the same encryption key and salt produces the same encrypted hash, avoiding redundant uploads.\n- **Active push + periodic polling**: Changes upload immediately upon local detection; remote devices poll periodically for updates.\n- **Obsidian must be running** — there is no background/daemon sync.\n\n## Conflict Resolution Modes\n\nThe actual configurable modes in Obsidian Sync (v1.9.7+) are **conflict resolution strategies**:\n\n| File Type | Strategy |\n|-----------|----------|\n| Markdown (.md) | **Three-way merge** via Google's `diff-match-patch` algorithm |\n| Non-Markdown (images, PDFs, etc.) | **Last-modified-wins** (timestamp comparison) |\n| Settings (JSON) | **Key-level merge** (local keys overlay remote) |\n\nUsers can configure two behaviors:\n- **Automatically merge** (default) — combines divergent changes into one file\n- **Create conflict file** — generates a separate file named `original-note.sync-conflict-YYYYMMDD-HHMMSS.md`\n\n## \"Knowledge Files\" Is Not an Obsidian Concept\n\nObsidian works with **vault files** — primarily Markdown (`.md`). There is no distinct \"knowledge file\" type or protocol. Selective sync controls what file types are synchronized (markdown is always synced; images, audio, video, PDFs, and `.obsidian` config are configurable).\n\n---\n\nIf you encountered the phrase \"Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files\" in a source, it likely conflates or fabricates terminology. The actual Obsidian Sync system is file-level, not delta-level, and has no formally named \"protocol modes.\"\n\nSources:\n- [Obsidian Sync - Official](https://obsidian.md/sync)\n- [Introduction to Obsidian Sync - Help](https://help.obsidian.md/sync)\n- [Obsidian Sync | DeepWiki](https://deepwiki.com/obsidianmd/obsidian-help/3.1-obsidian-sync)\n- [Synchronization and Conflict Resolution | DeepWiki](https://deepwiki.com/obsidianmd/obsidian-help/2.3-filters-and-views)\n- [Security and Encryption | DeepWiki](https://deepwiki.com/obsidianmd/obsidian-help/2.2-variables-and-functions)\n- [Local and Remote Vaults - Obsidian Help](https://help.obsidian.md/sync/vault-types)\n",
+          "response_time_ms": 59472,
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 10,
+      "timed_out_queries": 0,
+      "total_recall": "0.400"
+    },
+    {
+      "avg_response_time_ms": 60029,
+      "failed_queries": 10,
+      "name": "knowledge_cli",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60024,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-002",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-002",
+          "query_text": "How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60025,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60027,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-004",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-005",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-005",
+          "query_text": "What traffic shaping policies does the Auralis service mesh support?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60029,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-006",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-006",
+          "query_text": "How do you train custom embeddings with the Helix Embedder and export to ONNX?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-007",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-007",
+          "query_text": "Describe the Prismoid cache coherence protocol and its gossip-based invalidation",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-008",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-008",
+          "query_text": "What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60027,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-009",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-009",
+          "query_text": "How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60034,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-010",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-010",
+          "query_text": "Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60035,
+          "success": false,
+          "timed_out": true
+        }
+      ],
+      "successful_queries": 0,
+      "timed_out_queries": 10,
+      "total_recall": "0.000"
+    },
+    {
+      "avg_response_time_ms": 60028,
+      "failed_queries": 10,
+      "name": "cli_search",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60027,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-002",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-002",
+          "query_text": "How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60024,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60031,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-004",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60025,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-005",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-005",
+          "query_text": "What traffic shaping policies does the Auralis service mesh support?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-006",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-006",
+          "query_text": "How do you train custom embeddings with the Helix Embedder and export to ONNX?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-007",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-007",
+          "query_text": "Describe the Prismoid cache coherence protocol and its gossip-based invalidation",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-008",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-008",
+          "query_text": "What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-009",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-009",
+          "query_text": "How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60031,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-010",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-010",
+          "query_text": "Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60032,
+          "success": false,
+          "timed_out": true
+        }
+      ],
+      "successful_queries": 0,
+      "timed_out_queries": 10,
+      "total_recall": "0.000"
+    },
+    {
+      "avg_response_time_ms": 60028,
+      "failed_queries": 10,
+      "name": "mcp_tools",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60024,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-002",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-002",
+          "query_text": "How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60024,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60035,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-004",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60026,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-005",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-005",
+          "query_text": "What traffic shaping policies does the Auralis service mesh support?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60030,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-006",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-006",
+          "query_text": "How do you train custom embeddings with the Helix Embedder and export to ONNX?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60026,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-007",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-007",
+          "query_text": "Describe the Prismoid cache coherence protocol and its gossip-based invalidation",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60031,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-008",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-008",
+          "query_text": "What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60026,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-009",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-009",
+          "query_text": "How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-010",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-010",
+          "query_text": "Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60030,
+          "success": false,
+          "timed_out": true
+        }
+      ],
+      "successful_queries": 0,
+      "timed_out_queries": 10,
+      "total_recall": "0.000"
+    },
+    {
+      "avg_response_time_ms": 60028,
+      "failed_queries": 10,
+      "name": "mcp_only",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-001",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-001",
+          "query_text": "What is the Zephyr Query Protocol and how does its three-phase handshake work?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60025,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-002",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-002",
+          "query_text": "How does ConpackDB implement ring-buffer sharding with BLAKE3 partition keys?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60024,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-003",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-003",
+          "query_text": "Explain the Meridian consensus protocol used by Nexara and its temporal sharding approach",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60029,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-004",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-004",
+          "query_text": "How do you configure the Vortex ingestion pipeline stages and dead-letter handling?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-005",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-005",
+          "query_text": "What traffic shaping policies does the Auralis service mesh support?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60027,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-006",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-006",
+          "query_text": "How do you train custom embeddings with the Helix Embedder and export to ONNX?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-007",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-007",
+          "query_text": "Describe the Prismoid cache coherence protocol and its gossip-based invalidation",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60029,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-008",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-008",
+          "query_text": "What resources does the conpack-cluster Terraform module provision and what are the auto-scaling triggers?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60028,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-009",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-009",
+          "query_text": "How does the Spectral Query Analyzer optimize execution plans for multi-upstream searches?",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60032,
+          "success": false,
+          "timed_out": true
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "eval-010",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-010",
+          "query_text": "Explain the Obsidian Vault Sync protocol modes and delta sync mechanism for knowledge files",
+          "recall": "0.000",
+          "response_text": "",
+          "response_time_ms": 60029,
+          "success": false,
+          "timed_out": true
+        }
+      ],
+      "successful_queries": 0,
+      "timed_out_queries": 10,
+      "total_recall": "0.000"
+    }
+  ]
+}

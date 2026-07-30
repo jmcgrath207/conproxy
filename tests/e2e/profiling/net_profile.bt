@@ -1,0 +1,93 @@
+#!/usr/bin/env bpftrace
+//
+// net_profile.bt — TCP connection lifecycle tracing for conpack proxy.
+//
+// Traces accept4 (inbound), connect (outbound), and close (teardown)
+// syscalls for the target PID.  Measures connection establishment latency
+// and pool churn rate (close/accept ratio).
+//
+// Usage: sudo bpftrace -p <PID> net_profile.bt <PID>
+//
+
+config = { max_map_keys = 16384 }
+
+// ---- accept4 (inbound connections) ----
+
+tracepoint:syscalls:sys_enter_accept4 / pid == $1 /
+{
+    @accept_start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_accept4 / pid == $1 && @accept_start[tid] /
+{
+    $lat = (nsecs - @accept_start[tid]) / 1000;  // microseconds
+    @accept_count++;
+    @accept_latency_us = hist($lat);
+    @accept_total_lat_us += $lat;
+    delete(@accept_start[tid]);
+}
+
+// ---- connect (outbound connections) ----
+
+tracepoint:syscalls:sys_enter_connect / pid == $1 /
+{
+    @connect_start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_connect / pid == $1 && @connect_start[tid] /
+{
+    $lat = (nsecs - @connect_start[tid]) / 1000;  // microseconds
+    @connect_count++;
+    @connect_latency_us = hist($lat);
+    @connect_total_lat_us += $lat;
+    delete(@connect_start[tid]);
+}
+
+// ---- close (connection teardown) ----
+
+tracepoint:syscalls:sys_enter_close / pid == $1 /
+{
+    @close_count++;
+}
+
+END
+{
+    printf("\n========================================\n");
+    printf("CONPACK NET CONNECTION PROFILE SUMMARY\n");
+    printf("========================================\n\n");
+
+    // ---- accept4 ----
+    printf("--- accept4 ---\n");
+    printf("count:          %lld\n", @accept_count);
+    if (@accept_count > 0) {
+        printf("avg latency us: %lld\n", @accept_total_lat_us / @accept_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@accept_latency_us);
+    printf("\n");
+
+    // ---- connect ----
+    printf("--- connect ---\n");
+    printf("count:          %lld\n", @connect_count);
+    if (@connect_count > 0) {
+        printf("avg latency us: %lld\n", @connect_total_lat_us / @connect_count);
+    }
+    printf("latency histogram (us):\n");
+    print(@connect_latency_us);
+    printf("\n");
+
+    // ---- close ----
+    printf("--- close ---\n");
+    printf("count:          %lld\n", @close_count);
+    if (@accept_count > 0) {
+        printf("close/accept:   %lld\n", @close_count / @accept_count);
+    }
+    printf("\n");
+
+    // Clean up
+    clear(@accept_start); clear(@accept_count);
+    clear(@accept_latency_us); clear(@accept_total_lat_us);
+    clear(@connect_start); clear(@connect_count);
+    clear(@connect_latency_us); clear(@connect_total_lat_us);
+    clear(@close_count);
+}

@@ -1,0 +1,238 @@
+{
+  "comparison": {
+    "best_confidence": "0.379",
+    "best_confidence_vertical": "no_context",
+    "best_time_avg_ms": 10535,
+    "best_time_vertical": "no_context",
+    "worst_vertical": "mcp_tools"
+  },
+  "duration_secs": 0,
+  "model": "auto",
+  "strategy_matrix": {
+    "cascade": {
+      "mcp_tools": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    },
+    "fts": {
+      "mcp_tools": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    },
+    "vector": {
+      "mcp_tools": {
+        "count": 1,
+        "pass": 0,
+        "recall": "0.000"
+      },
+      "no_ctx": {
+        "count": 1,
+        "pass": 1,
+        "recall": "1.000"
+      }
+    }
+  },
+  "timestamp": "2026-07-21 03:39:57 UTC",
+  "type": "eval",
+  "verticals": [
+    {
+      "avg_confidence": "0.379",
+      "avg_response_time_ms": 10535,
+      "failed_queries": 0,
+      "name": "no_context",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.354",
+              "doc_id": "doc-001",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:3/4",
+                "tag:async",
+                "tag:tokio",
+                "tag:runtime",
+                "term:runtime",
+                "term:tokio"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-fts-1",
+          "query_text": "Tokio async runtime scheduler",
+          "recall": "1.000",
+          "response_text": "To create a Tokio async runtime scheduler for your project, you can follow these specific steps:\n\n1. Install the Tokio async runtime scheduler from the official GitHub repository:\n\n```bash\nnpm install tokio-async @types/async-runtime-scheduler\n```\n\n2. Import the necessary modules in your JavaScript file:\n\n```javascript\nimport { async } from '@types/async-runtime-scheduler';\n```\n\n3. Implement the scheduler function:\n\n```javascript\nasync function main() {\n  const { getCount, getTasks, setTasks, startScheduling } = await async.runtimeScheduler;\n  const count = getCount();\n  const tasks = getTasks();\n\n  if (count > 0) {\n    setTasks(tasks);\n  }\n\n  if (tasks.length > 0) {\n    startScheduling();\n  }\n}\n```\n\n4. Test the scheduler function using a simple example:\n\n```javascript\nmain();\n```\n\nThis code snippet demonstrates how to use the async runtime scheduler to create a simple scheduler that runs tasks on a set schedule.",
+          "response_time_ms": 9168,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.429",
+              "doc_id": "doc-004",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:2/3",
+                "phrase:Euclidean distance",
+                "tag:vector",
+                "tag:embeddings",
+                "term:embeddings",
+                "term:euclidean",
+                "term:high-dimensional",
+                "term:similarity",
+                "term:product",
+                "term:vector"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-vector-1",
+          "query_text": "similarity search over high-dimensional embeddings",
+          "recall": "1.000",
+          "response_text": "The similarity search over high-dimensional embeddings can be performed using various algorithms, including:\n\n1. K-Nearest Neighbors (KNN): This algorithm finds the most similar documents or points to a given point in the high-dimensional space. It works by finding the k most similar points to the given point and then returns the k most similar documents or points.\n\n2. Cosine Similarity: This algorithm measures the similarity between two vectors based on their dot product and the cosine of their angle. It is a widely used similarity measure and is useful for high-dimensional data.\n\n3. Distance-based Similarity Measures: These measures, such as Euclidean distance, Manhattan distance, and Minkowski distance, are used to compare vectors in high-dimensional spaces. These measures provide a quantitative measure of similarity between vectors, which is useful for high-dimensional data.\n\n4. Mutual Information: This algorithm measures the amount of information that one vector has about another. It is used in various applications, such as feature selection and dimensionality reduction.\n\nThese algorithms can be used for similarity search over high-dimensional embeddings. For example, a KNN algorithm can be used to find the most similar documents in a high-dimensional space, while a cosine similarity algorithm can be used to compare two vectors and measure their similarity.",
+          "response_time_ms": 10036,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.354",
+              "doc_id": "doc-002",
+              "matched": true,
+              "matched_terms": [
+                "title-partial:2/3",
+                "tag:meilisearch",
+                "tag:search",
+                "term:tolerance",
+                "term:results",
+                "term:meilisearch",
+                "term:ranking"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 1,
+          "query_id": "q-cascade-1",
+          "query_text": "Meilisearch typo tolerance ranking",
+          "recall": "1.000",
+          "response_text": "Meilisearch is a web search engine that provides users with a search interface. Meilisearch typo tolerance ranking is a feature that allows users to adjust the type of characters to which search engines can search. This feature is designed to ensure that users get the most accurate results possible, by using alternative character variations that may be overlooked by conventional search engines.\n\nMeilisearch typo tolerance ranking is based on the following technical details:\n\n- Meilisearch uses a database of over 200 million web pages to provide users with accurate search results.\n- Meilisearch uses a search algorithm that is specifically designed for search engines.\n- Meilisearch uses machine learning algorithms to improve the accuracy of search results.\n\nMeilisearch typo tolerance ranking is achieved through the following technical details:\n\n- Meilisearch uses a technique called \"partial matching\" to search for variations of characters in search queries.\n- Meilisearch uses a technique called \"substring matching\" to search for variations of characters in search queries.\n- Meilisearch uses a technique called \"fuzzy matching\" to search for variations of characters in search queries.\n\nMeilisearch typo tolerance ranking is designed to improve the accuracy of search results by reducing the impact of typos and variations in search queries. By using alternative character variations, Meilisearch ensures that users get the most accurate results possible, while also providing a better user experience.",
+          "response_time_ms": 12401,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "9.17",
+      "time_p95_secs": "12.16",
+      "time_p97_secs": "12.26",
+      "time_p99_secs": "12.35",
+      "timed_out_queries": 0,
+      "total_recall": "1.000"
+    },
+    {
+      "avg_confidence": "0.079",
+      "avg_response_time_ms": 12261,
+      "failed_queries": 0,
+      "name": "mcp_tools",
+      "queries": [
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.143",
+              "doc_id": "doc-005",
+              "matched": false,
+              "matched_terms": [
+                "tag:http",
+                "tag:cache",
+                "term:cache-control",
+                "term:http"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-fts-2",
+          "query_text": "Cache-Control ETag header freshness",
+          "recall": "0.000",
+          "response_text": "To find relevant documents, I will use the conproxy_search command. Here is an example of how to use it:\n\n```\n# Usage: conproxy_search \"https://www.example.com/cache-control/2015-08-10/ {key} {doc_name} {doc_url}\"\n# Output:\n```\n\nIn this example, the query parameter `{key}` should be replaced with the desired key. The query parameters `{doc_name}` and `{doc_url}` will be used to retrieve the relevant document(s) from the cache control list.\n\n```\n# Output:\n```\n\nIf the cache control list is not found, the output will be an error message indicating that the key does not exist in the cache control list. If the cache list is found, the output will contain the relevant document(s) with the specified key.",
+          "response_time_ms": 7453,
+          "strategy": "fts",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.095",
+              "doc_id": "doc-003",
+              "matched": false,
+              "matched_terms": [
+                "tag:performance",
+                "term:memory",
+                "term:systems"
+              ]
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-vector-2",
+          "query_text": "in-memory data store with TTL eviction",
+          "recall": "0.000",
+          "response_text": "I can help you search for relevant documents and answer with specific technical details.\n\nQuestion: in-memory data store with TTL eviction\n\nAnswer:\n\nAnswer:\n\nThis is a specific type of data store known as an In-Memory Data Store (IMDS) with a Time-to-Live (TTL) eviction mechanism. IMDS data stores are designed to store data in memory, allowing for fast access, but also requiring periodic flushing to reduce memory usage.\n\nIn-Memory Data Store (IMDS) with TTL eviction:\n\nIMDS data stores are designed to store data in memory, allowing for fast access, but also requiring periodic flushing to reduce memory usage. In-Memory Data Store (IMDS) with TTL eviction is a type of In-Memory Data Store (IMDS) that uses TTL eviction as a mechanism to reduce memory usage by periodically flushing data from the data store.\n\nThis mechanism is based on the principle of Time-to-Live (TTL), which is used in many databases and data stores to track the expiration time of data. When a data block in a database is updated, the TTL is incremented. After a certain period of time (e.g., one hour), the TTL is decremented, and if the TTL has not expired, the data block is discarded and re-added to the data store. This mechanism helps to reduce memory usage by avoiding unnecessary data storage and freeing up memory for other tasks.\n\nIn-Memory Data Store (IMDS) with TTL eviction is commonly used in systems that require high performance, low latency, and high availability. This is because it allows for fast access to data by minimizing the amount of memory used and the time it takes to flush data from the data store.\n\nIt's worth noting that IMDS with TTL eviction is different from traditional databases, which use a data page-by-page approach to data storage. In IMDS with TTL eviction, data is stored in memory as a block, and the TTL is used to determine when the block should be flushed to the disk. This approach provides a trade-off between memory usage and the ability to quickly access data, but it can also lead to increased memory usage over time.",
+          "response_time_ms": 19299,
+          "strategy": "vector",
+          "success": true,
+          "timed_out": false
+        },
+        {
+          "doc_scores": [
+            {
+              "confidence": "0.000",
+              "doc_id": "doc-006",
+              "matched": false,
+              "matched_terms": []
+            }
+          ],
+          "expected_docs": 1,
+          "matched_docs": 0,
+          "query_id": "q-cascade-2",
+          "query_text": "Result enum pattern matching errors",
+          "recall": "0.000",
+          "response_text": "Error: \"conproxy_search.cpp:19:10: error: ‘error’ cannot be found in the target platform. It is likely that the compiler was compiled with a different platform.\"\n\nError message:\n\n```\nerror: cannot find ‘error’ in the target platform. It is likely that the compiler was compiled with a different platform.\n```\n\nError description:\n\n```\nerror: cannot find ‘error’ in the target platform. It is likely that the compiler was compiled with a different platform.\n```\n\nThe error occurs because the error is from the compiler, not conproxy. It's possible that the compiler was compiled with a different platform, which is why the error is present. Conproxy should be compiled with the target platform's compiler to resolve this issue.\n\nTo resolve this error, you can try the following steps:\n\n1. Ensure that the compiler's target platform is correctly set in your conproxy.yaml file.\n2. Use the conproxy_search tool to search for relevant documents.\n\nHere's an example of how you can modify your conproxy.yaml file to set the target platform:\n\n```yaml\n# Conproxy.yaml\n\n# Set the target platform in the conproxy.yaml file\n\n# Conproxy.search.yml\n\n# Set the target platform in the Conproxy.search.yml file\n```",
+          "response_time_ms": 10030,
+          "strategy": "cascade",
+          "success": true,
+          "timed_out": false
+        }
+      ],
+      "successful_queries": 3,
+      "time_best_secs": "7.45",
+      "time_p95_secs": "18.37",
+      "time_p97_secs": "18.74",
+      "time_p99_secs": "19.11",
+      "timed_out_queries": 0,
+      "total_recall": "0.000"
+    }
+  ]
+}

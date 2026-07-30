@@ -1,0 +1,55 @@
+# Two contexts share the same Meilisearch resource with different
+# index/timeout overrides + independent caches and scope phrases.
+#
+# Requires: Meilisearch on :7700 (see meilisearch-quickstart.toml).
+
+[server]
+listen = "127.0.0.1:9090"
+
+[upstreams.meili]
+url = "http://localhost:7700"
+type = "meilisearch"
+api_key = "dev_master_key"
+timeout_secs = 30
+
+[contexts.docs]
+default = true
+description = "Product docs"
+
+[[contexts.docs.upstreams]]
+ref = "meili"
+index = "docs"
+timeout_secs = 5
+
+[contexts.docs.cache]
+fresh_secs = 300
+stale_secs = 3600
+max_entries = 10000
+
+[contexts.docs.scope]
+mode = "filter"
+min_similarity = 0.25
+
+[[contexts.docs.scope.weighted_phrases]]
+text = "product api"
+weight = 1.0
+
+[contexts.support]
+description = "Support tickets"
+
+[[contexts.support.upstreams]]
+ref = "meili"
+index = "support"
+timeout_secs = 15
+
+[contexts.support.cache]
+fresh_secs = 60
+max_entries = 5000
+
+[contexts.support.scope]
+mode = "filter"
+min_similarity = 0.35
+
+[[contexts.support.scope.weighted_phrases]]
+text = "billing"
+weight = 1.2

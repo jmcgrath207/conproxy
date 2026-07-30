@@ -1,0 +1,179 @@
+[[docs]]
+template = "docs/cascade_configuration.md"
+
+[[docs]]
+template = "docs/federation_vs_cascade.md"
+
+[[docs]]
+template = "docs/cache_ttl_tuning.md"
+
+[[docs]]
+template = "docs/semantic_cache_threshold.md"
+
+[[docs]]
+template = "docs/embedding_provider_config.md"
+
+[[docs]]
+template = "docs/mcp_server_integration.md"
+
+[[docs]]
+template = "docs/peer_replication.md"
+
+[[docs]]
+template = "docs/scope_filtering.md"
+
+[[docs]]
+template = "docs/coalesce_dedup.md"
+
+[[docs]]
+template = "docs/circuit_breaker.md"
+
+[[docs]]
+template = "docs/connection_pool.md"
+
+[[docs]]
+template = "docs/rate_limiting.md"
+
+[[docs]]
+template = "docs/context_management.md"
+
+[[docs]]
+template = "docs/audit_logging.md"
+
+[[docs]]
+template = "docs/metrics_observability.md"
+
+[[docs]]
+template = "docs/warmup_strategy.md"
+
+[[docs]]
+template = "docs/drift_detection.md"
+
+[[docs]]
+template = "docs/adaptive_timeout.md"
+
+[[docs]]
+template = "docs/federated_search.md"
+
+[[docs]]
+template = "docs/deployment_k8s.md"
+
+[[tickets]]
+template = "tickets/connection_timeout.md"
+
+[[tickets]]
+template = "tickets/data_loss.md"
+
+[[tickets]]
+template = "tickets/auth_failure.md"
+
+[[tickets]]
+template = "tickets/performance_regression.md"
+
+[[tickets]]
+template = "tickets/memory_leak.md"
+
+[[tickets]]
+template = "tickets/cache_inconsistency.md"
+
+[[tickets]]
+template = "tickets/replication_divergence.md"
+
+[[tickets]]
+template = "tickets/circuit_tripping.md"
+
+[[tickets]]
+template = "tickets/rate_limit_exceeded.md"
+
+[[tickets]]
+template = "tickets/config_reload_failure.md"
+
+[[tickets]]
+template = "tickets/embedding_mismatch.md"
+
+[[tickets]]
+template = "tickets/search_quality_degradation.md"
+
+[[tickets]]
+template = "tickets/peer_sync_stall.md"
+
+[[tickets]]
+template = "tickets/health_check_failure.md"
+
+[[tickets]]
+template = "tickets/upstream_drain.md"
+
+[[tickets]]
+template = "tickets/scope_filter_regression.md"
+
+[[tickets]]
+template = "tickets/coalesce_deadlock.md"
+
+[[tickets]]
+template = "tickets/metrics_drift.md"
+
+[[tickets]]
+template = "tickets/warmup_timeout.md"
+
+[[tickets]]
+template = "tickets/cascade_exhaustion.md"
+
+[[code]]
+template = "code/embed_query.md"
+
+[[code]]
+template = "code/cache_lookup.md"
+
+[[code]]
+template = "code/fuse_rrf.md"
+
+[[code]]
+template = "code/scope_filter.md"
+
+[[code]]
+template = "code/circuit_check.md"
+
+[[code]]
+template = "code/rate_limit_check.md"
+
+[[code]]
+template = "code/peer_sync.md"
+
+[[code]]
+template = "code/health_probe.md"
+
+[[code]]
+template = "code/config_reload.md"
+
+[[code]]
+template = "code/coalesce_dedup_fn.md"
+
+[[code]]
+template = "code/warmup_seed.md"
+
+[[code]]
+template = "code/drift_check.md"
+
+[[code]]
+template = "code/adaptive_timeout_fn.md"
+
+[[code]]
+template = "code/federated_merge.md"
+
+[[code]]
+template = "code/audit_log.md"
+
+[[code]]
+template = "code/pool_select.md"
+
+[[code]]
+template = "code/context_switch.md"
+
+[[code]]
+template = "code/mcp_tool_register.md"
+
+[[code]]
+template = "code/cascade_execute.md"
+
+[[code]]
+template = "code/cache_evict.md"

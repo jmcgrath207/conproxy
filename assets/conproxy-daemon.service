@@ -1,0 +1,32 @@
+# Conproxy Daemon systemd unit file
+# Install to ~/.config/systemd/user/conproxy-daemon.service (user) or
+# /etc/systemd/system/conproxy-daemon.service (system)
+#
+# Enable and start:
+#   systemctl --user enable conproxy-daemon
+#   systemctl --user start conproxy-daemon
+#
+# View logs:
+#   journalctl --user -u conproxy-daemon -f
+
+[Unit]
+Description=Conproxy Daemon - Context Proxy
+Documentation=https://github.com/yourorg/conproxy
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/conproxy daemon run
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=info
+LimitNOFILE=65535
+
+# Security hardening (optional)
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.conproxy
+
+[Install]
+WantedBy=default.target
