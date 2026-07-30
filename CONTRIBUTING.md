@@ -249,21 +249,27 @@ We follow the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
 
 ### Required CI status checks (PR gate)
 
-`main` / default branch is protected. PRs must show green from:
+`main` / default branch is protected. PRs must show green from the
+three `ci.yml` jobs:
 
-- `ci / fmt`
-- `ci / clippy (*)` (all matrix cells)
-- `ci / test (*)` (all matrix cells)
-- `ci / build --workspace`
-- `ci / build --features embed`
-- `ci / mcp_test`
-- `ci / e2e (release bundle)` — runs `cargo test --features "release,e2e" --tests`
-- `ci / release-gate` — release-bundle clippy/test/build/install-sim
-- `perf / bench` (regression gate)
+- `ci / unit` — fmt, clippy (all feature surfaces), lib tests
+  (default / embed-api / mcp / release), build (workspace + embed),
+  mcp_test, release binary smoke + install-sim, audit-known-gaps.
+- `ci / integration` — `make test-integration` (testcontainers
+  real-backend matrix: qdrant, ES, OS, meili, pgvector, cascade,
+  peer, circuit, batch, metrics, context_config, singleflight).
+- `ci / e2e` — `needs: [unit, integration]`. Builds release binary,
+  brings up the e2e compose, loads data, runs `make e2e-smoke-core`
+  (ignored e2e_proxy_suite filtered to smoke/health/query). Tears
+  down on completion.
 
-Heavy Tier-3 steps (cross-compile, PGO, DHAT, full ignored e2e) live
-in `.github/workflows/release.yml` and run on `v*` tags only — they
-are **not** required for PR merge.
+`unit` and `integration` start in parallel; `e2e` is gated on both
+so the heavy compose + load + ignored suite never runs if the
+cheaper gates would block the merge.
+
+Heavy Tier-3 steps (cross-compile, PGO, DHAT, full ignored e2e,
+e2e_eval) live in `.github/workflows/release.yml` and run on `v*`
+tags only — they are **not** required for PR merge.
 
 ## Code Review Expectations
 

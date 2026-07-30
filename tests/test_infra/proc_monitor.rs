@@ -6,6 +6,13 @@
 //! NOTE: A copy of this logic also lives in `src/bin/test_runner.rs` for the
 //! standalone profiling binary. Keep them in sync when making changes.
 
+// Each test binary includes this module via `path = "../test_infra/mod.rs"`
+// (or mod.rs declaration) but most only use a subset of the symbols
+// (e.g. `containers` for integration tests, `proc_monitor` for e2e_proxy).
+// Allow dead code at module level so unused symbols don't fail under
+// `RUSTFLAGS=-D warnings` in CI.
+#![allow(dead_code)]
+
 /// Single /proc sample for a running process.
 #[cfg(target_os = "linux")]
 pub struct ProcSnapshot {

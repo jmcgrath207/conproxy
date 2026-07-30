@@ -74,21 +74,22 @@ cargo test --features mcp --test mcp_test
 
 **Prerequisites:** `python3-dev` and Python headers required for `cargo build --workspace` (builds `sdk/python` cdylib). ONNX runtime libs auto-downloaded via `download-binaries` feature (`cargo build --features embed --lib`).
 
-### Tier 2.5: PR release gate (every PR + default branch)
+### Tier 2.5: PR CI gate (every PR + default branch)
 
-`ci.yml` → `release-gate` job. Mirrors the GitHub-installable artifact
-(`cargo install --git ... --features release`). Must be green on every
-PR. Steps:
+`ci.yml` runs **three jobs** on every PR. `unit` and `integration`
+start in parallel; `e2e` is gated on both so the heavy compose +
+load + ignored suite never burns minutes if the cheaper gates would
+block the merge.
 
-- `cargo clippy --features release --lib -- -D warnings`
-- `cargo test --features release --lib`
-- `cargo build --release --features release --bin conproxy` + `--version` + `--help`
-- `cargo build --workspace --release --features release`
-- `cargo test --features release --test mcp_test`
-- `cargo install --locked --path . --features release --root /tmp/conproxy-install` + `--version`
-- `make audit-known-gaps` (best-effort; `continue-on-error: true` until inventory is clean)
+| Job | Needs | Steps (summary) |
+|-----|-------|-----------------|
+| `unit` | — | fmt, clippy (all feature surfaces), lib tests (default / embed-api / mcp / release), build (workspace + embed), mcp_test, release binary smoke, install-sim, `audit-known-gaps` |
+| `integration` | — | `make test-integration` (testcontainers: qdrant, ES, OS, meili, pgvector, cascade, peer, circuit, batch, metrics, context_config, singleflight) |
+| `e2e` | unit, integration | Build release bin, compose up, `cargo run test_runner wait all`, `load-data`, `make e2e-smoke-core` (ignored `e2e_proxy_suite` filtered to smoke/health/query), compose down |
 
-Also runs on every PR: `e2e` job now tests `cargo test --features "release,e2e" --tests` (no duplicate `release,e2e` build in the gate).
+Experimental integration (`make test-integration-experimental`,
+pinecone/milvus) and full e2e suites stay in Tier 3 (`release.yml`
+on `v*` tags) — out of PR scope.
 
 ### Tier 3: Release Gate (tag / manual only)
 
