@@ -4,6 +4,7 @@
 //! (SearchService, AdminService, ObservabilityService, ContextService)
 //! respond correctly. Follows the compression.rs pattern.
 
+use crate::helpers::client::E2eClient;
 use crate::helpers::constants::{category_enabled, proxy_url};
 use crate::helpers::report::TestReport;
 use crate::run_test;
@@ -36,6 +37,7 @@ pub fn run(report: &mut TestReport) {
         .expect("Failed to build tokio runtime");
 
     let url = grpc_url();
+    let http_client = E2eClient::new(proxy_url());
 
     eprintln!();
     eprintln!("\x1b[32m[INFO]\x1b[0m gRPC parity tests...");
@@ -88,11 +90,15 @@ pub fn run(report: &mut TestReport) {
         {
             let url = url.clone();
             rt.block_on(async {
+                // Pre-populate cache via REST query (federated may be disabled
+                // in this suite — the gRPC handler falls back to cache lookup)
+                let _ = http_client.query("grpc federated cache warmup");
+
                 let channel = Channel::from_shared(url).unwrap().connect().await.unwrap();
                 let mut client = SearchServiceClient::new(channel);
                 let resp = client
                     .federated_query(proto::FederatedQueryRequest {
-                        query: "grpc federated test".into(),
+                        query: "grpc federated cache warmup".into(),
                         local_results: vec![],
                         top_k: 3,
                         context: String::new(),

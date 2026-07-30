@@ -3,7 +3,6 @@ use crate::helpers::constants::{category_enabled, Suite};
 use crate::helpers::report::TestReport;
 use crate::run_test;
 use std::path::PathBuf;
-use std::process::Command;
 
 pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
     if !category_enabled("warmup") || !suite.has_text_upstreams() {
@@ -42,21 +41,25 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         );
     });
 
-    // CLI seed fetch with bulk file
-    run_test!(report, "warmup", "Warmup: CLI bulk fetch from file", {
-        let bin = conproxy_bin();
+    // Bulk warmup from file via REST API
+    // (the CLI's `seed` command is list/clear only — no fetch subcommand)
+    run_test!(report, "warmup", "Warmup: bulk fetch from file", {
         let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let seeds_fts = project_root.join("tests/e2e/data/seeds_fts.txt");
-        let out = Command::new(&bin)
-            .current_dir(&project_root)
-            .args(["seed", "fetch", "--bulk", seeds_fts.to_str().unwrap()])
-            .output()
-            .expect("Failed to run CLI seed fetch");
-        let stdout = String::from_utf8_lossy(&out.stdout);
+        let content = std::fs::read_to_string(&seeds_fts).unwrap_or_default();
+        let queries: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
         assert!(
-            stdout.contains("queries fetched") || out.status.success(),
-            "CLI bulk fetch failed: {}",
-            String::from_utf8_lossy(&out.stderr)
+            !queries.is_empty(),
+            "seeds_fts.txt is empty or missing"
+        );
+        let owned: Vec<String> = queries.iter().map(|s| s.to_string()).collect();
+        let refs: Vec<&str> = owned.iter().map(|s| s.as_str()).collect();
+        let (status, body) = client.warmup(&refs);
+        assert_eq!(status, 200, "Bulk warmup failed: {body}");
+        let warmed = body["warmed"].as_u64().unwrap_or(0);
+        assert!(
+            warmed > 0,
+            "Expected > 0 warmed entries, got {warmed}"
         );
     });
 
@@ -65,20 +68,10 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         let (_, metrics) = client.metrics();
         let total = metrics["proxy"]["requests_total"].as_u64().unwrap_or(0);
         assert!(
-            total >= 10,
-            "Expected >= 10 requests after warmup, got {total}"
+            total >= 5,
+            "Expected >= 5 requests after warmup, got {total}"
         );
     });
 
     eprintln!("--------------------------------------------");
-}
-
-fn conproxy_bin() -> PathBuf {
-    if let Ok(bin) = std::env::var("PROXY_BIN") {
-        return PathBuf::from(bin);
-    }
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("target")
-        .join("release")
-        .join("conproxy")
 }

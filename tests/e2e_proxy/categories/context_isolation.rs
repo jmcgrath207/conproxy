@@ -34,31 +34,21 @@ pub fn run(client: &E2eClient, _suite: Suite, report: &mut TestReport) {
         );
     });
 
-    // Test 3: Switch to A, query → miss
+    // Test 3: Query in A → miss (uses x-context header to scope)
     run_test!(report, "context_isolation", "Ctx: switch to A, query", {
-        let (switch_status, _) = client.context_switch("e2e-ctx-a");
-        assert!(
-            switch_status == 200,
-            "Expected 200 switching to ctx A, got {switch_status}"
-        );
-        let (status, body) = client.query("ctx isolation test");
+        let (status, body) = client.query_with_context("e2e-ctx-a", "ctx isolation test");
         assert_eq!(status, 200);
         let cs = body["cache_status"].as_str().unwrap_or("");
         assert_eq!(cs, "miss", "Expected miss in fresh context A, got {cs}");
     });
 
-    // Test 4: Switch to B, same query → miss (not hit from A)
+    // Test 4: Same query in B → miss (not hit from A)
     run_test!(
         report,
         "context_isolation",
         "Ctx: switch to B, same query is miss",
         {
-            let (switch_status, _) = client.context_switch("e2e-ctx-b");
-            assert!(
-                switch_status == 200,
-                "Expected 200 switching to ctx B, got {switch_status}"
-            );
-            let (status, body) = client.query("ctx isolation test");
+            let (status, body) = client.query_with_context("e2e-ctx-b", "ctx isolation test");
             assert_eq!(status, 200);
             let cs = body["cache_status"].as_str().unwrap_or("");
             assert_eq!(
@@ -92,9 +82,7 @@ pub fn run(client: &E2eClient, _suite: Suite, report: &mut TestReport) {
 
     // Test 7: Re-query A → hit
     run_test!(report, "context_isolation", "Ctx: re-query A is hit", {
-        let (switch_status, _) = client.context_switch("e2e-ctx-a");
-        assert_eq!(switch_status, 200);
-        let (status, body) = client.query("ctx isolation test");
+        let (status, body) = client.query_with_context("e2e-ctx-a", "ctx isolation test");
         assert_eq!(status, 200);
         let cs = body["cache_status"].as_str().unwrap_or("");
         assert_eq!(cs, "hit", "Expected hit on re-query in context A, got {cs}");

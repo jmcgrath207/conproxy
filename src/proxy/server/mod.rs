@@ -530,9 +530,10 @@ impl AppState {
                 .map_err(|e| format!("proxy.upstreams: failed to build pool: {}", e))?;
             let pool = Arc::new(pool);
             let cascade = if proxy_cfg.cascade.enabled {
-                Some(Arc::new(CascadeExecutor::new(
+                Some(Arc::new(CascadeExecutor::with_metrics(
                     pool.clone(),
                     proxy_cfg.cascade.clone(),
+                    self.metrics.clone(),
                 )))
             } else {
                 None

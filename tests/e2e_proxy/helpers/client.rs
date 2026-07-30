@@ -45,6 +45,26 @@ impl E2eClient {
         self.post_json("/query", &serde_json::json!({"query": q}))
     }
 
+    /// Query scoped to a specific context via the `x-context` header.
+    /// The query handler reads `x-context` to resolve the cache namespace,
+    /// so this is the correct way to test context isolation.
+    pub fn query_with_context(&self, ctx: &str, q: &str) -> (u16, Value) {
+        let url = format!("{}{}", self.base_url, "/query");
+        let req = self.client.post(&url).json(&serde_json::json!({"query": q}));
+        let req = self.apply_auth(req).header("x-context", ctx);
+        match req.send() {
+            Ok(resp) => {
+                let status = resp.status().as_u16();
+                let body = resp.json::<Value>().unwrap_or(Value::Null);
+                (status, body)
+            }
+            Err(e) => {
+                eprintln!("POST /query failed: {e}");
+                (0, Value::Null)
+            }
+        }
+    }
+
     pub fn batch(&self, queries: &[(&str, &str)]) -> (u16, Value) {
         let qs: Vec<Value> = queries
             .iter()

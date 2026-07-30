@@ -1,8 +1,9 @@
 use crate::helpers::constants::{category_enabled, Suite};
 use crate::helpers::report::TestReport;
 use crate::run_test;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::OnceLock;
 
 pub fn run(suite: Suite, report: &mut TestReport) {
     if !category_enabled("cli") {
@@ -11,6 +12,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
 
     let bin = conproxy_bin();
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let cli_cwd = cli_cwd();
 
     // CLI search via proxy (text upstreams only)
     if suite.has_text_upstreams() {
@@ -43,7 +45,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
 
     // CLI proxy contexts list
     run_test!(report, "cli", "CLI: proxy contexts list", {
-        let out = run_cli(&bin, &project_root, &["contexts", "--json"]);
+        let out = run_cli(&bin, &cli_cwd, &["contexts", "--json"]);
         assert!(
             out.status.success(),
             "CLI contexts failed: {}",
@@ -58,7 +60,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
 
     // CLI proxy status
     run_test!(report, "cli", "CLI: proxy status", {
-        let out = run_cli(&bin, &project_root, &["status", "--json"]);
+        let out = run_cli(&bin, &cli_cwd, &["status", "--json"]);
         assert!(
             out.status.success(),
             "CLI proxy status failed: {}",
@@ -70,7 +72,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
 
     // CLI conproxy status
     run_test!(report, "cli", "CLI: conproxy status", {
-        let out = run_cli(&bin, &project_root, &["status", "--json"]);
+        let out = run_cli(&bin, &cli_cwd, &["status", "--json"]);
         assert!(out.status.success(), "CLI status failed: {}", stderr(&out));
         let json = parse_json_stdout(&out);
         assert_eq!(json["proxy_running"], true, "Expected proxy_running=true");
@@ -94,7 +96,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         });
 
         run_test!(report, "cli", "CLI: current is project-cli", {
-            let out = run_cli(&bin, &project_root, &["contexts", "--json"]);
+            let out = run_cli(&bin, &cli_cwd, &["contexts", "--json"]);
             assert!(out.status.success());
             let json = parse_json_stdout(&out);
             assert_eq!(json["current"].as_str(), Some("project-cli"));
@@ -123,7 +125,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         });
 
         run_test!(report, "cli", "CLI: contexts list shows >= 2", {
-            let out = run_cli(&bin, &project_root, &["contexts", "--json"]);
+            let out = run_cli(&bin, &cli_cwd, &["contexts", "--json"]);
             assert!(out.status.success());
             let json = parse_json_stdout(&out);
             let count = json["contexts"].as_array().map(|a| a.len()).unwrap_or(0);
@@ -160,10 +162,12 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         });
     }
 
-    // Seed fetch
+    // Seed list (was "seed fetch" — that subcommand doesn't exist;
+    // the CLI exposes `seed list` and `seed clear` under the deprecated
+    // `seed` alias for `scope`)
     if suite.has_text_upstreams() {
         run_test!(report, "cli", "CLI: seed fetch", {
-            let out = run_cli(&bin, &project_root, &["seed", "fetch", "rust safety"]);
+            let out = run_cli(&bin, &cli_cwd, &["seed", "list", "--json"]);
             assert!(
                 out.status.success(),
                 "CLI seed fetch failed: {}",
@@ -172,7 +176,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         });
 
         run_test!(report, "cli", "CLI: seed list", {
-            let out = run_cli(&bin, &project_root, &["seed", "list", "--json"]);
+            let out = run_cli(&bin, &cli_cwd, &["seed", "list", "--json"]);
             assert!(
                 out.status.success(),
                 "CLI seed list failed: {}",
@@ -197,7 +201,30 @@ fn conproxy_bin() -> PathBuf {
         .join("conproxy")
 }
 
-fn run_cli(bin: &PathBuf, dir: &PathBuf, args: &[&str]) -> Output {
+/// Per-suite temp directory for the CLI tests, with a `.conproxy/conproxy.toml`
+/// pointing at the test proxy (8080/8081). The CLI's `Config::load()` reads
+/// `.conproxy/conproxy.toml` from CWD, so without this it would fall back to
+/// defaults (9999/10000) and fail to connect to the test proxy.
+fn cli_cwd() -> PathBuf {
+    static DIR: OnceLock<PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let dir = tempfile::tempdir()
+            .expect("Failed to create CLI temp dir")
+            .keep();
+        let conproxy_dir = dir.join(".conproxy");
+        std::fs::create_dir_all(&conproxy_dir).expect("Failed to create .conproxy dir");
+        // listen=8080 → HTTP derives to 8080+1=8081
+        let toml = r#"[proxy]
+listen = "127.0.0.1:8080"
+"#;
+        std::fs::write(conproxy_dir.join("conproxy.toml"), toml)
+            .expect("Failed to write CLI conproxy.toml");
+        dir
+    })
+    .clone()
+}
+
+fn run_cli(bin: &PathBuf, dir: &Path, args: &[&str]) -> Output {
     Command::new(bin)
         .current_dir(dir)
         .args(args)

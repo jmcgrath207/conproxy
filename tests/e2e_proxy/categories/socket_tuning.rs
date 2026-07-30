@@ -106,8 +106,7 @@ pub fn run(client: &E2eClient, report: &mut TestReport) {
             if log_path.exists() {
                 let logs = std::fs::read_to_string(&log_path).unwrap_or_default();
                 assert!(
-                    logs.contains("File descriptor limit:")
-                        || logs.contains("WARNING: File descriptor limit"),
+                    logs.contains("File descriptor limit"),
                     "Proxy startup logs don't contain FD limit check output"
                 );
             }

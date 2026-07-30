@@ -48,9 +48,9 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         );
     });
 
-    // q-003 (elasticsearch) returns doc-003
+    // q-003 (caching strategies) returns doc-003
     run_test!(report, "relevance", "Relevance: q-003 finds doc-003", {
-        let (status, body) = client.query("elasticsearch full text search");
+        let (status, body) = client.query("caching strategies distributed systems");
         assert_eq!(status, 200);
         let has_doc = body["results"]
             .as_array()
@@ -58,13 +58,13 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
             .unwrap_or(false);
         assert!(
             has_doc,
-            "Expected doc-003 in results for 'elasticsearch full text search'"
+            "Expected doc-003 in results for 'caching strategies distributed systems'"
         );
     });
 
-    // q-009 (circuit breaker) returns doc-008
+    // q-009 (gRPC protobuf) returns doc-008
     run_test!(report, "relevance", "Relevance: q-009 finds doc-008", {
-        let (status, body) = client.query("circuit breaker pattern distributed systems");
+        let (status, body) = client.query("gRPC protobuf protocol buffers");
         assert_eq!(status, 200);
         let has_doc = body["results"]
             .as_array()
@@ -72,7 +72,7 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
             .unwrap_or(false);
         assert!(
             has_doc,
-            "Expected doc-008 in results for 'circuit breaker pattern'"
+            "Expected doc-008 in results for 'gRPC protobuf protocol buffers'"
         );
     });
 

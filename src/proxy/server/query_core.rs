@@ -79,15 +79,24 @@ pub(crate) async fn dispatch_upstream_query(
 
     if let Some(ref cascade) = cascade {
         let cr = cascade.query(request).await;
-        // Treat empty results from a successful cascade traversal as a
-        // valid cache miss (no upstream had a matching hit), NOT as an
-        // upstream failure. Only real failure modes (timeout, no
-        // upstreams configured) should propagate as 502.
-        if matches!(
+        // Classify cascade exhaustion:
+        // - Timeout / NoUpstreams → hard upstream failure → 502
+        // - AllExhausted with every upstream errored → upstream failure → 502
+        //   (the cascade treated each error as "try next upstream", but every
+        //    upstream failed — this is not a valid empty miss)
+        // - AllExhausted with at least one upstream returning Ok (empty
+        //   results) → legitimate empty miss → 200 with empty results
+        let all_errored = !cr.upstream_scores.is_empty()
+            && cr.upstream_scores.iter().all(|s| s.error.is_some());
+        let upstream_failure = matches!(
             cr.stop_reason,
             crate::proxy::cascade::CascadeStopReason::Timeout
                 | crate::proxy::cascade::CascadeStopReason::NoUpstreams
-        ) {
+        ) || (matches!(
+            cr.stop_reason,
+            crate::proxy::cascade::CascadeStopReason::AllExhausted
+        ) && all_errored);
+        if upstream_failure {
             Err(crate::proxy::upstream::UpstreamError::Unavailable(
                 "All upstreams failed in cascade".to_string(),
             ))
