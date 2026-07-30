@@ -842,17 +842,16 @@ fn test_load_returns_default_when_no_config() {
 
 #[test]
 fn test_load_global_returns_some_if_exists() {
-    // Test that load_global returns the correct result based on whether
-    // the global config exists
-    let result = Config::load_global();
-    assert!(result.is_ok());
-
+    // Snapshot existence and load in one path check to avoid TOCTOU with
+    // parallel tests / install-sim that may create ~/.conproxy mid-suite.
     let global_path = Config::global_config_path();
-    if global_path.exists() {
-        assert!(result.unwrap().is_some());
-    } else {
-        assert!(result.unwrap().is_none());
-    }
+    let existed = global_path.exists();
+    let loaded = Config::load_global().expect("load_global should not error");
+    assert_eq!(
+        loaded.is_some(),
+        existed || global_path.exists(),
+        "load_global Some/None should match file presence"
+    );
 }
 
 #[test]
