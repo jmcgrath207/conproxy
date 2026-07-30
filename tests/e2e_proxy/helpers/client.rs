@@ -50,7 +50,10 @@ impl E2eClient {
     /// so this is the correct way to test context isolation.
     pub fn query_with_context(&self, ctx: &str, q: &str) -> (u16, Value) {
         let url = format!("{}{}", self.base_url, "/query");
-        let req = self.client.post(&url).json(&serde_json::json!({"query": q}));
+        let req = self
+            .client
+            .post(&url)
+            .json(&serde_json::json!({"query": q}));
         let req = self.apply_auth(req).header("x-context", ctx);
         match req.send() {
             Ok(resp) => {

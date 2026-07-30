@@ -251,7 +251,9 @@ pub fn run(report: &mut TestReport) {
     run_test!(report, "sdk_parity", "SDK: AdminService RotateKey", {
         rt.block_on(async {
             match client.rotate_key("sdk-test-agent", "new-sdk-key-456").await {
-                Ok(resp) => { let _ = resp.status; }
+                Ok(resp) => {
+                    let _ = resp.status;
+                }
                 Err(e) => {
                     let msg = e.to_string();
                     assert!(
@@ -266,7 +268,9 @@ pub fn run(report: &mut TestReport) {
     run_test!(report, "sdk_parity", "SDK: AdminService DeleteAgent", {
         rt.block_on(async {
             match client.delete_agent("sdk-test-agent").await {
-                Ok(resp) => { let _ = resp.status; }
+                Ok(resp) => {
+                    let _ = resp.status;
+                }
                 Err(e) => {
                     let msg = e.to_string();
                     assert!(

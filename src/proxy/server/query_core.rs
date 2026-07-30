@@ -86,8 +86,8 @@ pub(crate) async fn dispatch_upstream_query(
         //    upstream failed — this is not a valid empty miss)
         // - AllExhausted with at least one upstream returning Ok (empty
         //   results) → legitimate empty miss → 200 with empty results
-        let all_errored = !cr.upstream_scores.is_empty()
-            && cr.upstream_scores.iter().all(|s| s.error.is_some());
+        let all_errored =
+            !cr.upstream_scores.is_empty() && cr.upstream_scores.iter().all(|s| s.error.is_some());
         let upstream_failure = matches!(
             cr.stop_reason,
             crate::proxy::cascade::CascadeStopReason::Timeout

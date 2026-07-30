@@ -48,19 +48,13 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         let seeds_fts = project_root.join("tests/e2e/data/seeds_fts.txt");
         let content = std::fs::read_to_string(&seeds_fts).unwrap_or_default();
         let queries: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
-        assert!(
-            !queries.is_empty(),
-            "seeds_fts.txt is empty or missing"
-        );
+        assert!(!queries.is_empty(), "seeds_fts.txt is empty or missing");
         let owned: Vec<String> = queries.iter().map(|s| s.to_string()).collect();
         let refs: Vec<&str> = owned.iter().map(|s| s.as_str()).collect();
         let (status, body) = client.warmup(&refs);
         assert_eq!(status, 200, "Bulk warmup failed: {body}");
         let warmed = body["warmed"].as_u64().unwrap_or(0);
-        assert!(
-            warmed > 0,
-            "Expected > 0 warmed entries, got {warmed}"
-        );
+        assert!(warmed > 0, "Expected > 0 warmed entries, got {warmed}");
     });
 
     // Stats show increased request count
