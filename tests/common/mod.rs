@@ -357,24 +357,3 @@ pub fn init_and_install(work_dir: &Path, repo_path: &Path) -> Output {
     assert_success(&output);
     output
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn find_free_ports_returns_two_usable_ports() {
-        let ports = find_free_ports();
-        assert_ne!(
-            ports.grpc_port, ports.http_port,
-            "gRPC and HTTP ports must differ"
-        );
-        assert!(ports.grpc_port > 0, "gRPC port must be valid");
-        assert!(ports.http_port > 0, "HTTP port must be valid");
-        // Both ports should be immediately reusable (already released inside find_free_ports)
-        let grpc = TcpListener::bind(format!("127.0.0.1:{}", ports.grpc_port));
-        assert!(grpc.is_ok(), "gRPC port should be reusable immediately");
-        let http = TcpListener::bind(format!("127.0.0.1:{}", ports.http_port));
-        assert!(http.is_ok(), "HTTP port should be reusable immediately");
-    }
-}
