@@ -94,9 +94,6 @@ jobs:
           cargo install --locked --path . --features release --root /tmp/conproxy-install
           /tmp/conproxy-install/bin/conproxy --version
           rm -rf /tmp/conproxy-install
-      - name: Known-gaps inventory
-        continue-on-error: true
-        run: make audit-known-gaps
 
   # ---------------------------------------------------------------------------
   # Job 2: integration (starts immediately, parallel with unit)
