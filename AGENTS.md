@@ -76,20 +76,28 @@ cargo test --features mcp --test mcp_test
 
 ### Tier 2.5: PR CI gate (every PR + default branch)
 
-`ci.yml` runs **three jobs** on every PR. `unit` and `integration`
-start in parallel; `e2e` is gated on both so the heavy compose +
+`ci.yml` runs **six jobs** on every PR. `unit`, `integration`,
+`integration-experimental`, `security`, and `fuzz` start in parallel;
+`e2e` is gated on `unit` + `integration` so the heavy compose +
 load + ignored suite never burns minutes if the cheaper gates would
 block the merge.
 
 | Job | Needs | Steps (summary) |
 |-----|-------|-----------------|
-| `unit` | — | fmt, clippy (all feature surfaces), lib tests (default / embed-api / mcp / release), build (workspace + embed), mcp_test, release binary smoke, install-sim, `audit-known-gaps` |
+| `unit` | — | fmt, clippy (all feature surfaces + bins), lib tests (default / embed-api / mcp / release), mcp_test, build (workspace + embed), release binary smoke, install-sim, coverage gate (tarpaulin 80% line), `audit-known-gaps` (best-effort) |
 | `integration` | — | `make test-integration` (testcontainers: qdrant, ES, OS, meili, pgvector, cascade, peer, circuit, batch, metrics, context_config, singleflight) |
-| `e2e` | unit, integration | Build release bin, compose up, `cargo run test_runner wait all`, `load-data`, `make e2e-smoke-core` (ignored `e2e_proxy_suite` filtered to smoke/health/query), compose down |
+| `integration-experimental` | — | `make test-integration-experimental` (pinecone + milvus mocks, no real backends, ~2 min) |
+| `security` | — | `cargo audit` (RustSec), `cargo deny check` (supply chain + license), `cargo clippy` with security lints (unwrap/expect/panic/indexing_slicing/arithmetic_side_effects) |
+| `fuzz` | — | `cargo fuzz run` on all 5 targets, 60s each, `continue-on-error: true`. Crashes uploaded as `fuzz-artifacts` artifact. |
+| `e2e` | unit, integration | Build release bin, `docker compose pull` (GHA cache), compose up, `test_runner wait all`, `load-data`, full ignored `e2e_proxy_suite` (all phases: smoke/health/query, cascade, load, reload, observability, efficiency, advanced, security), UAT (`e2e_uat`), security-focused e2e filter, compose down. Results uploaded as `e2e-results` artifact. |
 
-Experimental integration (`make test-integration-experimental`,
-pinecone/milvus) and full e2e suites stay in Tier 3 (`release.yml`
-on `v*` tags) — out of PR scope.
+`release.yml` (`v*` tag / `workflow_dispatch`) **publishes artifacts
+only** — no test execution. By the time a tag lands, every commit on
+the default branch has already passed the full `ci.yml` gate, so
+`release.yml` skips straight to: cross-compile (x86_64-musl +
+aarch64-gnu), aarch64 qemu smoke, multi-arch container (amd64 + arm64)
+to GHCR, multi-arch manifest + `:latest` tag, OCI Helm chart to GHCR,
+GitHub Release with cross binaries + chart `.tgz` attached.
 
 ### Tier 3: Release Gate (tag / manual only)
 

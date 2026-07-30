@@ -1,16 +1,19 @@
 # conproxy release workflow — tag / manual only.
 #
-# Triggered on `v*` tags (e.g. v0.1.0) and `workflow_dispatch`. Verifies the
-# installable artifact, cross-compiles for x86_64-musl and aarch64-gnu,
-# runs a smoke binary on aarch64 (qemu), builds + publishes a multi-arch
-# container image (amd64 + arm64) to GHCR, builds + publishes a Helm
-# chart to OCI on GHCR, and attaches binaries + chart to a GitHub Release.
+# Triggered on `v*` tags (e.g. v0.1.0) and `workflow_dispatch`. Publishes
+# artifacts only:
 #
-# Re-runs the PR `release-gate` job (clippy/test/build/install-sim) to
-# guarantee a green on a clean tree before publishing artifacts.
+#   - cross-compiles for x86_64-musl and aarch64-gnu
+#   - smoke-tests the aarch64 binary under qemu
+#   - builds + publishes a multi-arch container image (amd64 + arm64) to GHCR
+#   - builds + publishes a Helm chart to OCI on GHCR
+#   - creates a GitHub Release and attaches binaries + chart
 #
-# Heavier steps (PGO, DHAT, full integration suite, ignored e2e) remain
-# manual / local — see AGENTS.md §"Tier 3".
+# All testing (fmt, clippy, lib tests, mcp_test, integration, integration-
+# experimental, security audit, fuzz, e2e, UAT) lives in `ci.yml` and
+# must be green on the default branch before a tag is pushed. This
+# workflow therefore contains no test execution — it only packages
+# artifacts that have already been validated by the PR gate.
 name: release
 
 on:
@@ -24,53 +27,15 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: -D warnings
   REGISTRY_IMAGE: ghcr.io/jmcgrath207/conproxy
   HELM_OCI: oci://ghcr.io/jmcgrath207/charts
 
 jobs:
-  # Re-run the PR release gate on the tagged tree to guarantee the
-  # published artifacts come from a clean green build.
-  release-gate:
-    name: release-gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Install protoc + python3-dev
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler python3-dev
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: release-gate-${{ runner.os }}
-          cache-on-failure: true
-      - name: Lint (release meta)
-        run: cargo clippy --features release --lib -- -D warnings
-      - name: Test (release meta)
-        run: cargo test --features release --lib
-      - name: Build + smoke shipped binary
-        run: |
-          cargo build --release --features release --bin conproxy
-          ./target/release/conproxy --version
-          ./target/release/conproxy --help 2>&1 | head -40
-      - name: Workspace release build (catches sdk breakage)
-        run: cargo build --workspace --release --features release
-      - name: MCP test on release bundle
-        run: cargo test --features release --test mcp_test
-      - name: Install simulation (isolated --root)
-        run: |
-          cargo install --locked --path . --features release --root /tmp/conproxy-install
-          /tmp/conproxy-install/bin/conproxy --version
-          rm -rf /tmp/conproxy-install
-
   # Cross-compile for the two Linux targets documented for the
   # installable artifact. Skipped on workflow_dispatch by default to keep
   # manual runs fast; trigger via tag push for real releases.
   cross:
     name: cross (${{ matrix.target }})
-    needs: release-gate
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -132,7 +97,6 @@ jobs:
   # Tag-only by default; dispatch skips to keep manual runs fast.
   container:
     name: container (${{ matrix.platform }})
-    needs: release-gate
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -218,7 +182,6 @@ jobs:
   # Also stages the .tgz so github-release can attach it.
   helm:
     name: helm
-    needs: release-gate
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 15

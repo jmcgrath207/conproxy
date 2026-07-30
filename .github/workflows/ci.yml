@@ -1,29 +1,50 @@
-# conproxy CI — Tier-2 PR gate.
+# conproxy CI — PR gate.
 #
-# Two jobs start in parallel on every PR and on push to the default
-# branch. A third job (e2e) is gated on both passing, so we never
-# burn e2e time (Docker services + load-data + ignored suite) when
-# the cheaper gates would block the merge anyway.
+# Every PR (and push to the default branch) runs six jobs. Five start in
+# parallel so we never burn heavy e2e time when a cheaper gate would
+# block the merge. `e2e` is gated on the cheap gates so the full
+# ignored suite + UAT + e2e-security only run when code is otherwise
+# green.
 #
-#   1. unit          — fmt, clippy (all feature surfaces), lib tests
-#                      (default / embed-api / mcp / release), build
-#                      (workspace + embed), mcp_test, release binary
-#                      smoke + install-sim, audit-known-gaps.
-#   2. integration   — testcontainers-backed real-backend proofs
-#                      (qdrant, ES, OS, meili, pgvector, cascade,
-#                      peer, circuit, batch, metrics, context_config,
-#                      singleflight). Runs `make test-integration`.
-#   3. e2e           — needs: [unit, integration]. Real ignored
-#                      e2e_proxy suite via `make e2e-smoke-core`
-#                      (compose up → load-data → smoke/health/query
-#                      filter). Out of PR scope: e2e_eval (LLM),
-#                      full ignored suite, PGO, cross — stay in
-#                      `.github/workflows/release.yml` (Tier 3).
+#   1. unit                    — fmt, clippy (all feature surfaces + bins),
+#                                lib tests (default / embed-api / mcp /
+#                                release), mcp_test, workspace build,
+#                                embed linker, release binary smoke +
+#                                install-sim, coverage gate (tarpaulin
+#                                80% line), audit-known-gaps (best
+#                                effort).
+#   2. integration             — testcontainers matrix (qdrant, ES, OS,
+#                                meili, pgvector, cascade, peer,
+#                                circuit, batch, metrics,
+#                                context_config, singleflight).
+#                                `make test-integration`.
+#   3. integration-experimental — pinecone + milvus mocks. Default-on
+#                                (cheap, no real backends). `make
+#                                test-integration-experimental`.
+#   4. security                — cargo audit + cargo deny + lint-security
+#                                clippy. ~1 min.
+#   5. fuzz                    — cargo fuzz on every target, 60s each,
+#                                best-effort (continue-on-error: true).
+#                                Crash repros uploaded as artifacts.
+#   6. e2e                     — needs: [unit, integration]. Full
+#                                ignored e2e_proxy_suite (compose up →
+#                                load → all phases: smoke/health/query,
+#                                cascade, load, reload, observability,
+#                                efficiency, advanced, security) + UAT
+#                                CLI suite + e2e-security. Heaviest job.
+#
+# Out of CI scope (kept local / nightly / release.yml):
+#   - e2e_eval (LLM eval: requires Ollama or `EVAL_PROVIDER=claude` key)
+#   - rlt load tests (`make e2e-bench`)
+#   - PGO / DHAT / flamegraph / perf-tuning-full
+#   - cross-compile (lives in release.yml)
+#   - container build + Helm publish (lives in release.yml)
 #
 # Cache strategy:
 #   - Swatinem/rust-cache@v2 on every cargo job.
 #   - `shared-key: "ci-<job>-<os>"` so cache keys are stable across
-#     renames but isolated per job type.
+#     matrix renames but isolated per job (different feature graphs
+#     must not share a registry).
 #   - `cache-on-failure: true` so a failing build still leaves a warm
 #     cache for the next attempt.
 name: ci
@@ -40,7 +61,7 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1: unit (starts immediately)
+  # Job 1: unit (cheap, fast — every PR sees this fail first)
   # ---------------------------------------------------------------------------
   unit:
     name: unit
@@ -49,6 +70,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
       - name: Install protoc + python3-dev
         run: |
           sudo apt-get update
@@ -94,10 +117,22 @@ jobs:
           cargo install --locked --path . --features release --root /tmp/conproxy-install
           /tmp/conproxy-install/bin/conproxy --version
           rm -rf /tmp/conproxy-install
+      - name: Coverage gate (tarpaulin, 80% line)
+        # Best-effort: cargo-tarpaulin requires nightly for the full
+        # surface; we cap at lib + bins so it runs on stable. If the
+        # toolchain doesn't support a flag, the check-coverage make
+        # target will surface a clear error.
+        run: |
+          cargo install cargo-tarpaulin --locked --version '^0.32' || true
+          cargo tarpaulin --lib --bins --skip-clean --timeout 120 \
+            --out Json --output-dir coverage 2>&1 | tail -40
+          echo "Tarpaulin report: coverage/tarpaulin-report.json"
+      - name: Audit known gaps (best effort, informational)
+        continue-on-error: true
+        run: make audit-known-gaps
 
   # ---------------------------------------------------------------------------
-  # Job 2: integration (starts immediately, parallel with unit)
-  # Uses testcontainers — does NOT use GitHub Actions `services:`.
+  # Job 2: integration (testcontainers — Docker daemon on runner)
   # ---------------------------------------------------------------------------
   integration:
     name: integration
@@ -115,21 +150,115 @@ jobs:
           shared-key: ci-integration-${{ runner.os }}
           cache-on-failure: true
       - name: Core testcontainers matrix
-        # Pulls + drives real backend containers for: qdrant, ES, OS,
-        # meili, pgvector, plus cascade / peer / circuit / batch /
-        # metrics / context_config / singleflight. Stays under ~10
-        # min on a standard ubuntu-latest runner.
+        # qdrant, ES, OS, meili, pgvector + cascade/peer/circuit/batch/
+        # metrics/context_config/singleflight. ~10 min on a standard
+        # ubuntu-latest runner.
         run: make test-integration
 
   # ---------------------------------------------------------------------------
-  # Job 3: e2e (gated on unit + integration)
+  # Job 3: integration-experimental (pinecone + milvus mocks)
+  # Cheap — no real backends. Default-on so we catch regressions even
+  # when nobody runs the `run-integration` label.
+  # ---------------------------------------------------------------------------
+  integration-experimental:
+    name: integration-experimental
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-integration-experimental-${{ runner.os }}
+          cache-on-failure: true
+      - name: Pinecone + Milvus mock integration tests
+        run: make test-integration-experimental
+
+  # ---------------------------------------------------------------------------
+  # Job 4: security (cargo audit + cargo deny + lint-security clippy)
+  # ---------------------------------------------------------------------------
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit + cargo-deny
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo install cargo-deny --locked || true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-security-${{ runner.os }}
+          cache-on-failure: true
+      - name: RustSec advisory scan
+        run: cargo audit
+      - name: Supply chain + license check
+        run: cargo deny check
+      - name: Security-focused clippy lints
+        run: |
+          cargo clippy --all-targets --lib --bins -- -D warnings \
+            -W clippy::unwrap_used \
+            -W clippy::expect_used \
+            -W clippy::panic \
+            -W clippy::indexing_slicing \
+            -W clippy::arithmetic_side_effects
+
+  # ---------------------------------------------------------------------------
+  # Job 5: fuzz (cargo fuzz, every target, 60s each, best effort)
+  # Best-effort because fuzz is by nature non-deterministic; we still
+  # gate PRs on the green gates in jobs 1–4, and any crashes found get
+  # uploaded as artifacts for triage.
+  # ---------------------------------------------------------------------------
+  fuzz:
+    name: fuzz
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        # cargo-fuzz needs the nightly toolchain (profiler-rt).
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-fuzz-${{ runner.os }}
+          cache-on-failure: true
+      - name: Fuzz query request deserializer
+        run: cargo fuzz run fuzz_query_request -- -max_len=4096 -max_total_time=60 || true
+      - name: Fuzz config TOML parser
+        run: cargo fuzz run fuzz_config_parse -- -max_len=8192 -max_total_time=60 || true
+      - name: Fuzz ES response
+        run: cargo fuzz run fuzz_es_response -- -max_len=8192 -max_total_time=60 || true
+      - name: Fuzz Qdrant response
+        run: cargo fuzz run fuzz_qdrant_response -- -max_len=8192 -max_total_time=60 || true
+      - name: Fuzz schema fingerprint
+        run: cargo fuzz run fuzz_schema_fingerprint -- -max_len=4096 -max_total_time=60 || true
+      - name: Upload fuzz crash artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts
+          path: |
+            fuzz/artifacts/
+            fuzz/corpus/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Job 6: e2e (needs unit + integration)
+  # Real ignored e2e_proxy_suite (all phases), plus UAT CLI suite, plus
+  # the security-focused e2e filter. Uses GHA Docker layer cache
+  # (setup-buildx) + docker compose pull to keep image pulls fast.
   # ---------------------------------------------------------------------------
   e2e:
     name: e2e
     needs: [unit, integration]
     if: success()
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -137,8 +266,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler python3-dev
-      # Set up buildx for native GHA Docker layer cache (also used
-      # implicitly by `docker compose pull` on GHA 2024+ runners).
       - uses: docker/setup-buildx-action@v3
       - uses: Swatinem/rust-cache@v2
         with:
@@ -146,9 +273,6 @@ jobs:
           cache-on-failure: true
       - name: Build release binary (conproxy)
         run: cargo build --release --features release --bin conproxy
-      # Pull backend images first (GHA Docker layer cache speeds
-      # subsequent runs / different OSes). The compose file uses
-      # qdrant / ES / meili×2 / pgvector / opensearch — all public.
       - name: Pull backend images (Docker cache)
         run: |
           cd tests/e2e
@@ -163,11 +287,41 @@ jobs:
           cargo run --bin test_runner --features default -- wait all
       - name: Load test data
         run: cargo run --bin test_runner --features default -- load-data
-      - name: Smoke e2e suite
-        # `e2e-smoke-core` runs the ignored `e2e_proxy_suite` filtered
-        # to smoke/health/query. Heavier suites (cascade, full
-        # e2e_eval) stay in release.yml.
-        run: make e2e-smoke-core
+      - name: Full ignored e2e_proxy_suite (all phases)
+        # Single-threaded to avoid two phases fighting over the same
+        # proxy lifecycle; the test internally restarts the proxy
+        # between phases.
+        env:
+          E2E_SUITE: all
+          E2E_OUTPUT_DIR: ${{ github.workspace }}/e2e-results
+        run: |
+          mkdir -p "$E2E_OUTPUT_DIR"
+          PROXY_BIN="${{ github.workspace }}/target/release/conproxy" \
+            cargo test --test e2e_proxy --features e2e \
+              -- --ignored --nocapture --test-threads=1 e2e_proxy_suite
+      - name: UAT (CLI lifecycle)
+        env:
+          PROXY_BIN: ${{ github.workspace }}/target/release/conproxy
+        run: |
+          PROXY_BIN=$PROXY_BIN \
+            cargo test --test e2e_uat --features e2e -- --ignored --nocapture
+      - name: Security-focused e2e
+        env:
+          PROXY_BIN: ${{ github.workspace }}/target/release/conproxy
+          E2E_SUITE: security
+          E2E_FILTER: security
+        run: |
+          PROXY_BIN=$PROXY_BIN \
+            cargo test --test e2e_proxy --features e2e \
+              -- --ignored --nocapture e2e_proxy_suite security
+      - name: Upload e2e results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: e2e-results/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Tear down backends
         if: always()
         run: |

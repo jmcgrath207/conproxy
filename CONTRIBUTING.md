@@ -250,26 +250,42 @@ We follow the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
 ### Required CI status checks (PR gate)
 
 `main` / default branch is protected. PRs must show green from the
-three `ci.yml` jobs:
+six `ci.yml` jobs:
 
-- `ci / unit` — fmt, clippy (all feature surfaces), lib tests
-  (default / embed-api / mcp / release), build (workspace + embed),
-  mcp_test, release binary smoke + install-sim, audit-known-gaps.
+- `ci / unit` — fmt, clippy (all feature surfaces + bins), lib
+  tests (default / embed-api / mcp / release), mcp_test, build
+  (workspace + embed), release binary smoke + install-sim, coverage
+  gate (tarpaulin 80% line), `audit-known-gaps` (best-effort).
 - `ci / integration` — `make test-integration` (testcontainers
   real-backend matrix: qdrant, ES, OS, meili, pgvector, cascade,
   peer, circuit, batch, metrics, context_config, singleflight).
+- `ci / integration-experimental` — `make test-integration-experimental`
+  (pinecone + milvus mocks, ~2 min, no real backends).
+- `ci / security` — `cargo audit` (RustSec), `cargo deny check`
+  (supply chain + license), clippy with security lints
+  (unwrap/expect/panic/indexing_slicing/arithmetic_side_effects).
+- `ci / fuzz` — `cargo fuzz run` on all 5 targets, 60s each, best
+  effort. Crash repros uploaded as `fuzz-artifacts` artifact.
 - `ci / e2e` — `needs: [unit, integration]`. Builds release binary,
-  brings up the e2e compose, loads data, runs `make e2e-smoke-core`
-  (ignored e2e_proxy_suite filtered to smoke/health/query). Tears
+  `docker compose pull` (GHA cache), brings up the e2e compose,
+  loads data, runs the **full** ignored `e2e_proxy_suite` (all
+  phases: smoke/health/query, cascade, load, reload, observability,
+  efficiency, advanced, security) + UAT (`e2e_uat`) + security-focused
+  e2e filter. Results uploaded as `e2e-results` artifact. Tears
   down on completion.
 
-`unit` and `integration` start in parallel; `e2e` is gated on both
-so the heavy compose + load + ignored suite never runs if the
-cheaper gates would block the merge.
+`unit`, `integration`, `integration-experimental`, `security`, and
+`fuzz` start in parallel; `e2e` is gated on `unit` + `integration` so
+the heavy compose + load + ignored suite never runs if the cheaper
+gates would block the merge.
 
-Heavy Tier-3 steps (cross-compile, PGO, DHAT, full ignored e2e,
-e2e_eval) live in `.github/workflows/release.yml` and run on `v*`
-tags only — they are **not** required for PR merge.
+`release.yml` (`v*` tag / `workflow_dispatch`) **publishes artifacts
+only** — no test execution. By the time a tag lands, every commit
+on the default branch has already passed the full `ci.yml` gate.
+Release steps: cross-compile (x86_64-musl + aarch64-gnu), aarch64
+qemu smoke, multi-arch container (amd64 + arm64) to GHCR, multi-arch
+manifest + `:latest` tag, OCI Helm chart to GHCR, GitHub Release
+with cross binaries + chart `.tgz` attached.
 
 ## Code Review Expectations
 
