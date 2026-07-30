@@ -255,7 +255,7 @@ six `ci.yml` jobs:
 - `ci / unit` — fmt, clippy (all feature surfaces + bins), lib
   tests (default / embed-api / mcp / release), mcp_test, build
   (workspace + embed), release binary smoke + install-sim, coverage
-  gate (tarpaulin 80% line), `audit-known-gaps` (best-effort).
+  gate (tarpaulin 80% line).
 - `ci / integration` — `make test-integration` (testcontainers
   real-backend matrix: qdrant, ES, OS, meili, pgvector, cascade,
   peer, circuit, batch, metrics, context_config, singleflight).

@@ -84,7 +84,7 @@ block the merge.
 
 | Job | Needs | Steps (summary) |
 |-----|-------|-----------------|
-| `unit` | — | fmt, clippy (all feature surfaces + bins), lib tests (default / embed-api / mcp / release), mcp_test, build (workspace + embed), release binary smoke, install-sim, coverage gate (tarpaulin 80% line), `audit-known-gaps` (best-effort) |
+| `unit` | — | fmt, clippy (all feature surfaces + bins), lib tests (default / embed-api / mcp / release), mcp_test, build (workspace + embed), release binary smoke, install-sim, coverage gate (tarpaulin 80% line) |
 | `integration` | — | `make test-integration` (testcontainers: qdrant, ES, OS, meili, pgvector, cascade, peer, circuit, batch, metrics, context_config, singleflight) |
 | `integration-experimental` | — | `make test-integration-experimental` (pinecone + milvus mocks, no real backends, ~2 min) |
 | `security` | — | `cargo audit` (RustSec), `cargo deny check` (supply chain + license), `cargo clippy` with security lints (unwrap/expect/panic/indexing_slicing/arithmetic_side_effects) |
