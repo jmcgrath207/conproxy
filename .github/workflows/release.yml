@@ -76,42 +76,33 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  # Smoke the aarch64 build under qemu. Skipped on workflow_dispatch to
-  # keep manual runs fast.
+  # Smoke the aarch64 cross artifact under qemu-user (no rebuild).
   aarch64-smoke:
     name: aarch64 smoke (qemu)
     needs: cross
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Download aarch64 artifact
+        uses: actions/download-artifact@v4
         with:
-          targets: aarch64-unknown-linux-gnu
-      - name: Install cross + host linker
+          name: conproxy-aarch64-unknown-linux-gnu
+          path: bin
+      - name: Install qemu-user + smoke --version
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang lld
-          cargo install cross --locked
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: release-cross-aarch64-smoke-${{ runner.os }}
-          cache-on-failure: true
-      - name: Register qemu binfmt
-        run: docker run --privileged --rm tonistiigi/binfmt --install all
-      - name: Smoke aarch64 binary
-        env:
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: clang
-        run: cross run --release --features release --target aarch64-unknown-linux-gnu --bin conproxy -- --version
+          sudo apt-get install -y --no-install-recommends qemu-user-static
+          chmod +x bin/conproxy
+          qemu-aarch64-static bin/conproxy --version
+          qemu-aarch64-static bin/conproxy --help 2>&1 | head -20
 
   # Build + publish multi-arch container image to GHCR.
-  # linux/amd64 (host) + linux/arm64 (qemu buildx).
-  # Tag-only by default; dispatch skips to keep manual runs fast.
+  # Native runners per arch (arm64 via ubuntu-24.04-arm — avoids slow qemu).
   container:
     name: container (${{ matrix.platform }})
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -120,17 +111,17 @@ jobs:
           # platform = buildx platforms= value; tag_suffix must be docker-tag-safe (no /)
           - platform: linux/amd64
             tag_suffix: linux-amd64
+            runner: ubuntu-latest
             description: x86_64
           - platform: linux/arm64
             tag_suffix: linux-arm64
+            runner: ubuntu-24.04-arm
             description: aarch64
     steps:
       - uses: actions/checkout@v4
       - name: Set VERSION from tag
         id: v
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to GHCR
@@ -155,11 +146,10 @@ jobs:
             org.opencontainers.image.version=${{ steps.v.outputs.VERSION }}
           cache-from: type=gha,scope=container-${{ matrix.tag_suffix }}
           cache-to: type=gha,scope=container-${{ matrix.tag_suffix }},mode=max
-      - name: Smoke amd64 image
-        if: matrix.platform == 'linux/amd64'
+      - name: Smoke image
         run: |
-          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux-amd64 --version
-          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-linux-amd64 --help 2>&1 | head -20
+          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-${{ matrix.tag_suffix }} --version
+          docker run --rm ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}-${{ matrix.tag_suffix }} --help 2>&1 | head -20
 
   # Assemble the multi-arch manifest + re-tag with the version-only
   # tags. Runs once per tag after every per-arch image is pushed.
