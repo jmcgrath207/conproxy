@@ -16,9 +16,9 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
     // Clear cache before bulk warmup
     client.cache_clear();
 
-    // Bulk warmup via /cache/warmup
+    // Bulk warmup via /cache/warmup (must fetch_from_upstream to populate cache)
     run_test!(report, "warmup", "Warmup: bulk from seeds", {
-        let (status, body) = client.warmup(&[
+        let (status, body) = client.warmup_with_fetch(&[
             "rust programming language",
             "vector database embeddings",
             "elasticsearch full text search",
@@ -27,8 +27,7 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         ]);
         assert_eq!(status, 200);
         let warmed = body["warmed"].as_u64().unwrap_or(0);
-        // warmed is u64, always >= 0; just verify the request succeeded
-        let _ = warmed;
+        assert!(warmed > 0, "Expected > 0 warmed entries, got {warmed}");
     });
 
     // Cache has entries after bulk warmup
@@ -42,7 +41,6 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
     });
 
     // Bulk warmup from file via REST API
-    // (the CLI's `seed` command is list/clear only — no fetch subcommand)
     run_test!(report, "warmup", "Warmup: bulk fetch from file", {
         let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let seeds_fts = project_root.join("tests/e2e/data/seeds_fts.txt");
@@ -51,19 +49,19 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         assert!(!queries.is_empty(), "seeds_fts.txt is empty or missing");
         let owned: Vec<String> = queries.iter().map(|s| s.to_string()).collect();
         let refs: Vec<&str> = owned.iter().map(|s| s.as_str()).collect();
-        let (status, body) = client.warmup(&refs);
+        let (status, body) = client.warmup_with_fetch(&refs);
         assert_eq!(status, 200, "Bulk warmup failed: {body}");
         let warmed = body["warmed"].as_u64().unwrap_or(0);
         assert!(warmed > 0, "Expected > 0 warmed entries, got {warmed}");
     });
 
-    // Stats show increased request count
+    // Cache still populated after file warmup
     run_test!(report, "warmup", "Warmup: requests increased", {
-        let (_, metrics) = client.metrics();
-        let total = metrics["proxy"]["requests_total"].as_u64().unwrap_or(0);
+        let (_, stats) = client.stats();
+        let total = stats["cache"]["total"].as_u64().unwrap_or(0);
         assert!(
             total >= 5,
-            "Expected >= 5 requests after warmup, got {total}"
+            "Expected >= 5 cache entries after warmup, got {total}"
         );
     });
 

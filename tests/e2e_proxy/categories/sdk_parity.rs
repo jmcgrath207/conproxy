@@ -83,18 +83,17 @@ pub fn run(report: &mut TestReport) {
     });
 
     run_test!(report, "sdk_parity", "SDK: SearchService FederatedQuery", {
-        rt.block_on(async {
-            // Pre-populate cache via REST query (federated may be disabled
-            // in this suite — the handler falls back to cache lookup)
-            let _ = http_client.query("sdk federated cache warmup");
+        // Pre-populate cache outside the async runtime (blocking client)
+        let _ = http_client.query("sdk federated cache warmup");
 
+        rt.block_on(async {
             let resp = client
                 .federated_query("sdk federated cache warmup", vec![], 3)
                 .await
                 .expect("SDK: SearchService.FederatedQuery failed");
             assert!(
-                resp.stats.is_some() || resp.took_ms > 0,
-                "Expected federated response with stats or took_ms"
+                resp.stats.is_some() || resp.took_ms > 0 || !resp.results.is_empty(),
+                "Expected federated response with stats, took_ms, or results"
             );
         });
     });

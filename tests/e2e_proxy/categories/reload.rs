@@ -24,14 +24,14 @@ pub fn run(client: &E2eClient, suite: Suite, config: &ConfigManager, report: &mu
     config.backup_current();
     config.set_max_entries(9999);
 
-    // Reload picks up new max_entries (verify via /cache/upstreams response)
+    // Reload picks up new max_entries (verify via /stats cache section)
     run_test!(report, "reload", "Reload: picks up new max_entries", {
-        let (status, _) = client.admin_reload();
+        let (status, body) = client.admin_reload();
         assert_eq!(status, 200);
-        // Verify the new max_entries is reflected in the cache config endpoint
-        let (status, body) = client.cache_upstreams();
+        assert_eq!(body["success"], true);
+        let (status, stats) = client.stats();
         assert_eq!(status, 200);
-        let max_entries = body["max_entries"].as_u64().unwrap_or(0);
+        let max_entries = stats["cache"]["max_entries"].as_u64().unwrap_or(0);
         assert_eq!(
             max_entries, 9999,
             "Expected max_entries=9999 after reload, got {max_entries}"

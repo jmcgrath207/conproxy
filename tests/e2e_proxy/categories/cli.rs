@@ -11,7 +11,6 @@ pub fn run(suite: Suite, report: &mut TestReport) {
     }
 
     let bin = conproxy_bin();
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let cli_cwd = cli_cwd();
 
     // CLI search via proxy (text upstreams only)
@@ -19,7 +18,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         run_test!(report, "cli", "CLI: search via proxy", {
             let out = run_cli(
                 &bin,
-                &project_root,
+                &cli_cwd,
                 &["search", "rust programming", "--format", "json"],
             );
             assert!(out.status.success(), "CLI search failed: {}", stderr(&out));
@@ -31,7 +30,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         run_test!(report, "cli", "CLI: search shows cache status", {
             let out = run_cli(
                 &bin,
-                &project_root,
+                &cli_cwd,
                 &["search", "rust programming", "--format", "json"],
             );
             assert!(out.status.success());
@@ -75,7 +74,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         let out = run_cli(&bin, &cli_cwd, &["status", "--json"]);
         assert!(out.status.success(), "CLI status failed: {}", stderr(&out));
         let json = parse_json_stdout(&out);
-        assert_eq!(json["proxy_running"], true, "Expected proxy_running=true");
+        assert_eq!(json["running"], true, "Expected running=true");
     });
 
     // Context switch workflow (text upstreams only)
@@ -83,8 +82,8 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         run_test!(report, "cli", "CLI: switch to project-cli", {
             let out = run_cli(
                 &bin,
-                &project_root,
-                &["context", "project-cli", "--switch", "--json"],
+                &cli_cwd,
+                &["context", "project-cli", "--switch", "--create", "--json"],
             );
             assert!(
                 out.status.success(),
@@ -105,7 +104,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         run_test!(report, "cli", "CLI: search in new context", {
             let out = run_cli(
                 &bin,
-                &project_root,
+                &cli_cwd,
                 &["search", "context test query", "--format", "json"],
             );
             assert!(out.status.success());
@@ -116,7 +115,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         run_test!(report, "cli", "CLI: switch back to default", {
             let out = run_cli(
                 &bin,
-                &project_root,
+                &cli_cwd,
                 &["context", "default", "--switch", "--json"],
             );
             assert!(out.status.success());
@@ -135,11 +134,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
 
     // CLI seed clear
     run_test!(report, "cli", "CLI: seed clear all", {
-        let out = run_cli(
-            &bin,
-            &project_root,
-            &["seed", "clear", "--all", "--confirm"],
-        );
+        let out = run_cli(&bin, &cli_cwd, &["seed", "clear", "--all", "--confirm"]);
         // Allow success or expected error (no cache to clear)
         assert!(
             out.status.success() || stderr(&out).contains("no cache"),
@@ -153,7 +148,7 @@ pub fn run(suite: Suite, report: &mut TestReport) {
         run_test!(report, "cli", "CLI: search miss after clear", {
             let out = run_cli(
                 &bin,
-                &project_root,
+                &cli_cwd,
                 &["search", "after cli clear test", "--format", "json"],
             );
             assert!(out.status.success());

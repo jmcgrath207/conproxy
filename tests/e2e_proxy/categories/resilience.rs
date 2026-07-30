@@ -10,7 +10,7 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         return;
     }
 
-    // Failure injection (all suite only — needs 2 ES upstreams)
+    // Failure injection (all suite only — multi-elasticsearch.toml uses meili-1/2)
     if suite.is_all() {
         eprintln!();
         eprintln!("\x1b[1mFailure Injection Tests\x1b[0m");
@@ -26,8 +26,8 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
             );
         });
 
-        // Stop secondary ES
-        docker::stop_container("conproxy-elasticsearch-2");
+        // Stop secondary meilisearch (compose: conproxy-cmeili-2)
+        docker::stop_container("conproxy-cmeili-2");
         std::thread::sleep(Duration::from_secs(3));
 
         // Send probe queries to trigger failure detection
@@ -54,19 +54,22 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         });
 
         // Restart secondary
-        docker::start_container("conproxy-elasticsearch-2");
+        docker::start_container("conproxy-cmeili-2");
         std::thread::sleep(Duration::from_secs(12));
 
-        // Verify ES container is back
+        // Verify meili secondary is back
         run_test!(report, "resilience", "Failover: es-secondary back", {
             let check = reqwest::blocking::Client::builder()
                 .timeout(Duration::from_secs(5))
                 .build()
                 .unwrap();
-            let resp = check.get("http://localhost:9201/_cluster/health").send();
+            let resp = check
+                .get("http://localhost:7701/health")
+                .header("Authorization", "Bearer conproxy_test_key")
+                .send();
             assert!(
                 resp.is_ok() && resp.unwrap().status().is_success(),
-                "ES secondary not back"
+                "Meili secondary not back"
             );
         });
 
@@ -87,9 +90,9 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
             assert_eq!(cb["state"].as_str(), Some("closed"));
         });
 
-        // Stop ALL upstreams to trip circuit breaker
-        docker::stop_container("conproxy-elasticsearch-1");
-        docker::stop_container("conproxy-elasticsearch-2");
+        // Stop ALL meili upstreams to trip circuit breaker
+        docker::stop_container("conproxy-cmeili-1");
+        docker::stop_container("conproxy-cmeili-2");
         std::thread::sleep(Duration::from_secs(2));
 
         // Send rapid queries to trip circuit breaker
@@ -110,8 +113,8 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         });
 
         // Restart upstreams and wait for circuit recovery
-        docker::start_container("conproxy-elasticsearch-1");
-        docker::start_container("conproxy-elasticsearch-2");
+        docker::start_container("conproxy-cmeili-1");
+        docker::start_container("conproxy-cmeili-2");
         std::thread::sleep(Duration::from_secs(35));
 
         // Circuit should recover

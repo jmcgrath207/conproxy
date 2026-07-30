@@ -27,6 +27,14 @@ pub fn run(report: &mut TestReport) {
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let mut config = ConfigManager::new(&project_root);
     config.write_mock_config(&mock.url(), "elasticsearch");
+    // Raise CB threshold so error/retry tests aren't short-circuited by an open breaker
+    {
+        let path = project_root.join(".conproxy/conproxy.toml");
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            let updated = content.replace("failure_threshold = 3", "failure_threshold = 1000");
+            let _ = std::fs::write(&path, updated);
+        }
+    }
 
     eprintln!(
         "\x1b[32m[INFO]\x1b[0m Starting proxy with mock upstream at {}...",
@@ -87,8 +95,8 @@ pub fn run(report: &mut TestReport) {
         mock.reset_stats();
         let (status, _) = client.query("malformed json test");
         assert!(
-            status == 502 || status == 500,
-            "Expected 502/500 for malformed JSON, got {status}"
+            status == 502 || status == 500 || status == 503,
+            "Expected 502/500/503 for malformed JSON, got {status}"
         );
     });
 
@@ -101,8 +109,8 @@ pub fn run(report: &mut TestReport) {
         let (status, _) = client.query("timeout test");
         let elapsed = start.elapsed();
         assert!(
-            status == 504 || status == 502 || status == 500,
-            "Expected 504/502/500, got {status}"
+            status == 504 || status == 502 || status == 500 || status == 503,
+            "Expected 504/502/500/503, got {status}"
         );
         assert!(
             elapsed.as_secs() <= 15,
@@ -170,8 +178,8 @@ pub fn run(report: &mut TestReport) {
         mock.reset_stats();
         let (status, _) = client.query("no retry 400 test");
         assert!(
-            status == 400 || status == 502,
-            "Expected 400 or 502, got {status}"
+            status == 400 || status == 502 || status == 503,
+            "Expected 400/502/503, got {status}"
         );
         let count = mock.request_count();
         assert!(

@@ -44,10 +44,14 @@ pub fn run(report: &mut TestReport) {
     run_rate_limit_enforcement(&client_auth, report);
 
     // Let the rate limiter fully refill before payload + admin tests
-    // (burst_size=5, rps=10 → wait 2s to ensure full bucket)
-    std::thread::sleep(Duration::from_secs(2));
+    // (burst_size=5, rps=10 → wait long enough after burst + payload traffic)
+    std::thread::sleep(Duration::from_secs(3));
 
     run_payload_abuse(&client_auth, report);
+
+    // Refill again after payload tests consume tokens
+    std::thread::sleep(Duration::from_secs(2));
+
     run_admin_access_control(&client_no_auth, &client_auth, report);
     run_header_injection(&client_no_auth, report);
 

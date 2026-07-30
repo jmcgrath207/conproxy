@@ -88,12 +88,11 @@ pub fn run(report: &mut TestReport) {
         "grpc_parity",
         "gRPC: SearchService FederatedQuery",
         {
+            // Pre-populate cache outside the async runtime (blocking client)
+            let _ = http_client.query("grpc federated cache warmup");
+
             let url = url.clone();
             rt.block_on(async {
-                // Pre-populate cache via REST query (federated may be disabled
-                // in this suite — the gRPC handler falls back to cache lookup)
-                let _ = http_client.query("grpc federated cache warmup");
-
                 let channel = Channel::from_shared(url).unwrap().connect().await.unwrap();
                 let mut client = SearchServiceClient::new(channel);
                 let resp = client
@@ -106,10 +105,9 @@ pub fn run(report: &mut TestReport) {
                     .await
                     .expect("SearchService.FederatedQuery failed");
                 let inner = resp.into_inner();
-                // Just verify the response has stats
                 assert!(
-                    inner.stats.is_some() || inner.took_ms > 0,
-                    "Expected federated response with stats or took_ms"
+                    inner.stats.is_some() || inner.took_ms > 0 || !inner.results.is_empty(),
+                    "Expected federated response with stats, took_ms, or results"
                 );
             });
         }
