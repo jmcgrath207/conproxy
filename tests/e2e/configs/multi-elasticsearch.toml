@@ -1,23 +1,29 @@
-[proxy]
+# Plan 09: context-rooted multi-upstream for e2e-all.
+# Two meilisearch backends at different priorities.
+
+[server]
 listen = "127.0.0.1:8080"
 max_entries = 1000
 
-[[proxy.upstreams]]
-id = "meili-1"
+[upstreams.meili-1]
 url = "http://localhost:7700"
-upstream_type = "meilisearch"
+type = "meilisearch"
 index = "conproxy_test"
 api_key = "conproxy_test_key"
-weight = 1
-priority = 0
-enabled = true
 
-[[proxy.upstreams]]
-id = "meili-2"
+[upstreams.meili-2]
 url = "http://localhost:7701"
-upstream_type = "meilisearch"
+type = "meilisearch"
 index = "conproxy_test"
 api_key = "conproxy_test_key"
-weight = 1
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "meili-1"
+priority = 0
+
+[[contexts.default.upstreams]]
+ref = "meili-2"
 priority = 1
-enabled = true

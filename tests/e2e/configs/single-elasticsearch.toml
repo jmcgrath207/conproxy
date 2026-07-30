@@ -1,12 +1,15 @@
-[proxy]
+[server]
 listen = "127.0.0.1:8080"
 
-[[proxy.upstreams]]
-id = "meili"
+[upstreams.meili]
 url = "http://localhost:7700"
-upstream_type = "meilisearch"
+type = "meilisearch"
 index = "conproxy_test"
 api_key = "conproxy_test_key"
-weight = 1
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "meili"
 priority = 0
-enabled = true

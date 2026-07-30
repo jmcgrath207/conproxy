@@ -133,16 +133,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install protoc + python3-dev + docker compose plugin
+      - name: Install protoc + python3-dev
         run: |
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler python3-dev
+      # Set up buildx for native GHA Docker layer cache (also used
+      # implicitly by `docker compose pull` on GHA 2024+ runners).
+      - uses: docker/setup-buildx-action@v3
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ci-e2e-${{ runner.os }}
           cache-on-failure: true
       - name: Build release binary (conproxy)
         run: cargo build --release --features release --bin conproxy
+      # Pull backend images first (GHA Docker layer cache speeds
+      # subsequent runs / different OSes). The compose file uses
+      # qdrant / ES / meili×2 / pgvector / opensearch — all public.
+      - name: Pull backend images (Docker cache)
+        run: |
+          cd tests/e2e
+          docker compose pull --quiet || true
       - name: Bring up backends (docker compose)
         run: |
           cd tests/e2e
