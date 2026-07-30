@@ -390,23 +390,41 @@ pub(crate) fn run(command: super::ProxyCommands) -> anyhow::Result<()> {
                     {
                         Ok(resp) => {
                             let inner = resp.into_inner();
-                            if json_output {
-                                println!(
-                                    "{}",
-                                    serde_json::to_string_pretty(&serde_json::json!({
-                                        "context_id": inner.context_id,
-                                        "message": inner.message,
-                                    }))?
-                                );
-                            } else {
-                                println!("Created context: {}", inner.context_id);
+                            if !switch {
+                                if json_output {
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&serde_json::json!({
+                                            "success": true,
+                                            "context_id": inner.context_id,
+                                            "message": inner.message,
+                                        }))?
+                                    );
+                                } else {
+                                    println!("Created context: {}", inner.context_id);
+                                }
                             }
                         }
                         Err(e) => {
-                            eprintln!("Error: {}", e.message());
+                            // Already exists is fine when also switching
+                            if !switch {
+                                if json_output {
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&serde_json::json!({
+                                            "success": false,
+                                            "error": e.message(),
+                                        }))?
+                                    );
+                                } else {
+                                    eprintln!("Error: {}", e.message());
+                                }
+                                return Ok(());
+                            }
                         }
                     }
-                } else if switch {
+                }
+                if switch {
                     match client
                         .switch_context(proto::SwitchContextRequest {
                             context_id: id.clone(),
@@ -442,7 +460,7 @@ pub(crate) fn run(command: super::ProxyCommands) -> anyhow::Result<()> {
                             }
                         }
                     }
-                } else {
+                } else if !create {
                     // Show context details via get_context_stats
                     match client
                         .get_context_stats(proto::GetContextStatsRequest {

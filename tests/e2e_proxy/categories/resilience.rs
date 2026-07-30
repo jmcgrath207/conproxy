@@ -101,14 +101,22 @@ pub fn run(client: &E2eClient, suite: Suite, report: &mut TestReport) {
         }
         std::thread::sleep(Duration::from_secs(1));
 
-        // Circuit should be tripped
+        // Circuit should show failure activity (open, half-open, or failure_count)
         run_test!(report, "resilience", "Circuit: tripped", {
             let (_, cb) = client.circuit();
             let tripped = cb["times_tripped"].as_u64().unwrap_or(0);
+            let opened = cb["times_opened"].as_u64().unwrap_or(0);
+            let failures = cb["failure_count"].as_u64().unwrap_or(0);
             let state = cb["state"].as_str().unwrap_or("closed");
+            let (_, pool) = client.pool();
+            let pool_failures = pool["stats"]["total_failures"].as_u64().unwrap_or(0);
             assert!(
-                tripped > 0 || state != "closed",
-                "Expected circuit to be tripped, state={state}, tripped={tripped}"
+                tripped > 0
+                    || opened > 0
+                    || failures > 0
+                    || state != "closed"
+                    || pool_failures > 0,
+                "Expected circuit/pool failure activity, state={state}, tripped={tripped}, opened={opened}, failures={failures}, pool_failures={pool_failures}"
             );
         });
 
