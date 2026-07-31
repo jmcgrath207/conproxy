@@ -1993,3 +1993,68 @@ fn test_empty_results_respected_by_stats() {
         "Clear still works after empty-result insert"
     );
 }
+
+#[test]
+fn test_evict_filter_by_context_and_prefix() {
+    let store = CacheStore::new(Duration::from_secs(300), Duration::from_secs(3600), 1000);
+
+    store.insert_with_context(
+        "error handling rust",
+        make_response("r"),
+        "upstream".to_string(),
+        "tenant_a",
+    );
+    store.insert_with_context(
+        "error handling python",
+        make_response("r"),
+        "upstream".to_string(),
+        "tenant_a",
+    );
+    store.insert_with_context(
+        "error handling ruby",
+        make_response("r"),
+        "upstream".to_string(),
+        "tenant_b",
+    );
+    store.insert_with_context(
+        "async patterns",
+        make_response("r"),
+        "upstream".to_string(),
+        "tenant_a",
+    );
+
+    // Context-only: drop tenant_a entirely.
+    let evicted = store.evict_filter(Some("tenant_a"), None, None, None);
+    assert_eq!(evicted, 3);
+    assert_eq!(store.len(), 1);
+
+    // Prefix-only: drop remaining tenant_b entries whose query starts with "error".
+    let evicted = store.evict_filter(None, Some("error"), None, None);
+    assert_eq!(evicted, 1);
+    assert_eq!(store.len(), 0);
+}
+
+#[test]
+fn test_evict_filter_max_entries_caps() {
+    let store = CacheStore::new(Duration::from_secs(300), Duration::from_secs(3600), 1000);
+    for i in 0..5 {
+        store.insert_with_context(
+            &format!("query {i}"),
+            make_response("r"),
+            "u".to_string(),
+            "c",
+        );
+    }
+    let evicted = store.evict_filter(Some("c"), None, None, Some(2));
+    assert_eq!(evicted, 2);
+    assert_eq!(store.len(), 3);
+}
+
+#[test]
+fn test_evict_filter_older_than_secs() {
+    let store = CacheStore::new(Duration::from_secs(300), Duration::from_secs(3600), 1000);
+    store.insert_with_context("old", make_response("r"), "u".to_string(), "c");
+    // 0s threshold should match entries with cached_at_wall <= now (i.e. all).
+    let evicted = store.evict_filter(None, None, Some(0), None);
+    assert_eq!(evicted, 1);
+}

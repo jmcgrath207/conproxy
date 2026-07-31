@@ -43,11 +43,25 @@ pub(super) async fn handle_cache_integrity(State(state): State<AppState>) -> imp
 }
 
 /// Request body for selective cache eviction.
+///
+/// All criteria AND-combine. Omitted fields place no constraint. When
+/// `upstream_id` is set, the handler delegates to the upstream-scoped
+/// eviction path; otherwise the new `context_id` / `query_text_prefix` /
+/// `older_than_secs` filter is used.
 #[derive(Debug, Clone, serde::Deserialize)]
 pub(super) struct EvictRequest {
     /// Upstream ID to evict entries from (optional).
     #[serde(default)]
     pub(super) upstream_id: Option<String>,
+    /// Context ID to evict entries from (optional, ignored if upstream_id set).
+    #[serde(default)]
+    pub(super) context_id: Option<String>,
+    /// Evict entries whose query text starts with this prefix (case-insensitive).
+    #[serde(default)]
+    pub(super) query_text_prefix: Option<String>,
+    /// Evict entries cached at least this many seconds ago (wall-clock).
+    #[serde(default)]
+    pub(super) older_than_secs: Option<u64>,
     /// Maximum number of entries to evict (optional).
     #[serde(default)]
     pub(super) max_entries: Option<usize>,
@@ -67,18 +81,19 @@ struct EvictResponse {
 
 /// Handle POST /cache/evict requests.
 ///
-/// Selectively evicts cache entries based on criteria.
+/// Selectively evicts cache entries based on criteria. When `upstream_id` is
+/// set, eviction is governed by upstream-scoped limits (existing behavior).
+/// Otherwise criteria are AND-combined across `context_id`,
+/// `query_text_prefix`, `older_than_secs`, and `max_entries`.
 pub(super) async fn handle_cache_evict(
     State(state): State<AppState>,
     Json(request): Json<EvictRequest>,
 ) -> impl IntoResponse {
     let evicted = if request.expired_only {
-        // Evict only truly expired entries
         state.cache.evict_truly_expired()
-    } else if let Some(upstream_id) = &request.upstream_id {
-        // Evict entries from a specific upstream
+    } else if request.upstream_id.is_some() {
+        let upstream_id = request.upstream_id.as_deref().unwrap_or_default();
         if let Some(max) = request.max_entries {
-            // Enforce a limit on this upstream
             state.cache.enforce_per_upstream_limit(
                 upstream_id,
                 state
@@ -87,12 +102,20 @@ pub(super) async fn handle_cache_evict(
                     .saturating_sub(max),
             )
         } else {
-            // Evict all from this upstream
             let count = state.cache.count_for_upstream(upstream_id);
             state.cache.evict_from_upstream(upstream_id, count)
         }
+    } else if request.context_id.is_some()
+        || request.query_text_prefix.is_some()
+        || request.older_than_secs.is_some()
+    {
+        state.cache.evict_filter(
+            request.context_id.as_deref(),
+            request.query_text_prefix.as_deref(),
+            request.older_than_secs,
+            request.max_entries,
+        )
     } else {
-        // No specific criteria - only evict expired
         state.cache.evict_truly_expired()
     };
 

@@ -951,11 +951,30 @@ impl UpstreamEndpointConfig {
         self.upstream_type.as_deref() == Some("pgvector")
     }
 
+    /// `true` when this upstream's type is in the experimental list.
+    pub fn is_experimental(&self) -> bool {
+        match self.upstream_type.as_deref() {
+            Some(t) => is_experimental_upstream_type(t),
+            None => false,
+        }
+    }
+
     /// Get the distance metric (default: "cosine").
     pub fn distance_metric(&self) -> &str {
         self.distance_metric.as_deref().unwrap_or("cosine")
     }
+}
 
+/// Upstream types that are considered experimental: lighter e2e coverage,
+/// API may drift, gated behind a runtime flag in some downstream tools.
+pub const EXPERIMENTAL_UPSTREAM_TYPES: &[&str] = &["pinecone", "milvus"];
+
+/// `true` when the upstream type is experimental (less e2e proof).
+pub fn is_experimental_upstream_type(upstream_type: &str) -> bool {
+    EXPERIMENTAL_UPSTREAM_TYPES.contains(&upstream_type)
+}
+
+impl UpstreamEndpointConfig {
     /// Validate upstream-specific configuration.
     pub fn validate(&self) -> std::result::Result<(), String> {
         // Validate upstream_type values
@@ -2014,12 +2033,24 @@ pub struct SemanticCacheSettingsConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
     /// Cosine similarity threshold for a match (default: 0.92).
+    ///
+    /// Below the floor (0.85) the config validates to a startup error unless
+    /// `allow_unsafe_threshold = true` is set. Below 0.85 the false-hit rate
+    /// explodes (see `strategy-assessment.md`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub similarity_threshold: Option<f32>,
     /// Maximum stored embeddings before LRU eviction (default: 10000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_entries: Option<usize>,
+    /// Explicit opt-in to run below the safe τ floor (0.85). Default: false.
+    /// Only honored when semantic is enabled; refuse to start otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub allow_unsafe_threshold: Option<bool>,
 }
+
+/// Lowest τ that `make bench-hitrate-sem` has shown can clear the 1% false-hit
+/// gate across synthetic traces. Below this, false-hit explodes 34–88%.
+pub const SAFE_SIMILARITY_THRESHOLD_FLOOR: f32 = 0.85;
 
 impl SemanticCacheSettingsConfig {
     /// `true` when semantic matching is enabled (default: false).
@@ -2037,12 +2068,47 @@ impl SemanticCacheSettingsConfig {
         self.max_entries.unwrap_or(10_000)
     }
 
+    /// `true` when operator opted in to running below the safe τ floor.
+    pub fn allow_unsafe_threshold(&self) -> bool {
+        self.allow_unsafe_threshold.unwrap_or(false)
+    }
+
+    /// Validate semantic cache configuration.
+    ///
+    /// # Errors
+    ///
+    /// * `similarity_threshold` not in `[0.0, 1.0]`
+    /// * `similarity_threshold` below `SAFE_SIMILARITY_THRESHOLD_FLOOR` and
+    ///   `allow_unsafe_threshold` not set
+    pub fn validate(&self) -> std::result::Result<(), String> {
+        if let Some(t) = self.similarity_threshold {
+            if !(0.0..=1.0).contains(&t) {
+                return Err(format!(
+                    "cache.semantic.similarity_threshold must be in [0.0, 1.0], got {t}"
+                ));
+            }
+            if self.enabled()
+                && t < SAFE_SIMILARITY_THRESHOLD_FLOOR
+                && !self.allow_unsafe_threshold()
+            {
+                return Err(format!(
+                    "cache.semantic.similarity_threshold {t} is below the safe floor {}. \
+                     Below this, bench-hitrate-sem shows false-hit 34–88%. \
+                     Set allow_unsafe_threshold = true to override (discouraged).",
+                    SAFE_SIMILARITY_THRESHOLD_FLOOR
+                ));
+            }
+        }
+        Ok(())
+    }
+
     /// Merge with a base (global) config, local fields winning when set.
     pub fn merge_with(&self, base: &Self) -> Self {
         Self {
             enabled: self.enabled.or(base.enabled),
             similarity_threshold: self.similarity_threshold.or(base.similarity_threshold),
             max_entries: self.max_entries.or(base.max_entries),
+            allow_unsafe_threshold: self.allow_unsafe_threshold.or(base.allow_unsafe_threshold),
         }
     }
 }
@@ -2224,6 +2290,7 @@ impl ProxyCacheConfig {
             }
         }
         self.per_upstream.validate()?;
+        self.semantic.validate()?;
         Ok(())
     }
 }

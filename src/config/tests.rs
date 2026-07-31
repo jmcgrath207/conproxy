@@ -2591,3 +2591,71 @@ fn test_web_ui_config_merge() {
     let base = WebUiConfig { enabled: false };
     assert!(!overlay.merge_with(&base).enabled);
 }
+
+#[test]
+fn test_semantic_low_threshold_rejected_when_enabled() {
+    let s = SemanticCacheSettingsConfig {
+        enabled: Some(true),
+        similarity_threshold: Some(0.70),
+        ..Default::default()
+    };
+    let err = s.validate().unwrap_err();
+    assert!(err.contains("floor"), "msg: {err}");
+}
+
+#[test]
+fn test_semantic_low_threshold_ok_with_unsafe_opt_in() {
+    let s = SemanticCacheSettingsConfig {
+        enabled: Some(true),
+        similarity_threshold: Some(0.70),
+        allow_unsafe_threshold: Some(true),
+        ..Default::default()
+    };
+    assert!(s.validate().is_ok());
+}
+
+#[test]
+fn test_semantic_low_threshold_ok_when_disabled() {
+    // Floor only applies when semantic is enabled.
+    let s = SemanticCacheSettingsConfig {
+        enabled: Some(false),
+        similarity_threshold: Some(0.70),
+        ..Default::default()
+    };
+    assert!(s.validate().is_ok());
+}
+
+#[test]
+fn test_semantic_threshold_out_of_range() {
+    let s = SemanticCacheSettingsConfig {
+        enabled: Some(true),
+        similarity_threshold: Some(1.5),
+        ..Default::default()
+    };
+    assert!(s.validate().is_err());
+
+    let s = SemanticCacheSettingsConfig {
+        enabled: Some(true),
+        similarity_threshold: Some(-0.1),
+        ..Default::default()
+    };
+    assert!(s.validate().is_err());
+}
+
+#[test]
+fn test_semantic_default_threshold_ok() {
+    let s = SemanticCacheSettingsConfig::default();
+    assert!(s.validate().is_ok());
+    assert!((s.similarity_threshold() - 0.92).abs() < f32::EPSILON);
+}
+
+#[test]
+fn test_experimental_upstream_type_helper() {
+    use crate::config::{is_experimental_upstream_type, EXPERIMENTAL_UPSTREAM_TYPES};
+    assert!(is_experimental_upstream_type("pinecone"));
+    assert!(is_experimental_upstream_type("milvus"));
+    assert!(!is_experimental_upstream_type("qdrant"));
+    assert!(!is_experimental_upstream_type("elasticsearch"));
+    assert!(!is_experimental_upstream_type("unknown"));
+    assert_eq!(EXPERIMENTAL_UPSTREAM_TYPES, &["pinecone", "milvus"]);
+}

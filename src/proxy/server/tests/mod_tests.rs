@@ -1231,6 +1231,9 @@ async fn test_handler_cache_evict_expired() {
     let state = make_test_app_state();
     let request = cache::EvictRequest {
         upstream_id: None,
+        context_id: None,
+        query_text_prefix: None,
+        older_than_secs: None,
         max_entries: None,
         expired_only: true,
     };
@@ -1257,6 +1260,9 @@ async fn test_handler_cache_evict_by_upstream() {
 
     let request = cache::EvictRequest {
         upstream_id: Some("qdrant-1".to_string()),
+        context_id: None,
+        query_text_prefix: None,
+        older_than_secs: None,
         max_entries: None,
         expired_only: false,
     };

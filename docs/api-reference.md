@@ -148,16 +148,41 @@ Pre-fetch queries to populate the cache.
 
 #### `POST /cache/evict`
 
-Selectively evict cache entries.
+Selectively evict cache entries. All criteria AND-combine; omitted fields
+place no constraint. When `upstream_id` is set the upstream-scoped path
+runs; otherwise `context_id` / `query_text_prefix` / `older_than_secs`
+are AND-combined across the whole cache.
 
 **Request:**
 
 ```json
 {
-  "pattern": "error*",
-  "older_than_secs": 3600
+  "upstream_id": "qdrant-prod",
+  "context_id": "tenant_a",
+  "query_text_prefix": "error",
+  "older_than_secs": 3600,
+  "max_entries": 1000,
+  "expired_only": false
 }
 ```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `upstream_id` | string? | Empty/None = use filter path |
+| `context_id` | string? | Exact match on `context_id` field |
+| `query_text_prefix` | string? | Case-insensitive prefix |
+| `older_than_secs` | u64? | Wall-clock age from `cached_at_wall` |
+| `max_entries` | usize? | Cap on removed entries |
+| `expired_only` | bool | If true, ignore all other filters and drop only past-max-frozen entries |
+
+**Response:**
+
+```json
+{ "evicted": 12, "remaining": 48012 }
+```
+
+Single CDC REMOVE event (`bulk:<count>`) is emitted for peer-mesh
+invalidation when a CDC sender is configured.
 
 #### `GET /cache/integrity`
 

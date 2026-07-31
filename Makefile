@@ -6,7 +6,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: all build build-release test test-unit test-integration test-integration-experimental lint fmt clean help build-embed build-persistence build-pgvector build-mcp build-all build-profiling bench bench-save bench-compare profile-dhat profile-pgo profile-pgo-clean profile-flamegraph profile-tokio-console profile-heaptrack profile-metrics-snap perf-tuning-quick perf-tuning-default perf-tuning-full e2e-all e2e-dirty e2e-qdrant e2e-elastic e2e-meili e2e-mixed e2e-filter e2e-smoke e2e-smoke-core e2e-cascade e2e-federated e2e-bench e2e-services-up e2e-services-down e2e-wait e2e-load-data e2e-results e2e-report e2e-bench-compare e2e-proxy-clean llm-server-check  eval-llamacpp eval-all eval-quick eval-vertical eval-queries eval-cheap eval-results eval-clean uat uat-quick e2e-profile eval-profile test-all test-all-prebuild test-all-lint test-all-unit test-all-bench test-all-coverage test-all-e2e test-all-eval test-all-quality test-all-perf test-all-security test-coverage-check proxy-start proxy-stop proxy-status audit security-deny lint-security audit-known-gaps e2e-security sbom unsafe-audit mutant-security fuzz-query fuzz-config fuzz-all security-quick security-full profile-pgo profile-pgo-clean cov-scope-tune proof-cascade sdk-smoke perf-tuning-clean bench-hitrate bench-hitrate-sem bench-hitrate-onnx bench-hitrate-live perf-publish fmt-check test-one test-verbose test-coverage-quick e2e-generate-embeddings e2e-k8s docker-build docker-push dev-up dev-down dev-restart devex devex-attach devex-status devex-new devex-banner t test-fast test-nextest test-slow test-filter target-prune nextest-install docker-buildx
+.PHONY: all build build-release test test-unit test-integration test-integration-experimental lint fmt clean help build-embed build-persistence build-pgvector build-mcp build-all build-profiling bench bench-save bench-compare profile-dhat profile-pgo profile-pgo-clean profile-flamegraph profile-tokio-console profile-heaptrack profile-metrics-snap perf-tuning-quick perf-tuning-default perf-tuning-full e2e-all e2e-dirty e2e-qdrant e2e-elastic e2e-meili e2e-mixed e2e-filter e2e-smoke e2e-smoke-core e2e-cascade e2e-federated e2e-bench e2e-services-up e2e-services-down e2e-wait e2e-load-data e2e-results e2e-report e2e-bench-compare e2e-proxy-clean llm-server-check  eval-llamacpp eval-all eval-quick eval-vertical eval-queries eval-cheap eval-results eval-clean uat uat-quick e2e-profile eval-profile test-all test-all-prebuild test-all-lint test-all-unit test-all-bench test-all-coverage test-all-e2e test-all-eval test-all-quality test-all-perf test-all-security test-coverage-check proxy-start proxy-stop proxy-status audit security-deny lint-security audit-known-gaps e2e-security sbom unsafe-audit mutant-security fuzz-query fuzz-config fuzz-all security-quick security-full profile-pgo profile-pgo-clean cov-scope-tune proof-cascade sdk-smoke perf-tuning-clean bench-hitrate bench-hitrate-sem bench-hitrate-onnx bench-hitrate-live bench-hitrate-replay perf-publish fmt-check test-one test-verbose test-coverage-quick e2e-generate-embeddings e2e-k8s docker-build docker-push dev-up dev-down dev-restart devex devex-attach devex-status devex-new devex-banner t test-fast test-nextest test-slow test-filter target-prune nextest-install docker-buildx
 
 # E2E infra directory (docker-compose lives here). Override on the command
 # line, e.g. `make e2e-services-up E2E_PROXY_DIR=/path/to/compose`. The
@@ -450,6 +450,33 @@ bench-hitrate-live:
 	  --queries $(LIVE_QUERIES) --tasks $(LIVE_TASKS) \
 	  --live-mutate $(LIVE_MUTATE) $$_EVICT \
 	  --results-dir "$(CURDIR)/$$_RD" || _RC=$$?; \
+	cargo run --bin test_runner -- index "$$_RD" || echo "WARN: index generation failed"; \
+	echo "  Index: $$_RD/index.html"; \
+	exit $$_RC
+
+# Bring-your-own-trace replay. Use a real query log from your corpus to
+# measure hit rate on YOUR data — the only de-risking step before going
+# to prod (see docs/strategy-assessment.md §3). One query per line, no
+# other columns. File size cap is hitrate_bench's own load_queries_file.
+# Tunables: QUERIES, POOL (number of unique queries for the pool),
+# CACHE_SIZE, MODE (exact | semantic), TTL.
+QUERIES ?=
+POOL ?= 1000
+CACHE_SIZE ?= 10000
+MODE ?= exact
+TTL ?= 600
+bench-hitrate-replay:
+	@test -n "$(QUERIES)" || { echo "ERROR: set QUERIES=path/to/trace.txt"; exit 1; }; \
+	test -f "$(QUERIES)" || { echo "ERROR: $(QUERIES) not found"; exit 1; }; \
+	_RD="tests/results/hitrate/replay-$$(date +%Y%m%d-%H%M%S)-$$$$"; \
+	mkdir -p "$$_RD"; \
+	echo "=== Hit-Rate Benchmark (replay) → $$_RD ==="; \
+	_RC=0; \
+	_FEAT=""; [ "$(MODE)" = "semantic" ] && _FEAT="--features embed-api"; \
+	cargo run $$_FEAT --bin hitrate_bench -- \
+	  --queries-file "$(QUERIES)" --pool "$(POOL)" \
+	  --cache-size "$(CACHE_SIZE)" --ttl "$(TTL)" \
+	  --results-dir "$$_RD" || _RC=$$?; \
 	cargo run --bin test_runner -- index "$$_RD" || echo "WARN: index generation failed"; \
 	echo "  Index: $$_RD/index.html"; \
 	exit $$_RC
@@ -1611,6 +1638,7 @@ help:
 	@echo "  bench-hitrate-sem - Hit-rate + semantic τ frontier (embed-api; ~6 min)"
 	@echo "  bench-hitrate-onnx - Semantic τ frontier with live ONNX embedder (embed)"
 	@echo "  bench-hitrate-live - Live wire mode vs real proxy + qdrant (docker + embed)"
+	@echo "  bench-hitrate-replay - Bring-your-own-trace replay: QUERIES=path/to/trace.txt [POOL=1000 CACHE_SIZE=10000 MODE=exact TTL=600]"
 	@echo ""
 	@echo "E2E Proxy Testing targets:"
 	@echo "  e2e-all           - Run all proxy E2E tests (Docker required)"

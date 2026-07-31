@@ -1551,6 +1551,82 @@ impl CacheStore {
         self.evict_from_upstream(upstream_id, current.saturating_sub(max_entries))
     }
 
+    /// Filtered bulk eviction for `/cache/evict` (admin invalidation).
+    ///
+    /// All provided criteria are AND-combined. None = no constraint on that
+    /// field. `query_text_prefix` is a case-insensitive prefix match on the
+    /// stored query text (entries with no recorded text are skipped for this
+    /// filter). `older_than_secs` is wall-clock age from `cached_at_wall`.
+    ///
+    /// Returns the number of entries removed. A single CDC REMOVE event is
+    /// emitted with the count for downstream consumers (peer mesh).
+    #[allow(clippy::too_many_arguments)]
+    pub fn evict_filter(
+        &self,
+        context_id: Option<&str>,
+        query_text_prefix: Option<&str>,
+        older_than_secs: Option<u64>,
+        max_entries: Option<usize>,
+    ) -> usize {
+        let guard = self.entries.guard();
+        let prefix_lower = query_text_prefix.map(|s| s.to_lowercase());
+
+        let wall_threshold = older_than_secs.map(|secs| {
+            SystemTime::now()
+                .checked_sub(Duration::from_secs(secs))
+                .unwrap_or(SystemTime::UNIX_EPOCH)
+        });
+
+        let mut matches: Vec<QueryHash> = Vec::new();
+        for (hash, entry) in self.entries.iter(&guard) {
+            if let Some(cid) = context_id {
+                if entry.context_id != cid {
+                    continue;
+                }
+            }
+            if let Some(ref p) = prefix_lower {
+                match entry.query_text.as_deref() {
+                    Some(t) if t.to_lowercase().starts_with(p) => {}
+                    _ => continue,
+                }
+            }
+            if let Some(threshold) = wall_threshold {
+                match entry.cached_at_wall {
+                    Some(w) if w <= threshold => {}
+                    _ => continue,
+                }
+            }
+            matches.push(*hash);
+        }
+
+        if let Some(max) = max_entries {
+            if matches.len() > max {
+                matches.truncate(max);
+            }
+        }
+
+        let mut removed = 0usize;
+        for hash in matches {
+            if self.tracked_remove(&hash, &guard).is_some() {
+                removed = removed.saturating_add(1);
+            }
+        }
+
+        if removed > 0 {
+            let mut stats = self.eviction_stats.lock();
+            stats.total = stats.total.saturating_add(removed);
+
+            if let Some(ref sender) = self.cdc_sender {
+                sender.send(
+                    CdcEventType::Remove,
+                    CdcEventBuilder::remove(format!("bulk:{removed}")),
+                );
+            }
+        }
+
+        removed
+    }
+
     // --- Stats ---
 
     /// Get cache statistics.
