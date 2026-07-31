@@ -49,7 +49,7 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 
 **Tune**
 
-- **Scope loop** — dry-run Score C filter/boost/rerank + `min_similarity` sweeps on supplied or live hits; phrase suggest; run compare/select; `benchmark` verdict (improved / degraded / unchanged)
+- **Scope loop** — dry-run Score C filter/boost/rerank + `min_similarity` sweeps on supplied or live hits; phrase suggest; run compare/select
 - **What-if probes** — cache TTL hit/stale/miss, cascade leg selection, federated merge weights, embed batch shape, rate-limit allow/deny, warm-plan ETA — session-scoped, no backend write
 - **Build local — ship prod** — one call: `tune_workflow` (open → search → tune → optional `apply_tune` + hot-reload); or export `contexts.<id>.scope` TOML/JSON to paste by hand
 
@@ -63,6 +63,7 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 - `make bench-hitrate` family (exact / sem / onnx / live) with PASS / FAIL-CORE / FAIL-TRUST verdicts
 - τ-frontier + false-hit rate per workload (only public frontier in the space, as far as we know)
 - TTL sweep + what-if CDC model — measures stale rate vs healing options
+- MCP `benchmark` — live query vs tuned scope diff; improved / degraded / unchanged (pairs with Tune)
 
 **Resilience**
 
