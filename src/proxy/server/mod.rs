@@ -848,6 +848,18 @@ impl CacheProxy {
         let scope_filter = Arc::new(ScopeFilter::from_config(&config.scope));
         let upstream_id = format!("proxy-{}", std::process::id());
 
+        // Honest surfacing of experimental upstream types at startup.
+        for u in config.upstreams.iter() {
+            if u.is_experimental() {
+                warn!(
+                    upstream = %u.id,
+                    upstream_type = ?u.upstream_type(),
+                    "experimental upstream configured — lighter e2e coverage, \
+                     API may drift. See README 'Supported Upstreams'."
+                );
+            }
+        }
+
         // Create SmartEmbedder eagerly (shared between cascade and single-upstream paths)
         #[cfg(feature = "embed-api")]
         let smart_embedder = Some(Arc::new(SmartEmbedder::with_defaults()));
