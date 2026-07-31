@@ -42,10 +42,16 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 
 **One endpoint, any backend**
 
-- MCP server (stdio) with a search tool, a dry-run **tune suite** (scope / scope_suggest / cache / cascade / federated / embed / rate / warm / workflow / apply / reload), and dashboard-parity **status tools** (health, overview, cache_status, pool_status, circuit_status, metrics_status, contexts_status, peer_status, tokio_status, cache_entries)
+- MCP server (stdio): `search`, dry-run **tune** suite, dashboard-parity **status tools** (health, overview, cache_status, pool_status, circuit_status, metrics_status, contexts_status, peer_status, tokio_status, cache_entries)
 - 7 upstream adapters: Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, Milvus
 - Runtime query-mode probe (TextNative vs VectorOnly) per adapter
 - Context-rooted multi-tenancy (`[contexts.<id>]`): per-agent API keys, rate limits, isolated cache, scope phrases
+
+**Tune**
+
+- **Scope loop** — dry-run Score C filter/boost/rerank + `min_similarity` sweeps on supplied or live hits; phrase suggest; run compare/select; `benchmark` verdict (improved / degraded / unchanged)
+- **What-if probes** — cache TTL hit/stale/miss, cascade leg selection, federated merge weights, embed batch shape, rate-limit allow/deny, warm-plan ETA — session-scoped, no backend write
+- **Build local — ship prod** — one call: `tune_workflow` (open → search → tune → optional `apply_tune` + hot-reload); or export `contexts.<id>.scope` TOML/JSON to paste by hand
 
 **Cascade & federation**
 
