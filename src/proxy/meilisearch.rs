@@ -11,9 +11,9 @@
 //! setting is enabled. The score is already in the 0-1 range, so no
 //! division by `max_score` is needed (unlike Elasticsearch BM25).
 //!
-//! **This adapter requires Meilisearch v1.0 or newer** and the index
-//! must have `showRankingScore` enabled (the adapter enables it
-//! implicitly on the first query if not already set on the index).
+//! **This adapter requires Meilisearch v1.0 or newer.** The adapter
+//! requests `showRankingScore` on every query; the index must have it
+//! enabled (Meili v1.0+ enables it by default for new indexes).
 
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::time::Duration;
@@ -37,7 +37,7 @@ pub struct MeilisearchConfig {
     pub index: String,
     /// Request timeout.
     pub timeout: Duration,
-    /// Attributes to search on (default: ["content"]).
+    /// Attributes to search on (default: empty = search all fields).
     pub search_attributes: Vec<String>,
     /// Attributes to return in hits (default: empty = all attributes).
     pub displayed_attributes: Vec<String>,

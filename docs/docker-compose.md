@@ -118,7 +118,7 @@ or roll your own systemd/k8s manifests — see
 | `connection refused` on `/query` | Listen on `127.0.0.1` inside container | `[server] listen = "0.0.0.0:9999"` (or pass `--listen`) |
 | Qdrant unhealthy | Slow first boot / OOM | Increase `interval`/`retries`; check `docker compose logs qdrant` |
 | Miss on every call | Empty Meilisearch index | Create the index + POST docs (see `examples/docker-compose/README.md`) |
-| `results: []` even after seeding | Meilisearch adapter may need index-level `showRankingScore` setting; or scoring/filter threshold rejected all hits | Check `docker compose logs conproxy` for `normalized_score`, `result_count`. Try a single-keyword doc + simpler query to isolate. |
+| `results: []` even after seeding | Meilisearch adapter defaulted to `search_attributes: ["content"]` — only the `content` field was searched | Fixed in this branch; if using v0.1.0 image, set `search_fields = ["title", "body", "content"]` in `conproxy.toml` |
 | Hit/miss ratio looks wrong | `cache_status` shape | See `/metrics` for `conproxy_cache_hit_rate` |
 
  **Known issue (v0.1.0 image):** the Meilisearch adapter defaulted to
