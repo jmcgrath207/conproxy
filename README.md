@@ -21,6 +21,34 @@ conproxy sits in front of your search backends. LLM caches skip re-generating an
 - LLM-response caching (that's GPTCache or RedisVL SemanticCache territory)
 - Cross-org mTLS peer replication (not planned; use a mesh sidecar)
 
+**The problem**
+
+LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but agents still re-rerank, re-embed, and re-query the same corpora on retries, multi-agent fanout, and tool-call storms. Every repeated retrieval costs an embed call and a managed-vector read. conproxy caches the retrieval leg itself.
+
+**Consider conproxy if…**
+
+- [ ] Multiple agents or tool loops hit the same corpus
+- [ ] Embed or managed-vector $ is visible
+- [ ] You want one MCP/HTTP search façade over ES / Qdrant / pgvector / Meilisearch / Pinecone / Milvus
+- [ ] You need measured hit rate / false-hit gate, not vibes (`make bench-hitrate`)
+
+**Skip conproxy if…**
+
+- You only need an LLM-response cache → use GPTCache / RedisVL
+- A single in-process memoize hash covers your duplicates
+- You need write-path CDC / multi-region invalidation today (not shipped; track correctness doc)
+- One tiny backend, no agent loops, no cost pressure
+
+**vs alternatives**
+
+| Need | Prefer |
+|------|--------|
+| Cache **LLM answers** | GPTCache / RedisVL SemanticCache |
+| Cache **search/retrieval** under agents | **conproxy** |
+| One process, no daemon, single backend | In-process memoize / app cache |
+| Multi-backend cascade / MCP tune / dry-run scope | **conproxy** |
+| LLM-side semantic cache for prompts | LangChain cache / provider-level caching |
+
 One MCP endpoint, any backend, cost + latency on hits, false-hit gated semantic tier. Benchmarks reproducible.
 
 ```
