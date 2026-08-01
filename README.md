@@ -164,6 +164,15 @@ docker run -d --name conproxy -p 9999:9999 -p 10000:10000 \
   ghcr.io/jmcgrath207/conproxy:0.1.0
 ```
 
+**Docker Compose (proxy + Meilisearch):**
+```bash
+git clone https://github.com/jmcgrath207/conproxy
+cd conproxy/examples/docker-compose
+docker compose up -d
+curl -s http://127.0.0.1:10000/health
+```
+See [`examples/docker-compose/`](examples/docker-compose/) and [`docs/docker-compose.md`](docs/docker-compose.md) for the full walkthrough.
+
 **Helm (Kubernetes):**
 ```bash
 helm install conproxy oci://ghcr.io/jmcgrath207/charts/conproxy \
@@ -311,6 +320,7 @@ Multi-leg cascade and federated variants: see [`examples/multi-upstream-cascade.
 | [MCP Integration](docs/mcp-integration.md) | Setup for Claude Desktop, opencode, and other stdio clients; tune tools |
 | [Distill](docs/distill.md) | Cache export for LLM ingestion |
 | [Deployment](docs/deployment.md) | Production setup and monitoring |
+| [Docker Compose](docs/docker-compose.md) | Side-by-side conproxy + backend stack ([example](examples/docker-compose/)) |
 | [Feature Flags](docs/feature-flags.md) | Compile-time features |
 | [Python SDK](docs/sdk-python.md) | Native client + LangChain/LlamaIndex adapters |
 

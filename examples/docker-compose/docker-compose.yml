@@ -1,0 +1,60 @@
+# conproxy + Meilisearch, side by side.
+#
+# Pin to a specific release for reproducibility; bump on purpose.
+# Meilisearch is text-native out of the box — no FastEmbed / embedder
+# config required for the demo flow.
+#
+# Usage:
+#   docker compose up -d
+#   curl -s http://127.0.0.1:10000/health
+#   # query twice — second call hits the cache
+#   curl -s http://127.0.0.1:10000/query \
+#     -H 'Content-Type: application/json' \
+#     -d '{"query": "how to handle errors in rust", "top_k": 5}'
+#   docker compose down
+
+services:
+  meilisearch:
+    # Meilisearch is text-native out of the box — no embedder setup needed
+    # for the demo flow.
+    image: getmeili/meilisearch:v1.8
+    container_name: conproxy-compose-meili
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: development
+      # Master key is required for writes (creating the index, seeding docs)
+      # but conproxy's `api_key` below matches it so the proxy can search.
+      MEILI_MASTER_KEY: dev_master_key
+    volumes:
+      - meili_data:/meili_data
+    ports:
+      - "7700:7700"
+    healthcheck:
+      # Meilisearch exposes a JSON liveness at /health; -O /dev/null avoids
+      # logging the response body to the health log.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:7700/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  conproxy:
+    # Match the published release; :latest is fine for local play but unstable.
+    image: ghcr.io/jmcgrath207/conproxy:0.1.0
+    container_name: conproxy-compose-proxy
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    ports:
+      - "9999:9999"   # gRPC
+      - "10000:10000" # HTTP REST (query, health, metrics, admin)
+    volumes:
+      - ./conproxy.toml:/etc/conproxy/conproxy.toml:ro
+    command: ["start", "--config", "/etc/conproxy/conproxy.toml", "--listen", "0.0.0.0:9999"]
+    # Non-root by default; no extra caps required for the proxy.
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  meili_data:
