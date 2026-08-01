@@ -1,13 +1,8 @@
 # conproxy
 
-> Retrieval cache for agentic RAG — lower cost, faster search.
+> Search retrieval cache for agentic RAG.
 
-conproxy sits in front of your search backends. LLM caches skip re-generating answers. conproxy skips re-running the search — embed, rerank, upstream — when agents hit the same (or near-same) query again.
-
-**Why it pays**
-
-- **Cost** — every cache hit avoids another embed call and managed-vector read
-- **Speed** — live agentic bench: hit p50 **~0.1 ms** vs miss p50 **~13.8 ms** (~**138×**); exact hit rate **~89.5%** on the agentic trace ([benchmarks](docs/benchmarks.md))
+conproxy is a caching proxy for search backends. LLM caches skip re-generating answers. conproxy skips re-running the search — embed, rerank, backend — when agents ask the same thing twice.
 
 **When to use**
 
@@ -21,7 +16,7 @@ conproxy sits in front of your search backends. LLM caches skip re-generating an
 - LLM-response caching (that's GPTCache or RedisVL SemanticCache territory)
 - Cross-org mTLS peer replication (not planned; use a mesh sidecar)
 
-One MCP endpoint, any backend, cost + latency on hits, false-hit gated semantic tier. Benchmarks reproducible.
+One MCP endpoint, any backend, semantic tier with false-hit gating. Benchmarks reproducible.
 
 ```
 agent ──► MCP / HTTP / gRPC ──► conproxy ──► backends
@@ -41,7 +36,6 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 **Agentic cache**
 
 - In-memory cache with TTL, jitter, and background refresh; S3-FIFO eviction
-- Hit path skips embed + upstream — **cost and latency** win on every hit; coalesce collapses concurrent duplicates
 - Semantic tier with τ-frontier and measured false-hit rate (≤1% gate)
 - Request coalescing (singleflight) to collapse concurrent duplicates
 - Negative caching for errors; serve-stale-while-refresh
