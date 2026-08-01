@@ -6,8 +6,8 @@ conproxy sits in front of your search backends. LLM caches skip re-generating an
 
 **Why it pays**
 
-- **Cost** — every cache hit avoids another embed call and managed-vector read
-- **Speed** — live agentic bench: hit p50 **~0.1 ms** vs miss p50 **~13.8 ms** (~**138×**); exact hit rate **~89.5%** on the agentic trace ([benchmarks](docs/benchmarks.md))
+- **Cost** — hits skip another embed call and managed-vector read
+- **Speed** — cache hits ~**138×** faster than miss path on the agentic live bench (hit p50 ~0.1 ms vs miss ~13.8 ms; ~89.5% exact hit rate) — [benchmarks](docs/benchmarks.md)
 
 **When to use**
 
