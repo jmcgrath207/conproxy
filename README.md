@@ -49,6 +49,24 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 | Multi-backend cascade / MCP tune / dry-run scope | **conproxy** |
 | LLM-side semantic cache for prompts | LangChain cache / provider-level caching |
 
+**At a glance**
+
+| | |
+|--|--|
+| **Category** | Retrieval-leg cache for agentic RAG |
+| **Not** | LLM answer cache (GPTCache / RedisVL) |
+| **Pays when** | Agents re-query — hits skip embed + upstream |
+| **Proof** | ~89.5% exact hit rate; hit p50 ~0.1 ms vs miss ~13.8 ms (~**138×**) — [benchmarks](docs/benchmarks.md) |
+| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) |
+
+**FAQ**
+
+- **What is conproxy?** A caching proxy in front of search backends. Caches retrieval results, not LLM tokens.
+- **How is it different from GPTCache / RedisVL SemanticCache?** Those cache LLM answers. conproxy caches embed + search results for agents re-querying the same corpora.
+- **When does it pay?** Retries, multi-agent fanout, tool-call storms. Cost + latency win on every hit.
+- **How do I try it?** Install (binary / Docker / Helm) → see Quick Start below. One curl hits the proxy.
+- **How do I prove it on my data?** `make bench-hitrate` for synthetic traces; `make bench-hitrate-replay QUERIES=path/to/trace.txt` for your real query log.
+
 One MCP endpoint, any backend, cost + latency on hits, false-hit gated semantic tier. Benchmarks reproducible.
 
 ```
