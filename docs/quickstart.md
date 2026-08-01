@@ -56,3 +56,4 @@ conproxy stop
 - **[Tour](tour.md)** — full feature walkthrough
 - **[Configuration](configuration.md)** — all config fields
 - **[CLI Reference](cli-reference.md)** — all commands and flags
+- **[Docker Compose](docker-compose.md)** — side-by-side proxy + backend stack (no Rust toolchain needed)

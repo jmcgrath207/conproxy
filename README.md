@@ -1,8 +1,13 @@
 # conproxy
 
-> Search retrieval cache for agentic RAG.
+> Retrieval cache for agentic RAG — lower cost, faster search.
 
-conproxy is a caching proxy for search backends. LLM caches skip re-generating answers. conproxy skips re-running the search — embed, rerank, backend — when agents ask the same thing twice.
+conproxy sits in front of your search backends. LLM caches skip re-generating answers. conproxy skips re-running the search — embed, rerank, upstream — when agents hit the same (or near-same) query again.
+
+**Why it pays**
+
+- **Cost** — hits skip another embed call and managed-vector read
+- **Speed** — cache hits ~**138×** faster than miss path on the agentic live bench (hit p50 ~0.1 ms vs miss ~13.8 ms; ~89.5% exact hit rate) — [benchmarks](docs/benchmarks.md)
 
 **When to use**
 
@@ -16,7 +21,53 @@ conproxy is a caching proxy for search backends. LLM caches skip re-generating a
 - LLM-response caching (that's GPTCache or RedisVL SemanticCache territory)
 - Cross-org mTLS peer replication (not planned; use a mesh sidecar)
 
-One MCP endpoint, any backend, semantic tier with false-hit gating. Benchmarks reproducible.
+**The problem**
+
+LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but agents still re-rerank, re-embed, and re-query the same corpora on retries, multi-agent fanout, and tool-call storms. Every repeated retrieval costs an embed call and a managed-vector read. conproxy caches the retrieval leg itself.
+
+**Consider conproxy if…**
+
+- [ ] Multiple agents or tool loops hit the same corpus
+- [ ] Embed or managed-vector $ is visible
+- [ ] You want one MCP/HTTP search façade over ES / Qdrant / pgvector / Meilisearch / Pinecone / Milvus
+- [ ] You need measured hit rate / false-hit gate, not vibes (`make bench-hitrate`)
+
+**Skip conproxy if…**
+
+- You only need an LLM-response cache → use GPTCache / RedisVL
+- A single in-process memoize hash covers your duplicates
+- You need write-path CDC / multi-region invalidation today (not shipped; track correctness doc)
+- One tiny backend, no agent loops, no cost pressure
+
+**vs alternatives**
+
+| Need | Prefer |
+|------|--------|
+| Cache **LLM answers** | GPTCache / RedisVL SemanticCache |
+| Cache **search/retrieval** under agents | **conproxy** |
+| One process, no daemon, single backend | In-process memoize / app cache |
+| Multi-backend cascade / MCP tune / dry-run scope | **conproxy** |
+| LLM-side semantic cache for prompts | LangChain cache / provider-level caching |
+
+**At a glance**
+
+| | |
+|--|--|
+| **Category** | Retrieval-leg cache for agentic RAG |
+| **Not** | LLM answer cache (GPTCache / RedisVL) |
+| **Pays when** | Agents re-query — hits skip embed + upstream |
+| **Proof** | ~89.5% exact hit rate; hit p50 ~0.1 ms vs miss ~13.8 ms (~**138×**) — [benchmarks](docs/benchmarks.md) |
+| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) |
+
+**FAQ**
+
+- **What is conproxy?** A caching proxy in front of search backends. Caches retrieval results, not LLM tokens.
+- **How is it different from GPTCache / RedisVL SemanticCache?** Those cache LLM answers. conproxy caches embed + search results for agents re-querying the same corpora.
+- **When does it pay?** Retries, multi-agent fanout, tool-call storms. Cost + latency win on every hit.
+- **How do I try it?** Install (binary / Docker / Helm) → see Quick Start below. One curl hits the proxy.
+- **How do I prove it on my data?** `make bench-hitrate` for synthetic traces; `make bench-hitrate-replay QUERIES=path/to/trace.txt` for your real query log.
+
+One MCP endpoint, any backend, cost + latency on hits, false-hit gated semantic tier. Benchmarks reproducible.
 
 ```
 agent ──► MCP / HTTP / gRPC ──► conproxy ──► backends
@@ -36,6 +87,7 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 **Agentic cache**
 
 - In-memory cache with TTL, jitter, and background refresh; S3-FIFO eviction
+- Hit path skips embed + upstream — **cost and latency** win on every hit; coalesce collapses concurrent duplicates
 - Semantic tier with τ-frontier and measured false-hit rate (≤1% gate)
 - Request coalescing (singleflight) to collapse concurrent duplicates
 - Negative caching for errors; serve-stale-while-refresh
@@ -111,6 +163,15 @@ docker run -d --name conproxy -p 9999:9999 -p 10000:10000 \
   -v "$PWD/conproxy.toml:/etc/conproxy/conproxy.toml:ro" \
   ghcr.io/jmcgrath207/conproxy:0.1.0
 ```
+
+**Docker Compose (proxy + Meilisearch):**
+```bash
+git clone https://github.com/jmcgrath207/conproxy
+cd conproxy/examples/docker-compose
+docker compose up -d
+curl -s http://127.0.0.1:10000/health
+```
+See [`examples/docker-compose/`](examples/docker-compose/) and [`docs/docker-compose.md`](docs/docker-compose.md) for the full walkthrough.
 
 **Helm (Kubernetes):**
 ```bash
@@ -259,6 +320,7 @@ Multi-leg cascade and federated variants: see [`examples/multi-upstream-cascade.
 | [MCP Integration](docs/mcp-integration.md) | Setup for Claude Desktop, opencode, and other stdio clients; tune tools |
 | [Distill](docs/distill.md) | Cache export for LLM ingestion |
 | [Deployment](docs/deployment.md) | Production setup and monitoring |
+| [Docker Compose](docs/docker-compose.md) | Side-by-side conproxy + backend stack ([example](examples/docker-compose/)) |
 | [Feature Flags](docs/feature-flags.md) | Compile-time features |
 | [Python SDK](docs/sdk-python.md) | Native client + LangChain/LlamaIndex adapters |
 

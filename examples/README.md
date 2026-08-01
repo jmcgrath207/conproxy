@@ -11,6 +11,7 @@ Runnable configs and integration snippets. Copy any file into `.conproxy/conprox
 | `multi-upstream-cascade.toml` | Two-upstream priority cascade with RRF fusion. See [Multi-Upstream](../docs/multi-upstream.md#priority-based-cascade). |
 | `federated-search.toml` | Local-first federated search with merge modes. See [Federated](../docs/multi-upstream.md#federated-search). |
 | `multi-context.toml` | Two contexts share one Meili resource; isolated cache + scope. |
+| `docker-compose/` | Side-by-side `conproxy` + `meilisearch` stack with healthcheck. See [Docker Compose](../docs/docker-compose.md). |
 | `mcp-claude-desktop.json` | Claude Desktop MCP server registration. See [MCP Integration](../docs/mcp-integration.md). |
 | `mcp-opencode.jsonc` | opencode MCP server registration (global config). See [MCP Integration](../docs/mcp-integration.md). |
 | `distill-postprocess.sh` | Post-process hook for `conproxy distill`. See [Distill](../docs/distill.md). |

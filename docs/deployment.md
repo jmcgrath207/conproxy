@@ -107,15 +107,37 @@ services:
     ports:
       - "9999:9999"
       - "10000:10000"
-    volumes:
-      - ./.conproxy:/var/lib/conproxy/.conproxy:ro
-    command: start --listen 0.0.0.0:9999
+    ### Docker Compose
 
-  qdrant:
-    image: qdrant/qdrant:latest
+For a runnable, side-by-side conproxy + Meilisearch stack (pinned versions,
+healthcheck, non-root) see
+[`docs/docker-compose.md`](docker-compose.md) and
+[`examples/docker-compose/`](../examples/docker-compose/).
+
+```yaml
+# Minimal shape (full file in the example):
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.8
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    ports: ["7700:7700"]
+
+  conproxy:
+    image: ghcr.io/jmcgrath207/conproxy:0.1.0
+    depends_on:
+      meilisearch: { condition: service_healthy }
     ports:
-      - "6333:6333"
+      - "9999:9999"
+      - "10000:10000"
+    volumes:
+      - ./conproxy.toml:/etc/conproxy/conproxy.toml:ro
+    command: ["start", "--config", "/etc/conproxy/conproxy.toml", "--listen", "0.0.0.0:9999"]
 ```
+
+Note: the in-repo `tests/e2e/docker-compose.yml` boots the **full test
+matrix** (qdrant + ES + OS + meilisearch×2 + pgvector) and is **not** a
+user-facing starting point — use `examples/docker-compose/` instead.
 
 ## P2P Replication
 

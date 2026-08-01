@@ -142,7 +142,7 @@ fn create_adapter(config: &UpstreamEndpointConfig) -> Result<Arc<dyn UpstreamAda
                     .unwrap_or_else(|| "documents".to_string()),
                 timeout,
                 search_attributes: if config.search_fields.is_empty() {
-                    vec!["content".to_string()]
+                    Vec::new()
                 } else {
                     config.search_fields.clone()
                 },

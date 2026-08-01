@@ -1,0 +1,29 @@
+# In-compose conproxy config: HTTP listen + Meilisearch via Compose DNS.
+#
+# - Listen on 0.0.0.0 so Docker port-mapping works.
+# - Upstream URL uses the Compose service name `meilisearch` (NOT localhost).
+# - Context-rooted (canonical): cache/scope/routing live on the context.
+# - Tunables (fresh_secs, stale_secs, max_entries) match the README Quick Start.
+
+[server]
+listen = "0.0.0.0:9999"
+
+[upstreams.meili]
+url = "http://meilisearch:7700"
+type = "meilisearch"
+index = "docs"
+# Must match MEILI_MASTER_KEY in docker-compose.yml.
+# Swap to "${MEILI_MASTER_KEY}" in production to read from env.
+api_key = "dev_master_key"
+timeout_secs = 30
+
+[contexts.default]
+default = true
+
+[[contexts.default.upstreams]]
+ref = "meili"
+
+[contexts.default.cache]
+fresh_secs = 300      # 5 min fresh
+stale_secs = 600      # 10 min stale (serves while refreshing)
+max_entries = 10000

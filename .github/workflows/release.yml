@@ -244,6 +244,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -261,15 +265,37 @@ jobs:
           mv artifacts/conproxy-aarch64-unknown-linux-gnu/conproxy \
              artifacts/conproxy-aarch64-unknown-linux-gnu/conproxy-aarch64-unknown-linux-gnu
           chmod +x artifacts/conproxy-*/conproxy-*
+      - name: Resolve previous tag for compare link
+        id: prev
+        run: |
+          # Find the most recent semver tag (excluding the current one).
+          PREV=$(git tag --list 'v*' --sort=-v:refname \
+                 | grep -v "^${GITHUB_REF_NAME}$" \
+                 | head -n 1 || true)
+          if [ -n "$PREV" ]; then
+            echo "PREV=$PREV" >> "$GITHUB_OUTPUT"
+            echo "COMPARE=https://github.com/${{ github.repository }}/compare/${PREV}...${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "PREV=" >> "$GITHUB_OUTPUT"
+            echo "COMPARE=" >> "$GITHUB_OUTPUT"
+          fi
       - name: Create release + attach assets
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
           body: |
             ## conproxy ${{ steps.v.outputs.VERSION }}
 
-            Install:
+            ${{ steps.prev.outputs.COMPARE && format('**Compare:** [{0}…{1}]({2})', steps.prev.outputs.PREV, github.ref_name, steps.prev.outputs.COMPARE) || '**First release.**' }}
+
+            **Stability**
+            - **Shipped:** exact cache, MCP suite, all backends except Pinecone / Milvus
+            - **Experimental:** Pinecone, Milvus, peer mesh (no mTLS — see README)
+
+            **Install**
 
             ```bash
             # cargo (binary)
@@ -283,6 +309,8 @@ jobs:
             helm install conproxy ${{ env.HELM_OCI }}/conproxy \
               --version ${{ steps.v.outputs.VERSION }}
             ```
+
+            **Docs:** [README](https://github.com/${{ github.repository }}#readme) · [Benchmarks](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/docs/benchmarks.md)
           files: |
             artifacts/conproxy-x86_64-unknown-linux-musl/conproxy-x86_64-unknown-linux-musl
             artifacts/conproxy-aarch64-unknown-linux-gnu/conproxy-aarch64-unknown-linux-gnu

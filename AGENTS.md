@@ -2,6 +2,15 @@
 
 Cache proxy for heterogeneous RAG/vector search backends (Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, Milvus). Rust 2021, Axum + tonic, multi-process: lib + `conproxy` CLI + `test_runner` + `generate_embeddings` + `perf_summarize` + `hitrate_bench` + `console_snap` + `corpus_seed` + Python SDK.
 
+## Product framing (for PR copy, README, and any external docs you write)
+
+- **What:** retrieval-leg cache for **agentic RAG** (embed + upstream search). **Not** an LLM-answer cache.
+- **Pitch:** cost + faster search on **hits**; agents re-query (retries, fanout, tool storms).
+- **Not:** GPTCache / RedisVL SemanticCache territory; not "faster chat RAG" as the headline alone.
+- **Proof:** `docs/benchmarks.md` + `make bench-hitrate*`; BYO with `make bench-hitrate-replay QUERIES=…`.
+- **User-facing decision docs:** `README.md` (consider/skip + vs table), `docs/benchmarks.md`. This file is ops-focused.
+- **Stability:** pinecone / milvus experimental; peer = trusted network, no mTLS.
+
 ## Fast Feedback Tiers
 
 Three tiers — Tier 1 & 2 for the per-PR loop, Tier 3 for release publishing. Run the tier that matches your stage. Vertical-specific commands live in the `contributing` skill (Feature Test Matrix + 14 verticals).
