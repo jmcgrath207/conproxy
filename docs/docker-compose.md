@@ -121,12 +121,13 @@ or roll your own systemd/k8s manifests — see
 | `results: []` even after seeding | Meilisearch adapter may need index-level `showRankingScore` setting; or scoring/filter threshold rejected all hits | Check `docker compose logs conproxy` for `normalized_score`, `result_count`. Try a single-keyword doc + simpler query to isolate. |
 | Hit/miss ratio looks wrong | `cache_status` shape | See `/metrics` for `conproxy_cache_hit_rate` |
 
-**Known issue (v0.1.0 image):** the Meilisearch adapter's `showRankingScore`
-request can return `result_count=0` from Meilisearch even when matching docs
-exist. This affects whether content shows up in the response, **not**
-whether caching works (miss→hit flow is independent and verified). The
-`cache_status` fields are reliable; `results: []` is the symptom to watch
-for. Tracked separately — see Known Gaps in `AGENTS.md`.
+ **Known issue (v0.1.0 image):** the Meilisearch adapter defaulted to
+`search_attributes: ["content"]`, so only the `content` field was searched.
+Documents with `title`/`body` but no `content` returned 0 results even
+though Meilisearch had matching docs. Fixed in this branch — empty
+`search_fields` now searches all fields. If using the v0.1.0 image, set
+`search_fields = ["title", "body", "content"]` in `conproxy.toml` or add
+`"content"` to your documents.
 
 ## Reference
 

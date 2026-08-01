@@ -15,7 +15,7 @@ fn test_meilisearch_config_default() {
     assert_eq!(config.base_url, "http://localhost:7700");
     assert_eq!(config.index, "documents");
     assert_eq!(config.timeout, Duration::from_secs(30));
-    assert_eq!(config.search_attributes, vec!["content".to_string()]);
+    assert_eq!(config.search_attributes, Vec::<String>::new());
     assert!(config.displayed_attributes.is_empty());
     assert!(config.api_key.is_none());
     assert!(config.score_threshold.is_none());
@@ -205,7 +205,8 @@ fn test_meilisearch_build_query_body() {
     assert_eq!(body["q"], "rust async");
     assert_eq!(body["limit"], 5);
     assert_eq!(body["showRankingScore"], true);
-    assert_eq!(body["attributesToSearchOn"][0], "content");
+    // Default search_attributes is empty → no attributesToSearchOn sent.
+    assert!(body.get("attributesToSearchOn").is_none());
 }
 
 #[test]
@@ -246,13 +247,47 @@ fn test_meilisearch_version_response_parsing() {
 #[test]
 fn test_meilisearch_helpers_extract_id() {
     let v = serde_json::json!({"id": "doc-1", "content": "x"});
-    assert_eq!(v.id(), "doc-1");
+    assert_eq!(hit_id(&v), "doc-1");
 
     let v = serde_json::json!({"uid": "doc-2", "content": "y"});
-    assert_eq!(v.id(), "doc-2");
+    assert_eq!(hit_id(&v), "doc-2");
 
     let v = serde_json::json!({"content": "no id"});
-    assert_eq!(v.id(), "");
+    assert_eq!(hit_id(&v), "");
+}
+
+#[test]
+fn test_meilisearch_helpers_extract_id_numeric() {
+    // Meili returns integer primary keys as JSON numbers.
+    let v = serde_json::json!({"id": 1, "body": "x"});
+    assert_eq!(hit_id(&v), "1");
+
+    let v = serde_json::json!({"id": 42, "body": "y"});
+    assert_eq!(hit_id(&v), "42");
+
+    // String ids still work.
+    let v = serde_json::json!({"id": "doc-1", "body": "z"});
+    assert_eq!(hit_id(&v), "doc-1");
+
+    // Missing id → empty.
+    let v = serde_json::json!({"body": "no id"});
+    assert_eq!(hit_id(&v), "");
+}
+
+#[test]
+fn test_meilisearch_parse_hit_with_numeric_id() {
+    // Full parse: numeric id + body content → hit kept.
+    let meili_json = serde_json::json!({
+        "hits": [{"id": 1, "body": "rust errors", "_rankingScore": 0.9}],
+        "estimatedTotalHits": 1,
+        "processingTimeMs": 1
+    });
+    let parsed: MeiliSearchResponse = serde_json::from_value(meili_json).unwrap();
+    let results = MeilisearchAdapter::parse_hits(&parsed);
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].id, "1");
+    assert_eq!(results[0].content, "rust errors");
+    assert!((results[0].score - 0.9).abs() < 0.001);
 }
 
 #[test]

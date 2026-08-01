@@ -56,7 +56,7 @@ impl Default for MeilisearchConfig {
             base_url: "http://localhost:7700".to_string(),
             index: "documents".to_string(),
             timeout: Duration::from_secs(30),
-            search_attributes: vec!["content".to_string()],
+            search_attributes: Vec::new(),
             displayed_attributes: Vec::new(),
             api_key: None,
             score_threshold: None,
@@ -199,7 +199,7 @@ impl MeilisearchAdapter {
             .hits
             .iter()
             .filter_map(|hit| {
-                let id = hit.id().to_string();
+                let id = hit_id(hit);
 
                 // Extract content from common field names.
                 let content = hit
@@ -270,30 +270,37 @@ struct MeiliVersionResponse {
     pkg_version: String,
 }
 
-/// Trait extension for `serde_json::Value` to retrieve a hit's `id` and
+/// Trait extension for `serde_json::Value` to retrieve a hit's
 /// `_rankingScore` regardless of whether the user used the reserved field
 /// name or a custom primary key.
 trait MeiliHitExt {
-    fn id(&self) -> &str;
     fn ranking_score(&self) -> Option<f32>;
 }
 
 impl MeiliHitExt for serde_json::Value {
-    fn id(&self) -> &str {
-        // Meili usually returns the primary key as a top-level field.
-        // If absent, fall back to the integer id (we don't currently use
-        // integer ids in our schemas, so this is mostly defensive).
-        self.get("id")
-            .and_then(|v| v.as_str())
-            .or_else(|| self.get("uid").and_then(|v| v.as_str()))
-            .unwrap_or_default()
-    }
-
     fn ranking_score(&self) -> Option<f32> {
         self.get("_rankingScore")
             .and_then(|v| v.as_f64())
             .map(|f| f as f32)
     }
+}
+
+/// Owned id string extracted from a Meili hit, handling both string and
+/// numeric primary keys.
+fn hit_id(hit: &serde_json::Value) -> String {
+    hit.get("id")
+        .and_then(|v| {
+            v.as_str()
+                .map(|s| s.to_string())
+                .or_else(|| v.as_i64().map(|n| n.to_string()))
+                .or_else(|| v.as_u64().map(|n| n.to_string()))
+                .or_else(|| v.as_f64().map(|n| n.to_string()))
+        })
+        .or_else(|| {
+            hit.get("uid")
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
+        })
+        .unwrap_or_default()
 }
 
 #[async_trait]
