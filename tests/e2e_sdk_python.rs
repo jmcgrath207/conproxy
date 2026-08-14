@@ -72,7 +72,15 @@ fn build_python_sdk() -> bool {
 
 /// Run a Python script and return (success, stdout, stderr).
 fn run_python(script: &str) -> (bool, String, String) {
-    let output = Command::new("python3")
+    // `maturin develop` installs into the local venv; prefer it over the
+    // bare system python so the built module is importable.
+    let venv_python = python_sdk_dir().join(".venv").join("bin").join("python");
+    let python = if venv_python.exists() {
+        venv_python
+    } else {
+        PathBuf::from("python3")
+    };
+    let output = Command::new(python)
         .args(["-c", script])
         .current_dir(python_sdk_dir())
         .output()
@@ -101,12 +109,12 @@ fn python_sdk_import_test() {
     }
 
     // Test 1: Basic import
-    eprintln!("  Test: import conproxy_py...");
+    eprintln!("  Test: import conproxy...");
     let (ok, stdout, stderr) =
-        run_python("import conproxy_py; print('import OK'); print(dir(conproxy_py))");
+        run_python("import conproxy; print('import OK'); print(dir(conproxy))");
     assert!(
         ok,
-        "Failed to import conproxy_py:\nstdout: {stdout}\nstderr: {stderr}"
+        "Failed to import conproxy:\nstdout: {stdout}\nstderr: {stderr}"
     );
     assert!(
         stdout.contains("import OK"),
@@ -122,22 +130,22 @@ fn python_sdk_import_test() {
     eprintln!("  Test: verify exported classes...");
     let (ok, stdout, stderr) = run_python(
         r#"
-import conproxy_py
+import conproxy
 classes = [
-    'ConproxyClient',
+    'ConproxyClient', 'Engine',
     'PyQueryResponse', 'PySearchResult', 'PyStatsResponse',
     'PyBatchQueryResponse', 'PyFederatedQueryResponse',
     'PyCircuitStatusResponse', 'PyQueueStatsResponse',
-    'PyClientsResponse', 'PyKnowledgeStatusResponse',
+    'PyClientInfo', 'PyClientsResponse', 'PyUpstreamInfo',
     'PyPoolStatusResponse', 'PyReloadResponse',
     'PyCacheClearResponse', 'PyCacheWarmupResponse',
     'PyCacheEvictResponse', 'PyCacheIntegrityResponse',
-    'PyListAgentsResponse', 'PyContextInfo',
+    'PyAgentInfo', 'PyListAgentsResponse', 'PyContextInfo',
     'PyListContextsResponse', 'PySwitchContextResponse',
     'PyCreateContextResponse', 'PyContextStats',
-    'PySdkConfig',
+    'PyDistillEntry', 'PyFederatedStats', 'PySdkConfig',
 ]
-missing = [c for c in classes if not hasattr(conproxy_py, c)]
+missing = [c for c in classes if not hasattr(conproxy, c)]
 if missing:
     print(f'MISSING: {missing}')
     exit(1)
@@ -151,7 +159,7 @@ print(f'All {len(classes)} classes exported')
     eprintln!("  Test: ConproxyClient constructor...");
     let (ok, stdout, stderr) = run_python(
         r#"
-from conproxy_py import ConproxyClient
+from conproxy import ConproxyClient
 # Constructor with explicit URL creates client (lazy connect, won't fail)
 client = ConproxyClient(grpc_url='http://127.0.0.1:9999')
 print('constructor OK')
@@ -167,7 +175,7 @@ print('constructor OK')
     eprintln!("  Test: SDK operations against running proxy...");
     let (ok, stdout, _stderr) = run_python(
         r#"
-from conproxy_py import ConproxyClient
+from conproxy import ConproxyClient
 try:
     client = ConproxyClient(grpc_url='http://127.0.0.1:8080')
     stats = client.stats()
@@ -203,7 +211,7 @@ except Exception as e:
     eprintln!("  Test: context manager protocol...");
     let (ok, stdout, stderr) = run_python(
         r#"
-from conproxy_py import ConproxyClient
+from conproxy import ConproxyClient
 client = ConproxyClient(grpc_url='http://127.0.0.1:9999')
 with client as c:
     print('context manager OK')
@@ -212,6 +220,74 @@ with client as c:
     assert!(
         ok,
         "Context manager failed:\nstdout: {stdout}\nstderr: {stderr}"
+    );
+    eprintln!("    PASSED");
+
+    // Test 6: Engine binding (in-process, no running daemon needed).
+    // Uses a tiny in-script HTTP server as the upstream so the Engine can
+    // produce a real miss->hit pair through the PyO3 layer.
+    eprintln!("  Test: Engine create/query/dashboard...");
+    let (ok, stdout, stderr) = run_python(
+        r#"
+import asyncio
+import json
+import threading
+import tempfile
+import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from conproxy import Engine
+
+class MockUpstream(BaseHTTPRequestHandler):
+    def do_POST(self):
+        body = json.dumps({
+            "results": [
+                {"id": "doc-001", "score": 0.91, "content": "rust async runtime"}
+            ]
+        }).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+    def log_message(self, *args):
+        pass
+
+server = ThreadingHTTPServer(("127.0.0.1", 0), MockUpstream)
+threading.Thread(target=server.serve_forever, daemon=True).start()
+port = server.server_address[1]
+
+cfg = tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False)
+cfg.write(f'[proxy]\nupstream_url = "http://127.0.0.1:{port}"\n')
+cfg.close()
+
+async def main():
+    engine = await Engine.create(config=cfg.name, dashboard_listen="127.0.0.1:0")
+    r1 = await engine.query("rust async")
+    assert len(r1.results) > 0, "first query should return results"
+    assert r1.cache_status == 2, f"first query cache_status {r1.cache_status}, want Miss(2)"
+    r2 = await engine.query("rust async")
+    assert r2.cache_status == 1, f"second query cache_status {r2.cache_status}, want Hit(1)"
+
+    addr = engine.dashboard_addr()
+    assert addr, "dashboard_addr() should be Some after dashboard_listen"
+    with urllib.request.urlopen(f"http://{addr}/health", timeout=5) as resp:
+        assert resp.status == 200, f"dashboard /health status {resp.status}"
+    engine.close()
+    print(f"engine OK: miss={r1.cache_status} hit={r2.cache_status} addr={addr}")
+
+asyncio.run(main())
+server.shutdown()
+print("ALL PASSED")
+"#,
+    );
+    assert!(
+        ok,
+        "Engine test failed:\nstdout: {stdout}\nstderr: {stderr}"
+    );
+    assert!(
+        stdout.contains("ALL PASSED"),
+        "Expected ALL PASSED in Engine output:\n{stdout}"
     );
     eprintln!("    PASSED");
 

@@ -1,12 +1,14 @@
 use pyo3::prelude::*;
 
 mod client;
+mod engine;
 mod error;
 mod types;
 
 #[pymodule]
 fn conproxy(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<client::ConproxyClient>()?;
+    m.add_class::<engine::PyEngine>()?;
     m.add_class::<types::PyQueryResponse>()?;
     m.add_class::<types::PySearchResult>()?;
     m.add_class::<types::PyBatchQueryResponse>()?;

@@ -130,8 +130,8 @@ pub struct CacheStore {
     max_frozen_duration: Duration,
     /// Maximum number of entries (for eviction). Atomic for hot-reload.
     max_entries: std::sync::atomic::AtomicUsize,
-    /// Maximum memory in bytes (0 = no limit).
-    max_memory_bytes: usize,
+    /// Maximum memory in bytes (0 = no limit). Atomic for hot-reload / live resize.
+    max_memory_bytes: std::sync::atomic::AtomicUsize,
     /// TTL jitter percentage (0.0 to 1.0).
     ttl_jitter_percent: f32,
     /// Fingerprint of relevant config (for cache invalidation on config change).
@@ -172,8 +172,8 @@ impl CacheStore {
             stale_duration: parking_lot::Mutex::new(stale_duration),
             max_frozen_duration: DEFAULT_MAX_FROZEN_DURATION,
             max_entries: std::sync::atomic::AtomicUsize::new(max_entries),
-            max_memory_bytes: 0,     // No limit
-            ttl_jitter_percent: 0.1, // Default 10% jitter
+            max_memory_bytes: std::sync::atomic::AtomicUsize::new(0), // No limit
+            ttl_jitter_percent: 0.1,                                  // Default 10% jitter
             config_fingerprint: AtomicU64::new(0),
             eviction_stats: parking_lot::Mutex::new(EvictionStats::default()),
             per_upstream_limit: None,
@@ -204,7 +204,7 @@ impl CacheStore {
             stale_duration: parking_lot::Mutex::new(stale_duration),
             max_frozen_duration: DEFAULT_MAX_FROZEN_DURATION,
             max_entries: std::sync::atomic::AtomicUsize::new(max_entries),
-            max_memory_bytes: 0,
+            max_memory_bytes: std::sync::atomic::AtomicUsize::new(0),
             ttl_jitter_percent: ttl_jitter_percent.clamp(0.0, 1.0),
             config_fingerprint: AtomicU64::new(0),
             eviction_stats: parking_lot::Mutex::new(EvictionStats::default()),
@@ -236,7 +236,7 @@ impl CacheStore {
             stale_duration: parking_lot::Mutex::new(stale_duration),
             max_frozen_duration: DEFAULT_MAX_FROZEN_DURATION,
             max_entries: std::sync::atomic::AtomicUsize::new(max_entries),
-            max_memory_bytes,
+            max_memory_bytes: std::sync::atomic::AtomicUsize::new(max_memory_bytes),
             ttl_jitter_percent: 0.1,
             config_fingerprint: AtomicU64::new(0),
             eviction_stats: parking_lot::Mutex::new(EvictionStats::default()),
@@ -343,8 +343,41 @@ impl CacheStore {
     ///
     /// When non-zero, the S3-FIFO admission path will evict entries
     /// until total memory usage drops below this limit.
-    pub fn set_max_memory_bytes(&mut self, bytes: usize) {
-        self.max_memory_bytes = bytes;
+    pub fn set_max_memory_bytes(&self, bytes: usize) {
+        self.max_memory_bytes.store(bytes, Ordering::Relaxed);
+    }
+
+    /// Current memory cap in bytes (0 = no limit).
+    #[must_use]
+    pub fn max_memory_bytes(&self) -> usize {
+        self.max_memory_bytes.load(Ordering::Relaxed)
+    }
+
+    /// Evict entries via S3-FIFO until total memory is under the current cap.
+    ///
+    /// Used by the live-resize path (memory budget changes) — the admission
+    /// path already enforces the cap on insert; this shrinks immediately.
+    /// Returns the number of entries evicted.
+    pub fn enforce_memory_limit(&self) -> usize {
+        let cap = self.max_memory_bytes();
+        if cap == 0 {
+            return 0;
+        }
+        let guard = self.entries.guard();
+        let mut state = self.s3fifo.lock();
+        let mut evicted = 0usize;
+        while self.total_memory_bytes.load(Ordering::Relaxed) > cap {
+            match self.s3fifo_evict_one(&mut state, &guard) {
+                Some(EvictionSource::Small) => evicted = evicted.saturating_add(1),
+                Some(EvictionSource::Main) => evicted = evicted.saturating_add(1),
+                None => break,
+            }
+        }
+        if evicted > 0 {
+            let mut stats = self.eviction_stats.lock();
+            stats.total = stats.total.saturating_add(evicted);
+        }
+        evicted
     }
 
     // --- Memory-tracking wrappers (take a papaya Guard) ---
@@ -428,8 +461,9 @@ impl CacheStore {
         }
 
         // Memory-pressure eviction: keep evicting until under the memory limit
-        if self.max_memory_bytes > 0 {
-            while self.total_memory_bytes.load(Ordering::Relaxed) > self.max_memory_bytes {
+        let max_memory = self.max_memory_bytes.load(Ordering::Relaxed);
+        if max_memory > 0 {
+            while self.total_memory_bytes.load(Ordering::Relaxed) > max_memory {
                 match self.s3fifo_evict_one(&mut state, guard) {
                     Some(EvictionSource::Small) => {
                         small_evictions = small_evictions.saturating_add(1)

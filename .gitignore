@@ -132,3 +132,4 @@ models/
 # Local DevEx runtime state (opencode session, daemon logs, sqlite).
 # One .conproxy/ tree per checkout; never commit contents.
 /.conproxy/
+/docs/superpowers/

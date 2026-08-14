@@ -244,6 +244,11 @@ path = "tests/integration_qdrant.rs"
 required-features = ["integration-tests"]
 
 [[test]]
+name = "integration_engine"
+path = "tests/integration_engine.rs"
+required-features = ["integration-tests"]
+
+[[test]]
 name = "integration_elasticsearch"
 path = "tests/integration_elasticsearch.rs"
 required-features = ["integration-tests"]

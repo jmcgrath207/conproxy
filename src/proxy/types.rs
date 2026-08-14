@@ -632,6 +632,29 @@ impl CachedResponse {
             took_ms,
         }
     }
+
+    /// Materialize an owned [`QueryResponse`] for Engine / non-HTTP callers.
+    pub fn into_query_response(self) -> QueryResponse {
+        match self {
+            Self::Cached {
+                entry,
+                cache_status,
+                took_ms,
+            } => QueryResponse {
+                results: entry.response.results.clone(),
+                cache_status,
+                took_ms,
+                generated_at: entry.response.generated_at,
+                miss_reason: None,
+            },
+            Self::Fresh(response) => response,
+            Self::SharedFresh { response, took_ms } => {
+                let mut owned = (*response).clone();
+                owned.took_ms = took_ms;
+                owned
+            }
+        }
+    }
 }
 
 impl Serialize for CachedResponse {

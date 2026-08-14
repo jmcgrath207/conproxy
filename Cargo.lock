@@ -859,6 +859,7 @@ dependencies = [
 name = "conproxy-python"
 version = "0.1.0"
 dependencies = [
+ "conproxy",
  "conproxy-sdk",
  "pyo3",
  "pyo3-async-runtimes",

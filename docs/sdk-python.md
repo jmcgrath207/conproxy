@@ -1,6 +1,6 @@
 # Python SDK
 
-The `conproxy` Python package ships a native Rust-backed gRPC client plus optional adapters for the most popular LLM frameworks. The compiled module is `conproxy`; pure-Python submodules (`langchain`, `llama_index`) are bundled in the same wheel.
+The `conproxy` Python package ships a native Rust-backed gRPC client (`ConproxyClient`), an in-process [`Engine`](engine.md), plus optional adapters for the most popular LLM frameworks. The compiled module is `conproxy`; pure-Python submodules (`langchain`, `llama_index`) are bundled in the same wheel. The wheel is **not thin** — `Engine` links the query core.
 
 ## Installation
 
@@ -26,6 +26,21 @@ The package is built with [maturin](https://www.maturin.rs/). To build from sour
 cd sdk/python
 maturin develop --release
 ```
+
+## In-process Engine
+
+Same query core as the daemon, no listen. Default context is `"global"`. Always `await query()`.
+
+```python
+from conproxy import Engine
+
+engine = Engine(config="conproxy.toml")
+# or: engine = await Engine.create(config="conproxy.toml")
+
+result = await engine.query("how does X work", top_k=10)
+```
+
+See [Engine](engine.md) for constructors, knobs, persistence, and when to keep the daemon instead.
 
 ## Core client
 

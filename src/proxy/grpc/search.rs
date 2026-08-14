@@ -128,6 +128,7 @@ impl SearchService for SearchServiceImpl {
             request_id,
             agent.as_ref(),
             source,
+            false,
         )
         .await;
 

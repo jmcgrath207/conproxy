@@ -111,6 +111,7 @@ pub(super) async fn handle_query(
         request_id,
         agent_identity.as_deref(),
         source,
+        false,
     )
     .await;
 

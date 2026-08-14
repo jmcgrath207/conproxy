@@ -35,7 +35,7 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 **Skip conproxy if…**
 
 - You only need an LLM-response cache → use GPTCache / RedisVL
-- A single in-process memoize hash covers your duplicates
+- A one-line memoize hash covers your duplicates (no TTL / semantic / upstreams)
 - You need write-path CDC / multi-region invalidation today (not shipped; track correctness doc)
 - One tiny backend, no agent loops, no cost pressure
 
@@ -45,7 +45,7 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 |------|--------|
 | Cache **LLM answers** | GPTCache / RedisVL SemanticCache |
 | Cache **search/retrieval** under agents | **conproxy** |
-| One process, no daemon, single backend | In-process memoize / app cache |
+| One process, no daemon, single MCP server | [`Engine`](docs/engine.md) (in-process query core) |
 | Multi-backend cascade / MCP tune / dry-run scope | **conproxy** |
 | LLM-side semantic cache for prompts | LangChain cache / provider-level caching |
 
@@ -57,7 +57,7 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 | **Not** | LLM answer cache (GPTCache / RedisVL) |
 | **Pays when** | Agents re-query — hits skip embed + upstream |
 | **Proof** | ~89.5% exact hit rate; hit p50 ~0.1 ms vs miss ~13.8 ms (~**138×**) — [benchmarks](docs/benchmarks.md) |
-| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) |
+| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) · [Engine](docs/engine.md) |
 
 **FAQ**
 
