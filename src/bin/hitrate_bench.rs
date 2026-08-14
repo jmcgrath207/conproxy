@@ -7,7 +7,9 @@
 //!
 //! v2 scope:
 //! - measured: exact hit rate (real cache), semantic hit rate + false-hit
-//!   rate (real `SemanticCache`, synthetic hash embedder), τ frontier
+//!   rate (real `SemanticCache`, synthetic hash embedder), τ frontier,
+//!   S3-FIFO small/main evictions, optional `--max-memory-bytes` + mixed
+//!   payload sizes (`--payload-zipf-max`) for the LFU-on-main measure-first
 //! - modeled: latency / cost / agent task-time savings (params, not measured)
 //! - deferred: TTL expiry (fast replay = effectively infinite TTL), ONNX/API
 //!   embedder fidelity, stale rate (needs CDC live mode)
@@ -673,14 +675,34 @@ struct SweepPoint {
     mean_latency_no_cache_ms: f64,
     latency_saved_pct: f64,
     usd_saved_per_1k_queries: f64,
+    /// 0 = no byte cap.
+    max_memory_bytes: usize,
+    /// 0 = default short payload.
+    payload_min: usize,
+    payload_max: usize,
+    small_evictions: usize,
+    main_evictions: usize,
+    promotions: usize,
+    ghost_hits: usize,
+    live_entries: usize,
+    live_memory_bytes: usize,
 }
 
 fn make_response() -> QueryResponse {
+    make_response_sized(0)
+}
+
+fn make_response_sized(content_bytes: usize) -> QueryResponse {
+    let content = if content_bytes == 0 {
+        "hitrate bench payload".to_string()
+    } else {
+        "x".repeat(content_bytes)
+    };
     QueryResponse {
         results: vec![SearchResult {
             id: "bench-doc".to_string(),
             score: 1.0,
-            content: "hitrate bench payload".to_string(),
+            content,
             metadata: None,
             upstream_id: Some("bench".to_string()),
         }],
@@ -689,6 +711,22 @@ fn make_response() -> QueryResponse {
         generated_at: None,
         miss_reason: None,
     }
+}
+
+/// Deterministic per-query content length. Cube-of-hash → mostly small, few large.
+fn payload_len(query: &str, min: usize, max: usize) -> usize {
+    if min >= max {
+        return min.max(1);
+    }
+    let digest = query_hash(query);
+    let mut buf = [0u8; 8];
+    buf.copy_from_slice(&digest[..8]);
+    let frac = u64::from_le_bytes(buf) as f64 / u64::MAX as f64;
+    let t = frac * frac * frac;
+    let span = max.saturating_sub(min);
+    min.saturating_add((t * span as f64) as usize)
+        .clamp(min, max)
+        .max(1)
 }
 
 /// Replay events against the real `CacheStore`.
@@ -727,14 +765,33 @@ fn run_sweep(
     cdc_delay: Option<f64>,
     rng: &mut Rng,
     model: &CostModel,
+    max_memory_bytes: usize,
+    payload_min: usize,
+    payload_max: usize,
 ) -> SweepPoint {
     // Fast replay: no wall-clock sleeps, so the store's own TTL is set huge
     // and expiry is decided by the harness virtual clock instead.
-    let store = CacheStore::new(
-        Duration::from_secs(86_400),
-        Duration::from_secs(604_800),
-        cache_size,
-    );
+    let store = if max_memory_bytes > 0 {
+        CacheStore::with_memory_limit(
+            Duration::from_secs(86_400),
+            Duration::from_secs(604_800),
+            cache_size,
+            max_memory_bytes,
+        )
+    } else {
+        CacheStore::new(
+            Duration::from_secs(86_400),
+            Duration::from_secs(604_800),
+            cache_size,
+        )
+    };
+    let mk_resp = |q: &str| -> QueryResponse {
+        if payload_max == 0 {
+            make_response()
+        } else {
+            make_response_sized(payload_len(q, payload_min.max(1), payload_max))
+        }
+    };
     let ttl_secs = ttl.map(|t| t.as_secs_f64());
     let mutations = mutation_rate > 0.0;
     let mut insert_vtime: HashMap<QueryHash, f64> = HashMap::new();
@@ -752,7 +809,6 @@ fn run_sweep(
     let mut stale = 0usize;
     let mut healed = 0usize;
     let mut ceiling = 0usize;
-    let resp = make_response();
     for ev in events {
         vnow += dt_secs;
         // Fire due what-if CDC invalidations.
@@ -782,7 +838,7 @@ fn run_sweep(
             if is_expired {
                 expired += 1;
                 // Fall through to miss path: refresh entry + virtual time.
-                store.insert(&ev.query, resp.clone(), "bench".to_string());
+                store.insert(&ev.query, mk_resp(&ev.query), "bench".to_string());
                 if let Some(h) = qh {
                     insert_vtime.insert(h, vnow);
                     if mutations {
@@ -805,7 +861,7 @@ fn run_sweep(
                     // Entry already invalidated by what-if CDC: miss,
                     // re-fetch, store fresh version.
                     healed += 1;
-                    store.insert(&ev.query, resp.clone(), "bench".to_string());
+                    store.insert(&ev.query, mk_resp(&ev.query), "bench".to_string());
                     if let Some(h) = qh {
                         insert_vtime.insert(h, vnow);
                         insert_version
@@ -827,7 +883,7 @@ fn run_sweep(
             if cached_clusters.contains(&ev.cluster) {
                 ceiling += 1;
             }
-            store.insert(&ev.query, resp.clone(), "bench".to_string());
+            store.insert(&ev.query, mk_resp(&ev.query), "bench".to_string());
             if let Some(h) = qh {
                 insert_vtime.insert(h, vnow);
                 if mutations {
@@ -853,6 +909,7 @@ fn run_sweep(
     let c = ceiling as f64 / q as f64;
     let mean = model.t_lookup_ms + (1.0 - h) * model.saved_per_hit_ms();
     let no_cache = model.t_lookup_ms + model.saved_per_hit_ms();
+    let evict = store.eviction_stats();
     SweepPoint {
         cache_size,
         ttl_secs: ttl.map(|t| t.as_secs()),
@@ -868,6 +925,15 @@ fn run_sweep(
         mean_latency_no_cache_ms: no_cache,
         latency_saved_pct: 100.0 * (no_cache - mean) / no_cache,
         usd_saved_per_1k_queries: h * model.usd_per_1k_hits(),
+        max_memory_bytes,
+        payload_min,
+        payload_max,
+        small_evictions: evict.small_evictions,
+        main_evictions: evict.main_evictions,
+        promotions: evict.promotions,
+        ghost_hits: evict.ghost_hits,
+        live_entries: store.len(),
+        live_memory_bytes: store.memory_usage(),
     }
 }
 
@@ -1059,6 +1125,12 @@ struct Args {
     live_docs: Option<usize>,
     live_mutate: Option<f64>,
     live_evict: bool,
+    /// Byte cap. 0 / unset = none.
+    max_memory_bytes: Option<usize>,
+    /// Fixed result content length. None = default short literal.
+    payload_bytes: Option<usize>,
+    /// If set, per-query content length in [64, N] (heavy-tail). Overrides payload_bytes.
+    payload_zipf_max: Option<usize>,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -1162,6 +1234,21 @@ fn parse_args() -> Result<Args, String> {
                 args.live_mutate = Some(parse_num(&take("--live-mutate")?, "--live-mutate")?);
             }
             "--live-evict" => args.live_evict = true,
+            "--max-memory-bytes" => {
+                args.max_memory_bytes = Some(parse_num(
+                    &take("--max-memory-bytes")?,
+                    "--max-memory-bytes",
+                )?);
+            }
+            "--payload-bytes" => {
+                args.payload_bytes = Some(parse_num(&take("--payload-bytes")?, "--payload-bytes")?);
+            }
+            "--payload-zipf-max" => {
+                args.payload_zipf_max = Some(parse_num(
+                    &take("--payload-zipf-max")?,
+                    "--payload-zipf-max",
+                )?);
+            }
             "--no-fail" => args.no_fail = true,
             "--probe" => args.probe = true,
             "--results-dir" => args.results_dir = Some(PathBuf::from(take("--results-dir")?)),
@@ -1208,6 +1295,9 @@ fn print_help() {
          \n\
          CACHE / MODEL:\n  \
          --cache-size N       repeatable; default 100, 1000, 10000\n  \
+         --max-memory-bytes N byte cap (omit = none). Count cap still applies.\n  \
+         --payload-bytes N    fixed result content length (default: short literal)\n  \
+         --payload-zipf-max N per-query heavy-tail content length in [64, N]\n  \
          --ttl SECS           repeatable exact-tier TTL (virtual time); default infinite\n  \
          --virtual-qps F      virtual arrival rate for TTL clock (default 10.0)\n  \
          --t-lookup-ms F      (default 1)   --t-embed-ms F    (default 30)\n  \
@@ -1324,9 +1414,9 @@ fn summary_md(
             sep.push_str("---|");
         }
         header.push_str(
-            " semantic ceiling | mean ms (no cache) | mean ms | lat saved | $/1k saved |",
+            " semantic ceiling | mean ms (no cache) | mean ms | lat saved | $/1k saved | small evict | main evict | entries | mem |",
         );
-        sep.push_str("---|---|---|---|---|");
+        sep.push_str("---|---|---|---|---|---|---|---|---|");
         let _ = writeln!(md, "{header}");
         let _ = writeln!(md, "{sep}");
         for p in &r.sweep {
@@ -1353,12 +1443,16 @@ fn summary_md(
                 row.push_str(&format!(" {} |", p.cdc_healed));
             }
             row.push_str(&format!(
-                " {:.1}% | {:.1} | {:.2} | {:.1}% | ${:.4} |",
+                " {:.1}% | {:.1} | {:.2} | {:.1}% | ${:.4} | {} | {} | {} | {} |",
                 p.semantic_ceiling_rate * 100.0,
                 p.mean_latency_no_cache_ms,
                 p.mean_latency_ms,
                 p.latency_saved_pct,
-                p.usd_saved_per_1k_queries
+                p.usd_saved_per_1k_queries,
+                p.small_evictions,
+                p.main_evictions,
+                p.live_entries,
+                p.live_memory_bytes
             ));
             let _ = writeln!(md, "{row}");
         }
@@ -1419,7 +1513,10 @@ fn summary_md(
          artificially dense for real embedders — interpret false-hit with workload\n  \
          realism in mind (--queries-file with real query logs is the de-risking path).\n\
          - TTL: virtual clock (see --virtual-qps). Stale: cluster mutated after insert\n  \
-         (see --mutation-rate); stale entry heals only at TTL expiry — no-CDC worst case.\n"
+         (see --mutation-rate); stale entry heals only at TTL expiry — no-CDC worst case.\n\
+         - small/main evict: S3-FIFO queue that dropped the value. entries/mem: live\n  \
+         occupancy at end of replay. mem cap via --max-memory-bytes; mixed sizes via\n  \
+         --payload-zipf-max (measure-first for the LFU-on-main experiment).\n"
     );
     md
 }
@@ -1499,6 +1596,15 @@ fn summary_json(
                         "mean_latency_no_cache_ms": p.mean_latency_no_cache_ms,
                         "latency_saved_pct": p.latency_saved_pct,
                         "usd_saved_per_1k_queries": p.usd_saved_per_1k_queries,
+                        "max_memory_bytes": p.max_memory_bytes,
+                        "payload_min": p.payload_min,
+                        "payload_max": p.payload_max,
+                        "small_evictions": p.small_evictions,
+                        "main_evictions": p.main_evictions,
+                        "promotions": p.promotions,
+                        "ghost_hits": p.ghost_hits,
+                        "live_entries": p.live_entries,
+                        "live_memory_bytes": p.live_memory_bytes,
                     })
                 })
                 .collect();
@@ -2041,6 +2147,17 @@ fn main() -> ExitCode {
     } else {
         args.cache_sizes.clone()
     };
+    let (payload_min, payload_max) = if let Some(max) = args.payload_zipf_max {
+        (args.payload_bytes.unwrap_or(64), max)
+    } else if let Some(n) = args.payload_bytes {
+        (n, n)
+    } else {
+        (0, 0)
+    };
+    if payload_max > 0 && payload_min > payload_max {
+        eprintln!("error: --payload-bytes must be <= --payload-zipf-max");
+        return ExitCode::from(1);
+    }
     // TTL grid: no --ttl flags → single infinite-TTL run per cache size
     // (preserves v1/v2 behavior). Otherwise cache_size × ttl cross-product.
     let ttls: Vec<Option<Duration>> = if args.ttl_values.is_empty() {
@@ -2215,6 +2332,9 @@ fn main() -> ExitCode {
                     args.cdc_delay,
                     &mut sweep_rng,
                     &model,
+                    args.max_memory_bytes.unwrap_or(0),
+                    payload_min,
+                    payload_max,
                 ));
             }
         }
