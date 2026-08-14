@@ -94,7 +94,7 @@ fn run_python(script: &str) -> (bool, String, String) {
 }
 
 #[test]
-#[ignore = "E2E: requires Python 3.9+, maturin, running proxy"]
+#[ignore = "E2E: requires Python 3.9+ and maturin (no running proxy needed; client ops skip gracefully)"]
 fn python_sdk_import_test() {
     eprintln!();
     eprintln!("\x1b[1mPython SDK E2E Tests\x1b[0m");
@@ -231,6 +231,7 @@ with client as c:
         r#"
 import asyncio
 import json
+import os
 import threading
 import tempfile
 import urllib.request
@@ -239,6 +240,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from conproxy import Engine
 
 class MockUpstream(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = b'{"status":"ok"}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
     def do_POST(self):
         body = json.dumps({
             "results": [
@@ -263,21 +271,26 @@ cfg.close()
 
 async def main():
     engine = await Engine.create(config=cfg.name, dashboard_listen="127.0.0.1:0")
-    r1 = await engine.query("rust async")
-    assert len(r1.results) > 0, "first query should return results"
-    assert r1.cache_status == 2, f"first query cache_status {r1.cache_status}, want Miss(2)"
-    r2 = await engine.query("rust async")
-    assert r2.cache_status == 1, f"second query cache_status {r2.cache_status}, want Hit(1)"
+    try:
+        r1 = await engine.query("rust async")
+        assert len(r1.results) > 0, "first query should return results"
+        assert r1.cache_status == 2, f"first query cache_status {r1.cache_status}, want Miss(2)"
+        r2 = await engine.query("rust async")
+        assert r2.cache_status == 1, f"second query cache_status {r2.cache_status}, want Hit(1)"
 
-    addr = engine.dashboard_addr()
-    assert addr, "dashboard_addr() should be Some after dashboard_listen"
-    with urllib.request.urlopen(f"http://{addr}/health", timeout=5) as resp:
-        assert resp.status == 200, f"dashboard /health status {resp.status}"
-    engine.close()
-    print(f"engine OK: miss={r1.cache_status} hit={r2.cache_status} addr={addr}")
+        addr = engine.dashboard_addr()
+        assert addr, "dashboard_addr() should be Some after dashboard_listen"
+        with urllib.request.urlopen(f"http://{addr}/health", timeout=5) as resp:
+            assert resp.status == 200, f"dashboard /health status {resp.status}"
+        print(f"engine OK: miss={r1.cache_status} hit={r2.cache_status} addr={addr}")
+    finally:
+        engine.close()
 
-asyncio.run(main())
-server.shutdown()
+try:
+    asyncio.run(main())
+finally:
+    server.shutdown()
+    os.unlink(cfg.name)
 print("ALL PASSED")
 "#,
     );

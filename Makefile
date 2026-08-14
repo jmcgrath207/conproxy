@@ -267,32 +267,7 @@ sdk-smoke:
 	/tmp/conproxy-sdk-smoke/bin/pip install --quiet "$$_WHL" 2>&1 | tail -2 && \
 	/tmp/conproxy-sdk-smoke/bin/python -c \
 		"import conproxy; print('import: OK'); print('client:', conproxy.ConproxyClient); print('engine:', conproxy.Engine)"
-	@/tmp/conproxy-sdk-smoke/bin/python - <<'PY'
-	import json
-	import os
-	import tempfile
-	import urllib.request
-	import conproxy
-
-	cfg = tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False)
-	cfg.write('[proxy]\nupstream_url = "http://127.0.0.1:9"\n')
-	cfg.close()
-
-	engine = conproxy.Engine(config=cfg.name, dashboard_listen="127.0.0.1:0")
-	try:
-		addr = engine.dashboard_addr()
-		if not addr:
-			print("FAIL: engine.dashboard_addr() is None")
-			raise SystemExit(1)
-		with urllib.request.urlopen(f"http://{addr}/health", timeout=5) as r:
-			assert r.status == 200, f"health status {r.status}"
-			health = json.loads(r.read())
-			print(f"engine dashboard /health: {r.status} {health}")
-	finally:
-		engine.close()
-		os.unlink(cfg.name)
-	print("engine construct + dashboard + close: OK")
-	PY
+	@/tmp/conproxy-sdk-smoke/bin/python scripts/sdk-smoke.py
 	@echo "sdk-smoke: PASS"
 
 # Run specific test

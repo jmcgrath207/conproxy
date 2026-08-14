@@ -93,6 +93,7 @@ struct EngineInner {
     /// Optional read-only dashboard listener.
     dashboard: Option<EngineDashboard>,
     dashboard_spawned: AtomicBool,
+    refresh_spawned: AtomicBool,
 }
 
 /// Bound dashboard listener. The std listener is `Sync` and is cloned per
@@ -404,11 +405,13 @@ impl EngineBuilder {
             None => None,
         };
         let state = proxy.to_app_state(cancel.clone());
+        let mut refresh_spawned = false;
         if let Ok(handle) = tokio::runtime::Handle::try_current() {
             if let Some(worker) = state.refresh_worker.clone() {
                 handle.spawn(async move {
                     worker.run().await;
                 });
+                refresh_spawned = true;
             }
             if let Some(fraction) = memory_fraction {
                 let st = state.clone();
@@ -427,6 +430,7 @@ impl EngineBuilder {
                 memory_fraction,
                 dashboard,
                 dashboard_spawned: AtomicBool::new(false),
+                refresh_spawned: AtomicBool::new(refresh_spawned),
             }),
         };
         if engine.dashboard_configured() {
@@ -501,13 +505,21 @@ impl Engine {
 
 impl Engine {
     /// Spawn the refresh worker on the current tokio runtime (Python after RT start).
+    ///
+    /// No-op when no runtime is current (Python building off-loop) or when the
+    /// worker was already started (by [`EngineBuilder::build`] under a runtime,
+    /// or a prior call).
     pub fn spawn_refresh(&self) {
+        if self.inner.refresh_spawned.swap(true, Ordering::Relaxed) {
+            return;
+        }
+        let Ok(handle) = tokio::runtime::Handle::try_current() else {
+            return;
+        };
         if let Some(worker) = self.inner.state.refresh_worker.clone() {
-            if let Ok(handle) = tokio::runtime::Handle::try_current() {
-                handle.spawn(async move {
-                    worker.run().await;
-                });
-            }
+            handle.spawn(async move {
+                worker.run().await;
+            });
         }
     }
 

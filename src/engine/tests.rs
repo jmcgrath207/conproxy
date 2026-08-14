@@ -358,6 +358,9 @@ async fn dashboard_rejects_write_routes() {
         ("POST", "/admin/pause"),
         ("POST", "/admin/resume"),
         ("POST", "/admin/agents"),
+        ("DELETE", "/admin/agents/x"),
+        ("POST", "/admin/agents/x/rotate-key"),
+        ("POST", "/admin/metrics/reset"),
         ("POST", "/contexts/switch"),
         ("POST", "/contexts/create"),
     ];
@@ -385,6 +388,9 @@ async fn dashboard_serves_every_spa_fetch_path() {
             ("fetchJSON('", "')"),
             ("fetchText('", "')"),
             ("fetch(BASE + '", "'"),
+            ("fetchJSON(\"", "\")"),
+            ("fetchText(\"", "\")"),
+            ("fetch(BASE + \"", "\""),
         ] {
             let mut rest = line;
             while let Some(start) = rest.find(left) {
@@ -400,7 +406,36 @@ async fn dashboard_serves_every_spa_fetch_path() {
             }
         }
     }
-    assert!(!paths.is_empty(), "ui/app.js exposes no fetch targets");
+    let expected: &[&str] = &[
+        "metrics",
+        "stats",
+        "circuit",
+        "pool",
+        "cache/integrity",
+        "queue",
+        "stats/queries",
+        "contexts/current",
+        "contexts",
+        "debug/tokio",
+        "peer/status",
+        "health",
+    ];
+    let mut missing: Vec<&str> = expected
+        .iter()
+        .filter(|e| !paths.contains(&e.to_string()))
+        .copied()
+        .collect();
+    let mut extra: Vec<String> = paths
+        .iter()
+        .filter(|p| !expected.contains(&p.as_str()))
+        .cloned()
+        .collect();
+    missing.sort_unstable();
+    extra.sort();
+    assert!(
+        missing.is_empty() && extra.is_empty(),
+        "SPA fetch targets drifted — missing: {missing:?}, extra: {extra:?}"
+    );
 
     let dir = tempfile::tempdir().unwrap();
     let engine = Engine::builder()
