@@ -8,6 +8,9 @@
 #   - builds + publishes a multi-arch container image (amd64 + arm64) to GHCR
 #   - builds + publishes a Helm chart to OCI on GHCR
 #   - creates a GitHub Release and attaches binaries + chart
+#   - publishes conproxy + conproxy-sdk to crates.io
+#   - builds manylinux2014 + musllinux_1_2 wheels (py3.9–3.13, x86_64 + aarch64)
+#     and publishes to PyPI (trusted publishing)
 #
 # All testing (fmt, clippy, lib tests, mcp_test, integration, integration-
 # experimental, security audit, fuzz, e2e, UAT) lives in `ci.yml` and
@@ -236,10 +239,141 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  version-check:
+    name: version-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.v.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Assert tag matches crate versions
+        id: v
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          ROOT=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c 'import json,sys; pkgs=json.load(sys.stdin)["packages"]; print(next(p["version"] for p in pkgs if p["name"]=="conproxy"))')
+          PY=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c 'import json,sys; pkgs=json.load(sys.stdin)["packages"]; print(next(p["version"] for p in pkgs if p["name"]=="conproxy-python"))')
+          SDK=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c 'import json,sys; pkgs=json.load(sys.stdin)["packages"]; print(next(p["version"] for p in pkgs if p["name"]=="conproxy-sdk"))')
+          echo "tag=$TAG root=$ROOT python=$PY sdk=$SDK"
+          test "$TAG" = "$ROOT" && test "$TAG" = "$PY" && test "$TAG" = "$SDK"
+          echo "VERSION=$TAG" >> "$GITHUB_OUTPUT"
+
+  crates-io:
+    name: crates-io
+    needs: version-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-crates-${{ runner.os }}
+          cache-on-failure: true
+      - name: Dry-run publish
+        run: |
+          cargo publish --dry-run -p conproxy
+          cargo publish --dry-run -p conproxy-sdk
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo publish -p conproxy --no-verify
+          cargo publish -p conproxy-sdk --no-verify
+
+  pypi-sdist:
+    name: pypi-sdist
+    needs: version-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+          working-directory: sdk/python
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi-sdist
+          path: sdk/python/dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  pypi-build:
+    name: pypi (${{ matrix.platform.target }} py${{ matrix.python }})
+    needs: version-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        platform:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            manylinux: '2014'
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+            manylinux: '2014'
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+            manylinux: musllinux_1_2
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+            manylinux: musllinux_1_2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --interpreter ${{ matrix.python }}
+          working-directory: sdk/python
+          sccache: 'true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi-wheel-${{ matrix.platform.target }}-py${{ matrix.python }}
+          path: sdk/python/dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  pypi-publish:
+    name: pypi-publish
+    needs: [pypi-build, pypi-sdist]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: pypi-*
+          merge-multiple: true
+      - name: List packages
+        run: ls -la dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
   # Create the GitHub Release and attach cross binaries + chart .tgz.
   github-release:
     name: github-release
-    needs: [cross, helm, container-publish]
+    needs: [cross, helm, container-publish, pypi-build, pypi-sdist]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -253,6 +387,11 @@ jobs:
           path: artifacts
           pattern: conproxy-*
           merge-multiple: false
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/pypi
+          pattern: pypi-*
+          merge-multiple: true
       - name: List artifacts
         run: find artifacts -maxdepth 3 -type f | sort
       - name: Set VERSION
@@ -298,9 +437,12 @@ jobs:
             **Install**
 
             ```bash
-            # cargo (binary)
-            cargo install --git https://github.com/${{ github.repository }} \
-              --tag ${{ github.ref_name }} --locked --features release
+            # cargo (crates.io)
+            cargo install conproxy --locked --features release
+            # or: cargo add conproxy / cargo add conproxy-sdk
+
+            # pypi
+            pip install conproxy
 
             # docker (multi-arch: amd64 + arm64)
             docker pull ${{ env.REGISTRY_IMAGE }}:${{ steps.v.outputs.VERSION }}
@@ -315,4 +457,5 @@ jobs:
             artifacts/conproxy-x86_64-unknown-linux-musl/conproxy-x86_64-unknown-linux-musl
             artifacts/conproxy-aarch64-unknown-linux-gnu/conproxy-aarch64-unknown-linux-gnu
             artifacts/conproxy-chart/conproxy-${{ steps.v.outputs.VERSION }}.tgz
+            artifacts/pypi/*
           fail_on_unmatched_files: true

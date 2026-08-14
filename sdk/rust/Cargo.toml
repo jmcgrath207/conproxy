@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust SDK client for conproxy cache proxy"
 license = "MIT"
+repository = "https://github.com/jmcgrath207/conproxy"
+homepage = "https://github.com/jmcgrath207/conproxy"
+keywords = ["cache", "proxy", "rag", "sdk", "grpc"]
+categories = ["api-bindings", "network-programming"]
 
 [dependencies]
 tonic = { version = "0.14", default-features = false, features = ["transport", "codegen"] }

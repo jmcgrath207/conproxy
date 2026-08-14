@@ -353,6 +353,14 @@ impl CacheStore {
         self.max_memory_bytes.load(Ordering::Relaxed)
     }
 
+    /// Lookup without bumping freq (hot-set probes).
+    #[must_use]
+    pub fn contains(&self, query: &str) -> bool {
+        let hash = Self::hash_query(query);
+        let guard = self.entries.guard();
+        self.entries.contains_key(&hash, &guard)
+    }
+
     /// Evict entries via S3-FIFO until total memory is under the current cap.
     ///
     /// Used by the live-resize path (memory budget changes) — the admission
@@ -367,7 +375,7 @@ impl CacheStore {
         let mut state = self.s3fifo.lock();
         let mut evicted = 0usize;
         while self.total_memory_bytes.load(Ordering::Relaxed) > cap {
-            match self.s3fifo_evict_one(&mut state, &guard) {
+            match self.s3fifo_evict_one_memory(&mut state, &guard) {
                 Some(EvictionSource::Small) => evicted = evicted.saturating_add(1),
                 Some(EvictionSource::Main) => evicted = evicted.saturating_add(1),
                 None => break,
@@ -464,7 +472,7 @@ impl CacheStore {
         let max_memory = self.max_memory_bytes.load(Ordering::Relaxed);
         if max_memory > 0 {
             while self.total_memory_bytes.load(Ordering::Relaxed) > max_memory {
-                match self.s3fifo_evict_one(&mut state, guard) {
+                match self.s3fifo_evict_one_memory(&mut state, guard) {
                     Some(EvictionSource::Small) => {
                         small_evictions = small_evictions.saturating_add(1)
                     }
@@ -491,6 +499,23 @@ impl CacheStore {
     /// Try to evict one entry from the S3-FIFO queues.
     /// Prefers evicting from Small; falls back to Main.
     fn s3fifo_evict_one(
+        &self,
+        state: &mut S3FifoState,
+        guard: &impl papaya::Guard,
+    ) -> Option<EvictionSource> {
+        if !state.small.is_empty() {
+            if let Some(src) = self.s3fifo_evict_from_small(state, guard) {
+                return Some(src);
+            }
+        }
+        if !state.main.is_empty() {
+            return self.s3fifo_evict_from_main(state, guard);
+        }
+        None
+    }
+
+    /// Memory-pressure eviction: small first (scan resistance), then FIFO main.
+    fn s3fifo_evict_one_memory(
         &self,
         state: &mut S3FifoState,
         guard: &impl papaya::Guard,
@@ -595,7 +620,7 @@ impl CacheStore {
 
     /// Bump the frequency counter on access (capped at 3).
     #[inline]
-    fn bump_freq(entry: &CacheEntry) {
+    fn bump_freq(&self, entry: &CacheEntry) {
         entry
             .freq
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |f| {
@@ -751,7 +776,7 @@ impl CacheStore {
         let normalized_hash = Self::hash_query(query);
         let guard = self.entries.guard();
         self.entries.get(&normalized_hash, &guard).map(|entry| {
-            Self::bump_freq(entry);
+            self.bump_freq(entry);
             self.exact_hits.fetch_add(1, Ordering::Relaxed);
             trace!(hit_type = "direct", "Cache lookup");
             Arc::clone(entry)
@@ -767,7 +792,7 @@ impl CacheStore {
         // Tier 1: Check if we have a cached exact→normalized mapping
         if let Some(&normalized_hash) = self.exact_to_normalized.get(&exact_hash, &e2n_guard) {
             if let Some(entry) = self.entries.get(&normalized_hash, &guard) {
-                Self::bump_freq(entry);
+                self.bump_freq(entry);
                 self.exact_hits.fetch_add(1, Ordering::Relaxed);
                 trace!(hit_type = "exact", "Cache lookup");
                 return Some(Arc::clone(entry));
@@ -780,7 +805,7 @@ impl CacheStore {
             // Store exact→normalized mapping for future fast lookups
             self.exact_to_normalized
                 .insert(exact_hash, normalized_hash, &e2n_guard);
-            Self::bump_freq(entry);
+            self.bump_freq(entry);
             self.normalized_hits.fetch_add(1, Ordering::Relaxed);
             trace!(hit_type = "normalized", "Cache lookup");
             Arc::clone(entry)
@@ -804,7 +829,7 @@ impl CacheStore {
             // Direct lookup only
             let normalized_hash = Self::hash_query(query);
             return self.entries.get(&normalized_hash, &guard).map(|entry| {
-                Self::bump_freq(entry);
+                self.bump_freq(entry);
                 self.exact_hits.fetch_add(1, Ordering::Relaxed);
                 (Arc::clone(entry), CacheHitType::Exact)
             });
@@ -816,7 +841,7 @@ impl CacheStore {
         // Tier 1: Check if we have a cached exact→normalized mapping
         if let Some(&normalized_hash) = self.exact_to_normalized.get(&exact_hash, &e2n_guard) {
             if let Some(entry) = self.entries.get(&normalized_hash, &guard) {
-                Self::bump_freq(entry);
+                self.bump_freq(entry);
                 self.exact_hits.fetch_add(1, Ordering::Relaxed);
                 return Some((Arc::clone(entry), CacheHitType::Exact));
             }
@@ -828,7 +853,7 @@ impl CacheStore {
             // Store exact→normalized mapping for future fast lookups
             self.exact_to_normalized
                 .insert(exact_hash, normalized_hash, &e2n_guard);
-            Self::bump_freq(entry);
+            self.bump_freq(entry);
             self.normalized_hits.fetch_add(1, Ordering::Relaxed);
             (Arc::clone(entry), CacheHitType::Normalized)
         })
@@ -856,7 +881,7 @@ impl CacheStore {
                 }
             }
 
-            Self::bump_freq(entry);
+            self.bump_freq(entry);
             trace!("Cache hit with integrity verification");
             return Some(Arc::clone(entry));
         }
@@ -869,7 +894,7 @@ impl CacheStore {
     pub fn get_by_hash(&self, hash: &QueryHash) -> Option<Arc<CacheEntry>> {
         let guard = self.entries.guard();
         self.entries.get(hash, &guard).map(|entry| {
-            Self::bump_freq(entry);
+            self.bump_freq(entry);
             Arc::clone(entry)
         })
     }

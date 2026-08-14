@@ -12,6 +12,8 @@ homepage = "https://github.com/jmcgrath207/conproxy"
 keywords = ["cache", "proxy", "rag", "vector-search", "mcp"]
 categories = ["web-programming::http-server", "database::database-engines"]
 license = "MIT"
+readme = "README.md"
+default-run = "conproxy"
 
 [lib]
 name = "conproxy"
