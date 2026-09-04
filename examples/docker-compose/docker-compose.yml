@@ -40,7 +40,7 @@ services:
 
   conproxy:
     # Match the published release; :latest is fine for local play but unstable.
-    image: ghcr.io/jmcgrath207/conproxy:0.1.0
+    image: ghcr.io/jmcgrath207/conproxy:0.2.0
     container_name: conproxy-compose-proxy
     depends_on:
       meilisearch:
