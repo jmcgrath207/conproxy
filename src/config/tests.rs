@@ -477,13 +477,19 @@ fn test_config_packages_local_overrides() {
 }
 
 #[test]
+#[serial]
 fn test_load_local_not_exists() {
-    // This tests that load_local returns None when no .conproxy/conproxy.toml exists
-    // We can't easily test this without changing cwd, but we can verify the method exists
-    // The actual behavior is tested in UAT tests
+    use tempfile::TempDir;
+
+    let dir = TempDir::new().unwrap();
+    let original_dir = std::env::current_dir().unwrap();
+    std::env::set_current_dir(dir.path()).unwrap();
+
     let result = Config::load_local();
-    // Result should be Ok (either Some or None)
-    assert!(result.is_ok());
+    assert!(result.is_ok(), "load_local: {result:?}");
+    assert!(result.unwrap().is_none());
+
+    std::env::set_current_dir(original_dir).unwrap();
 }
 
 #[test]
