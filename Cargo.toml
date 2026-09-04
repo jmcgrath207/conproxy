@@ -4,13 +4,13 @@ resolver = "2"
 
 [package]
 name = "conproxy"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Cache proxy server for heterogeneous RAG/vector search backends with cascade, scope, and MCP"
 repository = "https://github.com/jmcgrath207/conproxy"
 homepage = "https://github.com/jmcgrath207/conproxy"
 keywords = ["cache", "proxy", "rag", "vector-search", "mcp"]
-categories = ["web-programming::http-server", "database::database-engines"]
+categories = ["web-programming::http-server", "caching"]
 license = "MIT"
 readme = "README.md"
 default-run = "conproxy"

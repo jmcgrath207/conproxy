@@ -130,10 +130,10 @@ gRPC client crate: `cargo add conproxy-sdk`.
 Shared cache in front of a backend — the default when multiple agents share one cache. [Full walkthrough](docs/quickstart.md).
 
 ```bash
-docker pull ghcr.io/jmcgrath207/conproxy:0.2.0
+docker pull ghcr.io/jmcgrath207/conproxy:0.2.1
 docker run -d --name conproxy -p 9999:9999 -p 10000:10000 \
   -v "$PWD/conproxy.toml:/etc/conproxy/conproxy.toml:ro" \
-  ghcr.io/jmcgrath207/conproxy:0.2.0
+  ghcr.io/jmcgrath207/conproxy:0.2.1
 curl -s http://127.0.0.1:10000/health
 ```
 
@@ -150,7 +150,7 @@ curl -s http://127.0.0.1:9090/query \
 
 Compose (proxy + Meilisearch): `examples/docker-compose/` · [docs/docker-compose.md](docs/docker-compose.md).
 
-Helm: `helm install conproxy oci://ghcr.io/jmcgrath207/charts/conproxy --version 0.2.0`
+Helm: `helm install conproxy oci://ghcr.io/jmcgrath207/charts/conproxy --version 0.2.1`
 
 `release` = `mcp` + `persistence` + `embed-api` + `pgvector`. Flags: [docs/feature-flags.md](docs/feature-flags.md).
 
