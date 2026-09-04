@@ -12,6 +12,8 @@ homepage = "https://github.com/jmcgrath207/conproxy"
 keywords = ["cache", "proxy", "rag", "vector-search", "mcp"]
 categories = ["web-programming::http-server", "database::database-engines"]
 license = "MIT"
+readme = "README.md"
+default-run = "conproxy"
 
 [lib]
 name = "conproxy"
@@ -241,6 +243,11 @@ required-features = ["load-test", "e2e"]
 [[test]]
 name = "integration_qdrant"
 path = "tests/integration_qdrant.rs"
+required-features = ["integration-tests"]
+
+[[test]]
+name = "integration_engine"
+path = "tests/integration_engine.rs"
 required-features = ["integration-tests"]
 
 [[test]]

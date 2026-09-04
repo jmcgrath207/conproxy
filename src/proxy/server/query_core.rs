@@ -178,6 +178,7 @@ pub(crate) async fn execute_query(
     request_id: String,
     agent: Option<&AgentIdentity>,
     source: String,
+    skip_cache: bool,
 ) -> QueryResult {
     let start = Instant::now();
 
@@ -238,88 +239,90 @@ pub(crate) async fn execute_query(
     let query_hash = CacheStore::hash_query(&ctx_query);
     let mut miss_reason = MissReason::NotInCache;
 
-    // Check cache first
-    if let Some(freshness) = state.cache.check_freshness_by_hash(&query_hash) {
-        match freshness {
-            Freshness::Fresh => {
-                if let Some(entry) = state.cache.get_by_hash(&query_hash) {
-                    state.metrics.record_hit();
-                    state.context_manager.record_hit_for(&context_id);
-                    let elapsed = start.elapsed();
-                    state.metrics.record_latency(elapsed);
-                    state.query_stats.record(&request.query, true, elapsed);
-                    let took_ms = elapsed.as_millis() as u64;
-                    state.client_tracker.complete(&request_id);
-                    return QueryResult::ok(CachedResponse::from_cache(
-                        entry,
-                        CacheStatus::Hit,
-                        took_ms,
-                    ));
+    // Check cache first (Engine skip_cache=true forces refresh + write)
+    if !skip_cache {
+        if let Some(freshness) = state.cache.check_freshness_by_hash(&query_hash) {
+            match freshness {
+                Freshness::Fresh => {
+                    if let Some(entry) = state.cache.get_by_hash(&query_hash) {
+                        state.metrics.record_hit();
+                        state.context_manager.record_hit_for(&context_id);
+                        let elapsed = start.elapsed();
+                        state.metrics.record_latency(elapsed);
+                        state.query_stats.record(&request.query, true, elapsed);
+                        let took_ms = elapsed.as_millis() as u64;
+                        state.client_tracker.complete(&request_id);
+                        return QueryResult::ok(CachedResponse::from_cache(
+                            entry,
+                            CacheStatus::Hit,
+                            took_ms,
+                        ));
+                    }
                 }
-            }
-            Freshness::Stale => {
-                if let Some(entry) = state.cache.get_by_hash(&query_hash) {
-                    state.metrics.record_stale();
-                    // PERF(R2): required for tokio::spawn 'static bound
-                    let cache = state.cache.clone();
-                    let upstream = state.upstream.load_full();
-                    let query = request.query.clone();
-                    let ctx_id_bg = context_id.clone();
-                    let upstream_id = state.upstream_id.clone();
-                    let refresh_worker = state.refresh_worker.clone();
-                    let scope_filter = state.scope_filter_for(&context_id);
-                    #[cfg(feature = "embed-api")]
-                    let smart_embedder_bg = state.smart_embedder.clone();
+                Freshness::Stale => {
+                    if let Some(entry) = state.cache.get_by_hash(&query_hash) {
+                        state.metrics.record_stale();
+                        // PERF(R2): required for tokio::spawn 'static bound
+                        let cache = state.cache.clone();
+                        let upstream = state.upstream.load_full();
+                        let query = request.query.clone();
+                        let ctx_id_bg = context_id.clone();
+                        let upstream_id = state.upstream_id.clone();
+                        let refresh_worker = state.refresh_worker.clone();
+                        let scope_filter = state.scope_filter_for(&context_id);
+                        #[cfg(feature = "embed-api")]
+                        let smart_embedder_bg = state.smart_embedder.clone();
 
-                    tokio::spawn(async move {
-                        if let Some(upstream) = upstream {
-                            if let Ok(mut new_response) = upstream
-                                .query(&QueryRequest {
-                                    query: query.clone(),
-                                    top_k: None,
-                                    priority: None,
-                                    upstream_id: None,
-                                    upstream_type: None,
-                                })
-                                .await
-                            {
-                                new_response.results = apply_scope_filter(
-                                    &scope_filter,
-                                    new_response.results,
-                                    #[cfg(feature = "embed-api")]
-                                    smart_embedder_bg.as_deref(),
-                                )
-                                .await;
-                                if new_response.validate().is_ok() {
-                                    let bg_ctx_query = context_query(&ctx_id_bg, &query);
-                                    cache.insert_with_context(
-                                        &bg_ctx_query,
-                                        new_response,
-                                        upstream_id,
-                                        &ctx_id_bg,
-                                    );
-                                    if let Some(ref worker) = refresh_worker {
-                                        worker.register_query(&bg_ctx_query);
+                        tokio::spawn(async move {
+                            if let Some(upstream) = upstream {
+                                if let Ok(mut new_response) = upstream
+                                    .query(&QueryRequest {
+                                        query: query.clone(),
+                                        top_k: None,
+                                        priority: None,
+                                        upstream_id: None,
+                                        upstream_type: None,
+                                    })
+                                    .await
+                                {
+                                    new_response.results = apply_scope_filter(
+                                        &scope_filter,
+                                        new_response.results,
+                                        #[cfg(feature = "embed-api")]
+                                        smart_embedder_bg.as_deref(),
+                                    )
+                                    .await;
+                                    if new_response.validate().is_ok() {
+                                        let bg_ctx_query = context_query(&ctx_id_bg, &query);
+                                        cache.insert_with_context(
+                                            &bg_ctx_query,
+                                            new_response,
+                                            upstream_id,
+                                            &ctx_id_bg,
+                                        );
+                                        if let Some(ref worker) = refresh_worker {
+                                            worker.register_query(&bg_ctx_query);
+                                        }
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
 
-                    let elapsed = start.elapsed();
-                    state.metrics.record_latency(elapsed);
-                    state.query_stats.record(&request.query, true, elapsed);
-                    let took_ms = elapsed.as_millis() as u64;
-                    state.client_tracker.complete(&request_id);
-                    return QueryResult::ok(CachedResponse::from_cache(
-                        entry,
-                        CacheStatus::Stale,
-                        took_ms,
-                    ));
+                        let elapsed = start.elapsed();
+                        state.metrics.record_latency(elapsed);
+                        state.query_stats.record(&request.query, true, elapsed);
+                        let took_ms = elapsed.as_millis() as u64;
+                        state.client_tracker.complete(&request_id);
+                        return QueryResult::ok(CachedResponse::from_cache(
+                            entry,
+                            CacheStatus::Stale,
+                            took_ms,
+                        ));
+                    }
                 }
-            }
-            Freshness::Expired | Freshness::Frozen => {
-                miss_reason = MissReason::Expired;
+                Freshness::Expired | Freshness::Frozen => {
+                    miss_reason = MissReason::Expired;
+                }
             }
         }
     }
@@ -333,44 +336,48 @@ pub(crate) async fn execute_query(
     let mut query_embedding: Option<Vec<f32>> = None;
 
     #[cfg(feature = "embed-api")]
-    if let (Some(semantic), Some(embedder)) =
-        (state.semantic_cache.as_ref(), state.smart_embedder.as_ref())
-    {
-        match embedder.embed(&ctx_query).await {
-            Ok(embedding) => {
-                if let Some(matched_hash) = semantic.lookup(&embedding) {
-                    // Check freshness before serving — skip expired entries
-                    let fresh = state.cache.check_freshness_by_hash(&matched_hash);
-                    if matches!(
-                        fresh,
-                        Some(Freshness::Fresh) | Some(Freshness::Stale) | Some(Freshness::Frozen)
-                    ) {
-                        if let Some(entry) = state.cache.get_by_hash(&matched_hash) {
-                            state.metrics.record_semantic_hit();
-                            state.context_manager.record_hit_for(&context_id);
-                            let elapsed = start.elapsed();
-                            state.metrics.record_latency(elapsed);
-                            state.query_stats.record(&request.query, true, elapsed);
-                            let took_ms = elapsed.as_millis() as u64;
-                            state.client_tracker.complete(&request_id);
-                            return QueryResult::ok(CachedResponse::from_cache(
-                                entry,
-                                CacheStatus::Hit,
-                                took_ms,
-                            ));
+    if !skip_cache {
+        if let (Some(semantic), Some(embedder)) =
+            (state.semantic_cache.as_ref(), state.smart_embedder.as_ref())
+        {
+            match embedder.embed(&ctx_query).await {
+                Ok(embedding) => {
+                    if let Some(matched_hash) = semantic.lookup(&embedding) {
+                        // Check freshness before serving — skip expired entries
+                        let fresh = state.cache.check_freshness_by_hash(&matched_hash);
+                        if matches!(
+                            fresh,
+                            Some(Freshness::Fresh)
+                                | Some(Freshness::Stale)
+                                | Some(Freshness::Frozen)
+                        ) {
+                            if let Some(entry) = state.cache.get_by_hash(&matched_hash) {
+                                state.metrics.record_semantic_hit();
+                                state.context_manager.record_hit_for(&context_id);
+                                let elapsed = start.elapsed();
+                                state.metrics.record_latency(elapsed);
+                                state.query_stats.record(&request.query, true, elapsed);
+                                let took_ms = elapsed.as_millis() as u64;
+                                state.client_tracker.complete(&request_id);
+                                return QueryResult::ok(CachedResponse::from_cache(
+                                    entry,
+                                    CacheStatus::Hit,
+                                    took_ms,
+                                ));
+                            }
                         }
+                        // Expired or missing — record miss and continue to upstream
+                        state.metrics.record_semantic_miss();
+                    } else {
+                        state.metrics.record_semantic_miss();
                     }
-                    // Expired or missing — record miss and continue to upstream
-                    state.metrics.record_semantic_miss();
-                } else {
+                    // Stash for reuse in the leader branch below (avoids 2nd embed call).
+                    query_embedding = Some(embedding);
+                }
+                Err(_) => {
+                    // Embedding failed — record as miss so metrics reflect no semantic coverage
                     state.metrics.record_semantic_miss();
                 }
-                // Stash for reuse in the leader branch below (avoids 2nd embed call).
-                query_embedding = Some(embedding);
-            }
-            Err(_) => {
-                // Embedding failed — record as miss so metrics reflect no semantic coverage
-                state.metrics.record_semantic_miss();
             }
         }
     }

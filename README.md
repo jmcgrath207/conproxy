@@ -17,7 +17,7 @@ conproxy sits in front of your search backends. LLM caches skip re-generating an
 
 **When *not* to use**
 
-- Single small backend where an in-process cache suffices
+- A one-off script with no TTL / semantic / multi-backend needs — the in-process [`Engine`](docs/engine.md) is the lightweight path
 - LLM-response caching (that's GPTCache or RedisVL SemanticCache territory)
 - Cross-org mTLS peer replication (not planned; use a mesh sidecar)
 
@@ -35,7 +35,7 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 **Skip conproxy if…**
 
 - You only need an LLM-response cache → use GPTCache / RedisVL
-- A single in-process memoize hash covers your duplicates
+- A one-line memoize hash covers your duplicates (no TTL / semantic / upstreams)
 - You need write-path CDC / multi-region invalidation today (not shipped; track correctness doc)
 - One tiny backend, no agent loops, no cost pressure
 
@@ -45,7 +45,7 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 |------|--------|
 | Cache **LLM answers** | GPTCache / RedisVL SemanticCache |
 | Cache **search/retrieval** under agents | **conproxy** |
-| One process, no daemon, single backend | In-process memoize / app cache |
+| One process, no daemon, single MCP server | [`Engine`](docs/engine.md) (in-process query core) |
 | Multi-backend cascade / MCP tune / dry-run scope | **conproxy** |
 | LLM-side semantic cache for prompts | LangChain cache / provider-level caching |
 
@@ -57,14 +57,14 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 | **Not** | LLM answer cache (GPTCache / RedisVL) |
 | **Pays when** | Agents re-query — hits skip embed + upstream |
 | **Proof** | ~89.5% exact hit rate; hit p50 ~0.1 ms vs miss ~13.8 ms (~**138×**) — [benchmarks](docs/benchmarks.md) |
-| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) |
+| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) · [Engine](docs/engine.md) |
 
 **FAQ**
 
 - **What is conproxy?** A caching proxy in front of search backends. Caches retrieval results, not LLM tokens.
 - **How is it different from GPTCache / RedisVL SemanticCache?** Those cache LLM answers. conproxy caches embed + search results for agents re-querying the same corpora.
 - **When does it pay?** Retries, multi-agent fanout, tool-call storms. Cost + latency win on every hit.
-- **How do I try it?** Install (binary / Docker / Helm) → see Quick Start below. One curl hits the proxy.
+- **How do I try it?** See [Use it](#use-it) — Docker, Python, Rust, MCP, or a curl.
 - **How do I prove it on my data?** `make bench-hitrate` for synthetic traces; `make bench-hitrate-replay QUERIES=path/to/trace.txt` for your real query log.
 
 One MCP endpoint, any backend, cost + latency on hits, false-hit gated semantic tier. Benchmarks reproducible.
@@ -82,7 +82,113 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 
 [→ Benchmarks](docs/benchmarks.md) · [Python SDK + LangChain / LlamaIndex](docs/sdk-python.md) · [CONTRIBUTING](CONTRIBUTING.md)
 
+## Use it
+
+Five ways in. One copy-paste each; [docs](#documentation) for the rest.
+
+### Python Engine
+
+In-process query core — no daemon, no gRPC. Same request path as the daemon. [docs/engine.md](docs/engine.md) · [docs/sdk-python.md](docs/sdk-python.md).
+
+```bash
+pip install conproxy
+```
+
+```python
+from conproxy import Engine
+
+engine = Engine(config="conproxy.toml")
+result = await engine.query("how does X work", top_k=10)
+# result.cache_status: 1=hit, 2=miss, 3=stale, 4=frozen
+```
+
+Always `await query()`. Talk to a running daemon instead: `ConproxyClient(grpc_url="http://localhost:9999")`.
+
+### Rust Engine
+
+Same Engine, in-process. [docs/engine.md](docs/engine.md).
+
+```bash
+cargo add conproxy
+```
+
+```rust
+use conproxy::{Engine, QueryOpts};
+
+let engine = Engine::builder()
+    .config_toml("conproxy.toml")
+    .build()?;
+let result = engine
+    .query("how does X work", QueryOpts { top_k: Some(10), ..Default::default() })
+    .await?;
+```
+
+gRPC client crate: `cargo add conproxy-sdk`.
+
+### Docker daemon
+
+Shared cache in front of a backend — the default when multiple agents share one cache. [Full walkthrough](docs/quickstart.md).
+
+```bash
+docker pull ghcr.io/jmcgrath207/conproxy:0.1.0
+docker run -d --name conproxy -p 9999:9999 -p 10000:10000 \
+  -v "$PWD/conproxy.toml:/etc/conproxy/conproxy.toml:ro" \
+  ghcr.io/jmcgrath207/conproxy:0.1.0
+curl -s http://127.0.0.1:10000/health
+```
+
+Local binary (no Docker):
+
+```bash
+cargo install conproxy --locked --features release
+docker run -d -p 6333:6333 qdrant/qdrant
+conproxy start --config examples/qdrant-quickstart.toml --daemon
+curl -s http://127.0.0.1:9090/query \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "how to handle errors in rust", "top_k": 5}'
+```
+
+Compose (proxy + Meilisearch): `examples/docker-compose/` · [docs/docker-compose.md](docs/docker-compose.md).
+
+Helm: `helm install conproxy oci://ghcr.io/jmcgrath207/charts/conproxy --version 0.1.0`
+
+`release` = `mcp` + `persistence` + `embed-api` + `pgvector`. Flags: [docs/feature-flags.md](docs/feature-flags.md).
+
+### MCP
+
+`release` already includes the MCP server. Point Claude Desktop or opencode at `conproxy mcp`. [docs/mcp-integration.md](docs/mcp-integration.md).
+
+```json
+{ "mcpServers": { "conproxy": { "command": "conproxy", "args": ["mcp"] } } }
+```
+
+opencode (`~/.config/opencode/opencode.jsonc`):
+
+```jsonc
+{ "mcp": { "conproxy": { "type": "local", "command": ["conproxy", "mcp"], "enabled": true } } }
+```
+
+Start a daemon first (`conproxy start --config … --daemon`) so `search` has an upstream.
+
+### gRPC / HTTP
+
+Any language. Default container ports: gRPC `:9999`, HTTP `:10000`. [docs/api-reference.md](docs/api-reference.md).
+
+```bash
+curl -s http://127.0.0.1:10000/query \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "how to handle errors in rust", "top_k": 5}'
+```
+
 ## Features
+
+**In-process Engine**
+
+- Same `execute_query` path as the daemon — no gRPC, no peer, no daemon ([docs/engine.md](docs/engine.md))
+- `pip install conproxy` (Python) / `cargo add conproxy` (Rust); the wheel links the query core, not a thin client
+- Memory budget: `max_memory` / `memory_fraction` bounds the cache in-process
+- Optional read-only dashboard (`dashboard_listen`) — health, stats, metrics, cache, contexts
+- Use the daemon instead when multiple agents should share one cache
 
 **Agentic cache**
 
@@ -138,78 +244,6 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 - systemd service management
 - *Experimental:* P2P cache replication via CDC (LWW by wall timestamp; optional `shared_secret`, no mTLS — see feature flags before relying on it for production fan-out)
 
-## Install
-
-**Binary (cargo):**
-```bash
-# From a tagged release (recommended)
-cargo install --git https://github.com/jmcgrath207/conproxy \
-    --tag v0.1.0 --locked --features release
-
-# From the default branch
-cargo install --git https://github.com/jmcgrath207/conproxy --locked --features release
-
-# From a local checkout
-cargo install --path . --locked --features release
-```
-
-**Docker (multi-arch amd64 + arm64):**
-```bash
-docker pull ghcr.io/jmcgrath207/conproxy:0.1.0
-
-# Container default: gRPC :9999, HTTP :10000 (matches Dockerfile EXPOSE
-# + Helm values). Mount your conproxy.toml read-only at /etc/conproxy.
-docker run -d --name conproxy -p 9999:9999 -p 10000:10000 \
-  -v "$PWD/conproxy.toml:/etc/conproxy/conproxy.toml:ro" \
-  ghcr.io/jmcgrath207/conproxy:0.1.0
-```
-
-**Docker Compose (proxy + Meilisearch):**
-```bash
-git clone https://github.com/jmcgrath207/conproxy
-cd conproxy/examples/docker-compose
-docker compose up -d
-curl -s http://127.0.0.1:10000/health
-```
-See [`examples/docker-compose/`](examples/docker-compose/) and [`docs/docker-compose.md`](docs/docker-compose.md) for the full walkthrough.
-
-**Helm (Kubernetes):**
-```bash
-helm install conproxy oci://ghcr.io/jmcgrath207/charts/conproxy \
-  --version 0.1.0
-```
-
-**Features:** `release` = `mcp` + `persistence` + `embed-api` + `pgvector`
-(ONNX + sandbox opt-in). For MCP-only: `--features mcp`. For full
-options see `docs/feature-flags.md`.
-
-## Quick Start
-
-```bash
-# Verify install
-conproxy --version
-
-# Bring up a search backend
-docker run -d -p 6333:6333 qdrant/qdrant
-
-# Start the proxy with an example config (no `init` step needed).
-# The example config listens on 127.0.0.1:9090 (gRPC) — different from
-# the container/Helm default of :9999/:10000 so local dev doesn't
-# fight for a privileged port.
-conproxy start --config examples/qdrant-quickstart.toml --daemon
-
-# Query through the proxy
-curl -s http://127.0.0.1:9090/query \
-  -H 'Content-Type: application/json' \
-  -d '{"query": "how to handle errors in rust", "top_k": 5}'
-
-# Check status
-conproxy status
-
-# Stop
-conproxy stop
-```
-
 ## Supported Upstreams
 
 | Backend | Type | Query Mode | Score Range | Status |
@@ -221,61 +255,6 @@ conproxy stop
 | pgvector | `pgvector` | `vector_only` | 0–1 | Shipped (`pgvector` feature) |
 | Pinecone | `pinecone` | `vector_only` | 0–1 | Experimental (less e2e proof) |
 | Milvus | `milvus` | `vector_only` | 0–1 | Experimental (less e2e proof) |
-
-## Connect via MCP
-
-The `release` build already includes the MCP server (it's a default
-component of the production binary, not an add-on). Build with:
-
-```bash
-# 1. Install (release build includes MCP + persistence + embed-api + pgvector)
-cargo install --path . --locked --features release
-
-# MCP-only minimal build (smaller binary, no persistence/pgvector):
-# cargo install --path . --locked --features mcp
-
-# 2. Bring up a backend + start the proxy daemon
-docker run -d -p 6333:6333 qdrant/qdrant
-conproxy start --config examples/qdrant-quickstart.toml --daemon
-```
-
-**Claude Desktop** — add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `~/.config/Claude/claude_desktop_config.json` (Linux):
-
-```json
-{
-  "mcpServers": {
-    "conproxy": { "command": "conproxy", "args": ["mcp"] }
-  }
-}
-```
-
-Restart Claude Desktop.
-
-**opencode** — add to `~/.config/opencode/opencode.jsonc`:
-
-```jsonc
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "conproxy": { "type": "local", "command": ["conproxy", "mcp"], "enabled": true }
-  }
-}
-```
-
-Restart opencode and include `use conproxy` in your prompts.
-
-See [MCP Integration](docs/mcp-integration.md) for full configuration details.
-
-
-## Export cache for LLM ingestion
-
-Dump cached entries to structured Markdown (with optional JSON sidecars) for bootstrapping LLM knowledge.
-
-```bash
-conproxy distill --output-dir ./knowledge-base
-```
-
-See [Distill](docs/distill.md) for tier selection, stale handling, and post-process hooks.
 
 ## Minimal Configuration
 
@@ -323,6 +302,7 @@ Multi-leg cascade and federated variants: see [`examples/multi-upstream-cascade.
 | [Docker Compose](docs/docker-compose.md) | Side-by-side conproxy + backend stack ([example](examples/docker-compose/)) |
 | [Feature Flags](docs/feature-flags.md) | Compile-time features |
 | [Python SDK](docs/sdk-python.md) | Native client + LangChain/LlamaIndex adapters |
+| [Engine](docs/engine.md) | In-process query core (Rust + Python) |
 
 ## Feature Flags
 

@@ -1083,40 +1083,31 @@ impl CacheProxy {
         self
     }
 
-    /// Run the proxy server with gRPC on primary port and HTTP on health port.
+    /// Build runtime [`AppState`] without binding sockets or starting peer.
     ///
-    /// - `listen_addr`: Primary address for gRPC (e.g., "127.0.0.1:9999")
-    /// - `http_listen_addr`: Address for HTTP health/prometheus (e.g., "127.0.0.1:10000")
-    /// - `cancel`: Cancellation token for graceful shutdown
-    pub async fn run(
-        self,
-        listen_addr: &str,
-        http_listen_addr: &str,
-        cancel: CancellationToken,
-    ) -> anyhow::Result<()> {
-        // Create refresh worker if upstream is configured
+    /// Starts a [`QueryTrackingRefreshWorker`] when a single upstream exists.
+    /// `peer_manager` is always `None` — the daemon [`Self::run`] attaches peer after this returns.
+    pub(crate) fn to_app_state(&self, cancel: CancellationToken) -> AppState {
         let refresh_worker = self.upstream.as_ref().map(|upstream| {
             Arc::new(QueryTrackingRefreshWorker::new(
                 self.cache.clone(),
                 upstream.clone(),
                 self.upstream_id.clone(),
                 self.refresh_interval,
-                cancel.clone(),
+                cancel,
             ))
         });
 
-        // Create query stats tracker and batch processor
-        let query_stats = Arc::new(QueryStatsTracker::new(10000)); // Track up to 10k queries
+        let query_stats = Arc::new(QueryStatsTracker::new(10000));
         let batch_processor = Arc::new(BatchProcessor::new(BatchConfig::default()));
-
         let global_concurrency = Arc::new(tokio::sync::Semaphore::new(self.max_global_connections));
 
-        let state = AppState {
+        AppState {
             cache: self.cache.clone(),
             upstream: Arc::new(ArcSwapOption::new(self.upstream.clone())),
             upstream_pool: Arc::new(ArcSwapOption::new(self.upstream_pool.clone())),
             coalescer: self.coalescer.clone(),
-            refresh_worker: refresh_worker.clone(),
+            refresh_worker,
             scope_filter: self.scope_filter.clone(),
             metrics: self.metrics.clone(),
             circuit_breaker: self.circuit_breaker.clone(),
@@ -1140,22 +1131,37 @@ impl CacheProxy {
             cascade_executor: Arc::new(ArcSwapOption::new(self.cascade_executor.clone())),
             agent_registry: Arc::new(ArcSwapOption::new(self.agent_registry.clone())),
             cdc_manager: self.cdc_manager.clone(),
-            global_concurrency: global_concurrency.clone(),
+            global_concurrency,
             reload_source: self.reload_source.clone(),
-            peer_manager: if let (Some(ref cdc), Some(ref peer_cfg)) =
-                (&self.cdc_manager, &self.peer_config)
-            {
-                Some(Arc::new(PeerManager::new(
-                    peer_cfg.clone(),
-                    self.cache.clone(),
-                    cdc.event_sender(),
-                    cancel.clone(),
-                )))
-            } else {
-                None
-            },
-            tokio_handle: Some(tokio::runtime::Handle::current()),
-        };
+            peer_manager: None,
+            tokio_handle: tokio::runtime::Handle::try_current().ok(),
+        }
+    }
+
+    /// Run the proxy server with gRPC on primary port and HTTP on health port.
+    ///
+    /// - `listen_addr`: Primary address for gRPC (e.g., "127.0.0.1:9999")
+    /// - `http_listen_addr`: Address for HTTP health/prometheus (e.g., "127.0.0.1:10000")
+    /// - `cancel`: Cancellation token for graceful shutdown
+    pub async fn run(
+        self,
+        listen_addr: &str,
+        http_listen_addr: &str,
+        cancel: CancellationToken,
+    ) -> anyhow::Result<()> {
+        let peer_cfg = self.peer_config.clone();
+        let cache_for_peer = self.cache.clone();
+        let cdc_for_peer = self.cdc_manager.clone();
+        let mut state = self.to_app_state(cancel.clone());
+        state.tokio_handle = Some(tokio::runtime::Handle::current());
+        if let (Some(ref cdc), Some(ref peer_cfg)) = (&cdc_for_peer, &peer_cfg) {
+            state.peer_manager = Some(Arc::new(PeerManager::new(
+                peer_cfg.clone(),
+                cache_for_peer,
+                cdc.event_sender(),
+                cancel.clone(),
+            )));
+        }
 
         // Determine initial degradation level
         let initial_level = determine_degradation_level(&state);
@@ -1352,7 +1358,7 @@ impl CacheProxy {
         }
 
         // Start refresh worker if configured
-        if let Some(ref worker) = refresh_worker {
+        if let Some(ref worker) = state.refresh_worker {
             let worker = worker.clone();
             tokio::spawn(async move {
                 worker.run().await;
@@ -1551,6 +1557,17 @@ impl CacheProxy {
         &self.cache
     }
 
+    /// Mutable access to the cache `Arc` (Engine persist knob before share).
+    #[cfg(feature = "persistence")]
+    pub(crate) fn cache_arc_mut(&mut self) -> &mut Arc<CacheStore> {
+        &mut self.cache
+    }
+
+    /// Context manager (Engine creates `"global"` here).
+    pub(crate) fn context_manager(&self) -> &crate::proxy::context::ContextManager {
+        &self.context_manager
+    }
+
     /// Get the upstream adapter.
     pub fn upstream(&self) -> Option<&Arc<GenericRestAdapter>> {
         self.upstream.as_ref()
@@ -1658,6 +1675,47 @@ async fn handle_peer_status(State(state): State<AppState>) -> impl IntoResponse 
             cdc_sequence: None,
         })
     }
+}
+
+/// Read-only HTTP router for the in-process [`crate::engine::Engine`] dashboard.
+///
+/// Serves exactly the GETs the embedded SPA needs — health, stats, metrics,
+/// circuit/queue, cache reads, contexts — plus the embedded UI at
+/// `/dashboard`. No `/query`, no admin/cache mutations, no auth (caller
+/// chooses the bind address). The daemon's full REST router in
+/// [`CacheProxy::run`] is unchanged.
+pub(crate) fn dashboard_http_router() -> Router<AppState> {
+    Router::new()
+        // Public status
+        .route("/health", get(status::handle_health))
+        .route("/ready", get(status::handle_ready))
+        .route("/pool", get(status::handle_pool_status))
+        .route(
+            "/metrics/prometheus",
+            get(status::handle_metrics_prometheus),
+        )
+        .route("/peer/status", get(handle_peer_status))
+        .route("/debug/tokio", get(status::handle_tokio_metrics))
+        .route("/debug/tokio/dump", get(status::handle_tokio_dump))
+        // Observability (read-only)
+        .route("/stats", get(status::handle_stats))
+        .route("/stats/queries", get(status::handle_query_stats))
+        .route("/metrics", get(status::handle_metrics))
+        .route("/audit", get(status::handle_audit))
+        .route("/circuit", get(status::handle_circuit_status))
+        .route("/queue", get(status::handle_queue_status))
+        .route("/clients", get(status::handle_clients))
+        // Cache reads
+        .route("/cache/integrity", get(cache::handle_cache_integrity))
+        .route("/cache/upstreams", get(cache::handle_cache_upstreams))
+        .route("/cache/entries", get(cache::handle_cache_entries))
+        // Contexts (read-only)
+        .route("/contexts", get(context::handle_contexts_list))
+        .route("/contexts/current", get(context::handle_context_current))
+        .route("/contexts/{id}/stats", get(context::handle_context_stats))
+        // Web UI
+        .route("/dashboard", get(web_ui::handle_dashboard))
+        .route("/dashboard/{*path}", get(web_ui::handle_dashboard))
 }
 
 #[cfg(test)]

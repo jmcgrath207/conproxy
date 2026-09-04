@@ -6,7 +6,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: all build build-release test test-unit test-integration test-integration-experimental lint fmt clean help build-embed build-persistence build-pgvector build-mcp build-all build-profiling bench bench-save bench-compare profile-dhat profile-pgo profile-pgo-clean profile-flamegraph profile-tokio-console profile-heaptrack profile-metrics-snap perf-tuning-quick perf-tuning-default perf-tuning-full e2e-all e2e-dirty e2e-qdrant e2e-elastic e2e-meili e2e-mixed e2e-filter e2e-smoke e2e-smoke-core e2e-cascade e2e-federated e2e-bench e2e-services-up e2e-services-down e2e-wait e2e-load-data e2e-results e2e-report e2e-bench-compare e2e-proxy-clean llm-server-check  eval-llamacpp eval-all eval-quick eval-vertical eval-queries eval-cheap eval-results eval-clean uat uat-quick e2e-profile eval-profile test-all test-all-prebuild test-all-lint test-all-unit test-all-bench test-all-coverage test-all-e2e test-all-eval test-all-quality test-all-perf test-all-security test-coverage-check proxy-start proxy-stop proxy-status audit security-deny lint-security audit-known-gaps e2e-security sbom unsafe-audit mutant-security fuzz-query fuzz-config fuzz-all security-quick security-full profile-pgo profile-pgo-clean cov-scope-tune proof-cascade sdk-smoke perf-tuning-clean bench-hitrate bench-hitrate-sem bench-hitrate-onnx bench-hitrate-live bench-hitrate-replay perf-publish fmt-check test-one test-verbose test-coverage-quick e2e-generate-embeddings e2e-k8s docker-build docker-push dev-up dev-down dev-restart devex devex-attach devex-status devex-new devex-banner t test-fast test-nextest test-slow test-filter target-prune nextest-install docker-buildx
+.PHONY: all build build-release test test-unit test-integration test-integration-experimental lint fmt clean help build-embed build-persistence build-pgvector build-mcp build-all build-profiling bench bench-save bench-compare profile-dhat profile-pgo profile-pgo-clean profile-flamegraph profile-tokio-console profile-heaptrack profile-metrics-snap perf-tuning-quick perf-tuning-default perf-tuning-full e2e-all e2e-dirty e2e-qdrant e2e-elastic e2e-meili e2e-mixed e2e-filter e2e-smoke e2e-smoke-core e2e-cascade e2e-federated e2e-bench e2e-services-up e2e-services-down e2e-wait e2e-load-data e2e-results e2e-report e2e-bench-compare e2e-proxy-clean llm-server-check  eval-llamacpp eval-all eval-quick eval-vertical eval-queries eval-cheap eval-results eval-clean uat uat-quick e2e-profile eval-profile test-all test-all-prebuild test-all-lint test-all-unit test-all-bench test-all-coverage test-all-e2e test-all-eval test-all-quality test-all-perf test-all-security test-coverage-check proxy-start proxy-stop proxy-status audit security-deny lint-security audit-known-gaps e2e-security sbom unsafe-audit mutant-security fuzz-query fuzz-config fuzz-all security-quick security-full profile-pgo profile-pgo-clean cov-scope-tune proof-cascade sdk-smoke perf-tuning-clean bench-hitrate bench-hitrate-mem bench-hitrate-pressure bench-hitrate-sem bench-hitrate-onnx bench-hitrate-live bench-hitrate-replay perf-publish fmt-check test-one test-verbose test-coverage-quick e2e-generate-embeddings e2e-k8s docker-build docker-push dev-up dev-down dev-restart devex devex-attach devex-status devex-new devex-banner t test-fast test-nextest test-slow test-filter target-prune nextest-install docker-buildx
 
 # E2E infra directory (docker-compose lives here). Override on the command
 # line, e.g. `make e2e-services-up E2E_PROXY_DIR=/path/to/compose`. The
@@ -152,6 +152,7 @@ test-integration:
 	cargo test --features integration-tests --test integration_elasticsearch
 	cargo test --features integration-tests --test integration_opensearch
 	cargo test --features integration-tests --test integration_meilisearch
+	cargo test --features integration-tests --test integration_engine
 	cargo test --features "integration-tests,pgvector" --test integration_pgvector
 	cargo test --features integration-tests --test integration_cascade
 	cargo test --features integration-tests --test integration_peer
@@ -265,7 +266,8 @@ sdk-smoke:
 	python3 -m venv /tmp/conproxy-sdk-smoke && \
 	/tmp/conproxy-sdk-smoke/bin/pip install --quiet "$$_WHL" 2>&1 | tail -2 && \
 	/tmp/conproxy-sdk-smoke/bin/python -c \
-		"import conproxy; c = conproxy.ConproxyClient; print('import: OK'); print('class:', c)"
+		"import conproxy; print('import: OK'); print('client:', conproxy.ConproxyClient); print('engine:', conproxy.Engine)"
+	@/tmp/conproxy-sdk-smoke/bin/python scripts/sdk-smoke.py
 	@echo "sdk-smoke: PASS"
 
 # Run specific test
@@ -369,6 +371,57 @@ bench-hitrate:
 	cargo run --bin test_runner -- index "$$_RD" || echo "WARN: index generation failed"; \
 	echo "  Index: $$_RD/index.html"; \
 	exit $$_RC
+
+# Memory-pressure A/B. Same traces + zipf payloads.
+# A: count-cap 1000. B: byte-cap = A's live mem, S3-FIFO.
+MEM_CAP ?= 1351648
+bench-hitrate-mem:
+	@_RD="tests/results/hitrate/mem-$$(date +%Y%m%d-%H%M%S)-$$$$"; \
+	mkdir -p "$$_RD/count" "$$_RD/fifo"; \
+	echo "=== Hit-Rate memory A/B → $$_RD (MEM_CAP=$(MEM_CAP)) ==="; \
+	echo "--- arm A: count-cap 1000, zipf payloads ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/count" \
+	  --cache-size 1000 --payload-zipf-max 4096 --no-fail; \
+	echo "--- arm B: mem-cap $(MEM_CAP), FIFO ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/fifo" \
+	  --cache-size 1000000 --max-memory-bytes $(MEM_CAP) --payload-zipf-max 4096 \
+	  --no-fail; \
+	echo "  A count: $$_RD/count"; \
+	echo "  B fifo:  $$_RD/fifo"
+
+# Sustained memory-pressure suite: starve / scan / flip / elephants / agentic-tight.
+PRESS_MEM ?= 400000
+PRESS_ELE_MEM ?= 2097152
+bench-hitrate-pressure:
+	@_RD="tests/results/hitrate/pressure-$$(date +%Y%m%d-%H%M%S)-$$$$"; \
+	mkdir -p "$$_RD"; \
+	echo "=== Sustained pressure suite → $$_RD ==="; \
+	echo "--- starve ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/starve" \
+	  --workload zipf --unique 30000 --queries 80000 --paraphrase-rate 0 \
+	  --cache-size 1000000 --max-memory-bytes $(PRESS_MEM) --payload-zipf-max 4096 \
+	  --warmup-frac 0.25 --series-every 5000 --hot-set 50 --no-fail; \
+	echo "--- scan ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/scan" \
+	  --workload scan --unique 10000 --queries 40000 --scan-n 8000 --paraphrase-rate 0 \
+	  --cache-size 1000000 --max-memory-bytes $(PRESS_MEM) --payload-zipf-max 4096 \
+	  --warmup-frac 0.25 --series-every 5000 --hot-set 50 --no-fail; \
+	echo "--- flip ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/flip" \
+	  --workload flip --unique 10000 --queries 80000 --paraphrase-rate 0 \
+	  --cache-size 1000000 --max-memory-bytes $(PRESS_MEM) --payload-zipf-max 4096 \
+	  --warmup-frac 0.25 --series-every 5000 --hot-set 50 --no-fail; \
+	echo "--- elephants ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/elephants" \
+	  --workload zipf --unique 20000 --queries 60000 --paraphrase-rate 0 --elephants \
+	  --cache-size 1000000 --max-memory-bytes $(PRESS_ELE_MEM) --payload-bytes 64 \
+	  --warmup-frac 0.25 --series-every 5000 --hot-set 50 --no-fail; \
+	echo "--- agentic-tight ---"; \
+	cargo run --bin hitrate_bench -- --results-dir "$$_RD/agentic" \
+	  --workload agentic --pool 2000 --tasks 200 --paraphrase-rate 0 \
+	  --cache-size 1000000 --max-memory-bytes $(PRESS_MEM) --payload-zipf-max 4096 \
+	  --warmup-frac 0.25 --series-every 5000 --no-fail; \
+	echo "  Results: $$_RD"
 
 # Semantic hit-rate mode (v2): real SemanticCache tier + synthetic orthogonal
 # embedder. Requires embed-api feature. Sweeps τ, gates false-hit ≤ 1%.
@@ -1635,6 +1688,8 @@ help:
 	@echo "  bench-save        - Save baseline for comparison"
 	@echo "  bench-compare     - Compare against saved baseline + report"
 	@echo "  bench-hitrate     - Cache hit-rate benchmark (agentic + Zipf traces)"
+	@echo "  bench-hitrate-mem - Count-cap vs byte-cap HR (mixed sizes)"
+	@echo "  bench-hitrate-pressure - Starve/scan/flip/elephants/agentic-tight (S3-FIFO)"
 	@echo "  bench-hitrate-sem - Hit-rate + semantic τ frontier (embed-api; ~6 min)"
 	@echo "  bench-hitrate-onnx - Semantic τ frontier with live ONNX embedder (embed)"
 	@echo "  bench-hitrate-live - Live wire mode vs real proxy + qdrant (docker + embed)"

@@ -29,9 +29,14 @@ impl ConproxyClient {
             }
             None => SdkConfig::load().map_err(to_py_err)?,
         };
-        let client = RustClient::new(config).map_err(to_py_err)?;
         let rt =
             Runtime::new().map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        // `connect_lazy` schedules a background reconnect task, so the client
+        // must be built with a tokio reactor active.
+        let client = {
+            let _guard = rt.enter();
+            RustClient::new(config).map_err(to_py_err)?
+        };
         Ok(Self {
             inner: Arc::new(client),
             rt: Arc::new(rt),

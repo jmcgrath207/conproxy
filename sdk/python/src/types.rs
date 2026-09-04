@@ -58,6 +58,33 @@ impl From<conproxy_sdk::proto::QueryResponse> for PyQueryResponse {
     }
 }
 
+impl PyQueryResponse {
+    pub fn from_engine(r: conproxy::proxy::types::QueryResponse) -> Self {
+        use conproxy::proxy::types::CacheStatus;
+        Self {
+            results: r
+                .results
+                .into_iter()
+                .map(|s| PySearchResult {
+                    id: s.id,
+                    score: s.score,
+                    content: s.content,
+                    metadata_json: s.metadata.map(|m| m.to_string()),
+                    upstream_id: s.upstream_id.unwrap_or_default(),
+                })
+                .collect(),
+            cache_status: match r.cache_status {
+                CacheStatus::Hit => 1,
+                CacheStatus::Miss => 2,
+                CacheStatus::Stale => 3,
+                CacheStatus::Frozen => 4,
+            },
+            took_ms: r.took_ms,
+            generated_at: r.generated_at.unwrap_or(0),
+        }
+    }
+}
+
 #[pyclass(skip_from_py_object)]
 #[derive(Clone)]
 pub struct PyBatchQueryResponse {

@@ -3453,6 +3453,7 @@ async fn test_execute_query_paused() {
         "req-1".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 503);
@@ -3476,6 +3477,7 @@ async fn test_execute_query_invalid_request() {
         "req-2".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 400);
@@ -3498,6 +3500,7 @@ async fn test_execute_query_agent_context_denied() {
         "req-3".to_string(),
         Some(&agent),
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 403);
@@ -3514,6 +3517,7 @@ async fn test_execute_query_no_upstream_cache_miss() {
         "req-4".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 503);
@@ -3546,6 +3550,7 @@ async fn test_execute_query_no_upstream_cache_hit() {
         "req-5".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -3578,6 +3583,7 @@ async fn test_execute_query_fresh_cache_hit() {
         "req-6".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -3632,6 +3638,7 @@ async fn test_execute_query_expired_cache_no_upstream() {
         "req-7".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     // No upstream: expired entry may still be in cache (stale/frozen) → 200,
@@ -3888,6 +3895,7 @@ async fn test_execute_query_upstream_success() {
         "req-exec-1".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -3906,6 +3914,7 @@ async fn test_execute_query_upstream_failure_no_cache() {
         "req-exec-2".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 502);
@@ -3941,6 +3950,7 @@ async fn test_execute_query_upstream_failure_frozen_cache() {
         "req-exec-3".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     // Should serve frozen cache
@@ -3982,6 +3992,7 @@ async fn test_execute_query_circuit_open_frozen() {
         "req-exec-4".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -4004,6 +4015,7 @@ async fn test_execute_query_circuit_open_no_cache() {
         "req-exec-5".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 503);
@@ -4046,6 +4058,7 @@ async fn test_execute_query_stale_cache() {
         "req-exec-6".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     // Stale cache served as 200
@@ -4067,6 +4080,7 @@ async fn test_execute_query_concurrent_coalescing() {
             "req-coal-1".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
         super::query_core::execute_query(
             &state2,
@@ -4075,6 +4089,7 @@ async fn test_execute_query_concurrent_coalescing() {
             "req-coal-2".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
     );
     assert_eq!(r1.status, 200);
@@ -4106,6 +4121,7 @@ async fn test_execute_query_upstream_success_with_scope_filter() {
         "req-scope-1".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -5045,6 +5061,7 @@ async fn test_execute_query_concurrent_coalesce_waiter_error_no_cache() {
             "req-coal-fail-1".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
         super::query_core::execute_query(
             &state2,
@@ -5053,6 +5070,7 @@ async fn test_execute_query_concurrent_coalesce_waiter_error_no_cache() {
             "req-coal-fail-2".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
     );
     // Both should fail since upstream is down and no cache
@@ -5093,6 +5111,7 @@ async fn test_execute_query_concurrent_coalesce_waiter_error_frozen_cache() {
             "req-coal-frz-1".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
         super::query_core::execute_query(
             &state2,
@@ -5101,6 +5120,7 @@ async fn test_execute_query_concurrent_coalesce_waiter_error_frozen_cache() {
             "req-coal-frz-2".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
     );
     // At least one should serve frozen cache (200), leader might get frozen too
@@ -5123,6 +5143,7 @@ async fn test_execute_query_paused_reject_tracking() {
         "req-paused-track".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 503);
@@ -5154,6 +5175,7 @@ async fn test_execute_query_validation_error_metric() {
         "req-val-metric".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     let snap = state.metrics.snapshot();
@@ -5199,6 +5221,7 @@ async fn test_execute_query_miss_reason_expired() {
         "req-exp-miss".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     // No upstream: expired entry may still be stale (200), frozen (200), or fully expired (503).
@@ -5235,6 +5258,7 @@ async fn test_execute_query_upstream_success_refresh_worker() {
         "req-refresh".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -5517,6 +5541,7 @@ async fn test_execute_query_upstream_invalid_response() {
         "req-inv-resp".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     // Should still return 200 (response is served despite validation error)
@@ -5542,6 +5567,7 @@ async fn test_execute_query_upstream_invalid_response_concurrent() {
             "req-inv-coal-1".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
         super::query_core::execute_query(
             &state2,
@@ -5550,6 +5576,7 @@ async fn test_execute_query_upstream_invalid_response_concurrent() {
             "req-inv-coal-2".to_string(),
             None,
             "test".to_string(),
+            false,
         ),
     );
     assert_eq!(r1.status, 200);
@@ -5605,6 +5632,7 @@ async fn test_execute_query_upstream_error_frozen_cache_detailed() {
         "req-frozen-detail".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     // Should serve frozen cache with status 200
@@ -5657,6 +5685,7 @@ async fn test_execute_query_stale_with_upstream_background_refresh() {
         "req-stale-bg".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -5712,6 +5741,7 @@ async fn test_execute_query_stale_with_scope_filter_bg_refresh() {
         "req-stale-scope-bg".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -5917,6 +5947,7 @@ async fn test_admin_pause_then_execute_query_returns_503() {
         "req-pre-pause".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);
@@ -5933,6 +5964,7 @@ async fn test_admin_pause_then_execute_query_returns_503() {
         "req-post-pause".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 503);
@@ -5982,6 +6014,7 @@ async fn test_admin_pause_resume_restores_query_path() {
         "req-paused".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 503);
@@ -5998,6 +6031,7 @@ async fn test_admin_pause_resume_restores_query_path() {
         "req-resumed".to_string(),
         None,
         "test".to_string(),
+        false,
     )
     .await;
     assert_eq!(result.status, 200);

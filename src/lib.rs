@@ -7,6 +7,7 @@
 pub mod cache;
 pub mod config;
 pub mod embedding;
+pub mod engine;
 pub mod error;
 pub mod proxy;
 
@@ -16,6 +17,7 @@ pub mod mcp;
 // Re-exports
 pub use config::{Config, ProxyConfig};
 pub use embedding::models::ModelManager;
+pub use engine::{Engine, EngineBuilder, EngineError, EngineStats, QueryOpts};
 pub use error::{ConproxyError, Result};
 
 #[cfg(feature = "embed-api")]

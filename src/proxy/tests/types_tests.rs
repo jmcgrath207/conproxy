@@ -1245,6 +1245,20 @@ fn test_validate_response_size_accumulation() {
     }
 }
 
+#[test]
+fn cached_response_into_query_response_preserves_status() {
+    let fresh = CachedResponse::Fresh(QueryResponse {
+        results: vec![],
+        cache_status: CacheStatus::Miss,
+        took_ms: 7,
+        generated_at: None,
+        miss_reason: None,
+    });
+    let out = fresh.into_query_response();
+    assert_eq!(out.cache_status, CacheStatus::Miss);
+    assert_eq!(out.took_ms, 7);
+}
+
 // =============================================================================
 // proptest: QueryRequest validation properties
 // =============================================================================

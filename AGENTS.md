@@ -127,6 +127,8 @@ Published artifacts per `v*` tag:
 | Container | `ghcr.io/jmcgrath207/conproxy` | `<version>`, `v<version>`, `latest` (multi-arch) |
 | Helm chart | `oci://ghcr.io/jmcgrath207/charts/conproxy` + `.tgz` on GH Release | `version` + `appVersion` stamped from tag |
 | Binaries | GH Release + workflow artifacts | x86_64-musl, aarch64-gnu |
+| crates.io | `conproxy`, `conproxy-sdk` | tag version |
+| PyPI | `conproxy` wheels + sdist | manylinux2014 + musllinux_1_2, py3.9–3.13, x86_64 + aarch64 |
 
 ### Coverage (weekly, not a PR gate)
 

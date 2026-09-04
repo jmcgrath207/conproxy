@@ -2,12 +2,14 @@
 name = "conproxy-python"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
 [lib]
 name = "conproxy"
 crate-type = ["cdylib"]
 
 [dependencies]
+conproxy = { path = "../..", default-features = false }
 conproxy-sdk = { path = "../rust" }
 pyo3 = { version = "0.29", features = ["extension-module"] }
 pyo3-async-runtimes = { version = "0.29", features = ["tokio-runtime"] }

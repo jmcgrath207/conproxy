@@ -7,7 +7,9 @@
 //!
 //! v2 scope:
 //! - measured: exact hit rate (real cache), semantic hit rate + false-hit
-//!   rate (real `SemanticCache`, synthetic hash embedder), τ frontier
+//!   rate (real `SemanticCache`, synthetic hash embedder), τ frontier,
+//!   S3-FIFO small/main evictions, optional `--max-memory-bytes` + mixed
+//!   payload sizes (`--payload-zipf-max`) for byte-cap occupancy
 //! - modeled: latency / cost / agent task-time savings (params, not measured)
 //! - deferred: TTL expiry (fast replay = effectively infinite TTL), ONNX/API
 //!   embedder fidelity, stale rate (needs CDC live mode)
@@ -85,6 +87,8 @@ impl Rng {
 struct TraceEvent {
     query: String,
     cluster: u64,
+    /// 0 = default / zipf-a; 1 = scan or flip-b; 2 = zipf-c after scan.
+    phase: u8,
 }
 
 const VOCAB: [&str; 50] = [
@@ -183,6 +187,19 @@ fn gen_zipf(
     para_rate: f64,
     pool_texts: Option<&[String]>,
 ) -> Vec<TraceEvent> {
+    gen_zipf_ranks(rng, unique, s, queries, para_rate, pool_texts, false)
+}
+
+fn gen_zipf_ranks(
+    rng: &mut Rng,
+    unique: usize,
+    s: f64,
+    queries: usize,
+    para_rate: f64,
+    pool_texts: Option<&[String]>,
+    invert: bool,
+) -> Vec<TraceEvent> {
+    let unique = unique.max(1);
     let mut prefix = Vec::with_capacity(unique);
     let mut acc = 0.0f64;
     for rank in 1..=unique {
@@ -194,7 +211,11 @@ fn gen_zipf(
         .map(|_| {
             let x = rng.f64() * total;
             let rank = prefix.partition_point(|&c| c < x); // first prefix >= x
-            let rank = rank.min(unique - 1) as u64;
+            let mut rank = rank.min(unique - 1);
+            if invert {
+                rank = unique - 1 - rank;
+            }
+            let rank = rank as u64;
             let base = match pool_texts {
                 Some(p) => p[(rank as usize) % p.len()].clone(),
                 None => id_text(rank),
@@ -202,7 +223,75 @@ fn gen_zipf(
             TraceEvent {
                 cluster: cluster_of(&base),
                 query: maybe_paraphrase(rng, &base, para_rate),
+                phase: 0,
             }
+        })
+        .collect()
+}
+
+/// First half Zipf, second half inverted ranks (popularity flip).
+fn gen_zipf_flip(
+    rng: &mut Rng,
+    unique: usize,
+    s: f64,
+    queries: usize,
+    para_rate: f64,
+    pool_texts: Option<&[String]>,
+) -> Vec<TraceEvent> {
+    let first = queries / 2;
+    let second = queries.saturating_sub(first);
+    let mut ev = gen_zipf_ranks(rng, unique, s, first, para_rate, pool_texts, false);
+    ev.extend(gen_zipf_ranks(
+        rng, unique, s, second, para_rate, pool_texts, true,
+    ));
+    let mid = ev.len() / 2;
+    for (i, e) in ev.iter_mut().enumerate() {
+        e.phase = u8::from(i >= mid);
+    }
+    ev
+}
+
+/// Zipf → `scan_n` never-seen one-shots → Zipf. Tests scan resistance.
+fn gen_scan_storm(
+    rng: &mut Rng,
+    unique: usize,
+    s: f64,
+    queries: usize,
+    scan_n: usize,
+    para_rate: f64,
+    pool_texts: Option<&[String]>,
+) -> Vec<TraceEvent> {
+    let first = queries / 2;
+    let second = queries.saturating_sub(first);
+    let mut ev = gen_zipf(rng, unique, s, first, para_rate, pool_texts);
+    let base_id = unique as u64;
+    for i in 0..scan_n {
+        let base = match pool_texts {
+            Some(p) => format!("scan-{}-{}", i, p[i % p.len()]),
+            None => id_text(base_id.saturating_add(i as u64)),
+        };
+        ev.push(TraceEvent {
+            cluster: cluster_of(&base),
+            query: base,
+            phase: 1,
+        });
+    }
+    let after_scan = ev.len();
+    ev.extend(gen_zipf(rng, unique, s, second, para_rate, pool_texts));
+    for e in ev.iter_mut().take(first) {
+        e.phase = 0;
+    }
+    for e in ev.iter_mut().skip(after_scan) {
+        e.phase = 2;
+    }
+    ev
+}
+
+fn zipf_hot_queries(n: usize, pool_texts: Option<&[String]>) -> Vec<String> {
+    (0..n)
+        .map(|i| match pool_texts {
+            Some(p) => p[i % p.len()].clone(),
+            None => id_text(i as u64),
         })
         .collect()
 }
@@ -243,6 +332,7 @@ fn gen_agentic(
                 events.push(TraceEvent {
                     cluster: cluster_of(&base),
                     query: maybe_paraphrase(rng, &base, para_rate),
+                    phase: 0,
                 });
             }
         }
@@ -276,6 +366,7 @@ fn load_replay(path: &Path) -> Result<Vec<TraceEvent>, String> {
         events.push(TraceEvent {
             query: query.to_string(),
             cluster,
+            phase: 0,
         });
     }
     Ok(events)
@@ -673,14 +764,53 @@ struct SweepPoint {
     mean_latency_no_cache_ms: f64,
     latency_saved_pct: f64,
     usd_saved_per_1k_queries: f64,
+    /// 0 = no byte cap.
+    max_memory_bytes: usize,
+    /// 0 = default short payload.
+    payload_min: usize,
+    payload_max: usize,
+    small_evictions: usize,
+    main_evictions: usize,
+    promotions: usize,
+    ghost_hits: usize,
+    live_entries: usize,
+    live_memory_bytes: usize,
+    tail_queries: usize,
+    tail_hits: usize,
+    tail_hit_rate: f64,
+    hot_set_n: usize,
+    hot_set_retained: usize,
+    hot_set_current_n: usize,
+    hot_set_current_retained: usize,
+    phase_queries: [usize; 3],
+    phase_hits: [usize; 3],
+    series: Vec<(usize, f64)>,
+}
+
+struct PressureCfg {
+    warmup_frac: f64,
+    series_every: usize,
+    hot_queries: Vec<String>,
+    hot_queries_current: Vec<String>,
+    elephants: bool,
+    elephant_bytes: usize,
 }
 
 fn make_response() -> QueryResponse {
+    make_response_sized(0)
+}
+
+fn make_response_sized(content_bytes: usize) -> QueryResponse {
+    let content = if content_bytes == 0 {
+        "hitrate bench payload".to_string()
+    } else {
+        "x".repeat(content_bytes)
+    };
     QueryResponse {
         results: vec![SearchResult {
             id: "bench-doc".to_string(),
             score: 1.0,
-            content: "hitrate bench payload".to_string(),
+            content,
             metadata: None,
             upstream_id: Some("bench".to_string()),
         }],
@@ -689,6 +819,27 @@ fn make_response() -> QueryResponse {
         generated_at: None,
         miss_reason: None,
     }
+}
+
+/// Deterministic per-query content length. Cube-of-hash → mostly small, few large.
+fn payload_len(query: &str, min: usize, max: usize) -> usize {
+    if min >= max {
+        return min.max(1);
+    }
+    let digest = query_hash(query);
+    let mut buf = [0u8; 8];
+    buf.copy_from_slice(&digest[..8]);
+    let frac = u64::from_le_bytes(buf) as f64 / u64::MAX as f64;
+    let t = frac * frac * frac;
+    let span = max.saturating_sub(min);
+    min.saturating_add((t * span as f64) as usize)
+        .clamp(min, max)
+        .max(1)
+}
+
+fn is_elephant(query: &str) -> bool {
+    let digest = query_hash(query);
+    digest[8].is_multiple_of(100)
 }
 
 /// Replay events against the real `CacheStore`.
@@ -727,14 +878,36 @@ fn run_sweep(
     cdc_delay: Option<f64>,
     rng: &mut Rng,
     model: &CostModel,
+    max_memory_bytes: usize,
+    payload_min: usize,
+    payload_max: usize,
+    pressure: &PressureCfg,
 ) -> SweepPoint {
     // Fast replay: no wall-clock sleeps, so the store's own TTL is set huge
     // and expiry is decided by the harness virtual clock instead.
-    let store = CacheStore::new(
-        Duration::from_secs(86_400),
-        Duration::from_secs(604_800),
-        cache_size,
-    );
+    let store = if max_memory_bytes > 0 {
+        CacheStore::with_memory_limit(
+            Duration::from_secs(86_400),
+            Duration::from_secs(604_800),
+            cache_size,
+            max_memory_bytes,
+        )
+    } else {
+        CacheStore::new(
+            Duration::from_secs(86_400),
+            Duration::from_secs(604_800),
+            cache_size,
+        )
+    };
+    let mk_resp = |q: &str| -> QueryResponse {
+        if pressure.elephants && is_elephant(q) {
+            make_response_sized(pressure.elephant_bytes.max(1))
+        } else if payload_max == 0 {
+            make_response()
+        } else {
+            make_response_sized(payload_len(q, payload_min.max(1), payload_max))
+        }
+    };
     let ttl_secs = ttl.map(|t| t.as_secs_f64());
     let mutations = mutation_rate > 0.0;
     let mut insert_vtime: HashMap<QueryHash, f64> = HashMap::new();
@@ -752,7 +925,14 @@ fn run_sweep(
     let mut stale = 0usize;
     let mut healed = 0usize;
     let mut ceiling = 0usize;
-    let resp = make_response();
+    let warmup_n = ((events.len() as f64) * pressure.warmup_frac.clamp(0.0, 0.95)) as usize;
+    let mut tail_hits = 0usize;
+    let mut tail_q = 0usize;
+    let mut seen = 0usize;
+    let mut series: Vec<(usize, f64)> = Vec::new();
+    let mut prev_exact = 0usize;
+    let mut phase_queries = [0usize; 3];
+    let mut phase_hits = [0usize; 3];
     for ev in events {
         vnow += dt_secs;
         // Fire due what-if CDC invalidations.
@@ -782,7 +962,7 @@ fn run_sweep(
             if is_expired {
                 expired += 1;
                 // Fall through to miss path: refresh entry + virtual time.
-                store.insert(&ev.query, resp.clone(), "bench".to_string());
+                store.insert(&ev.query, mk_resp(&ev.query), "bench".to_string());
                 if let Some(h) = qh {
                     insert_vtime.insert(h, vnow);
                     if mutations {
@@ -805,7 +985,7 @@ fn run_sweep(
                     // Entry already invalidated by what-if CDC: miss,
                     // re-fetch, store fresh version.
                     healed += 1;
-                    store.insert(&ev.query, resp.clone(), "bench".to_string());
+                    store.insert(&ev.query, mk_resp(&ev.query), "bench".to_string());
                     if let Some(h) = qh {
                         insert_vtime.insert(h, vnow);
                         insert_version
@@ -827,7 +1007,7 @@ fn run_sweep(
             if cached_clusters.contains(&ev.cluster) {
                 ceiling += 1;
             }
-            store.insert(&ev.query, resp.clone(), "bench".to_string());
+            store.insert(&ev.query, mk_resp(&ev.query), "bench".to_string());
             if let Some(h) = qh {
                 insert_vtime.insert(h, vnow);
                 if mutations {
@@ -836,6 +1016,23 @@ fn run_sweep(
                 }
             }
             cached_clusters.insert(ev.cluster);
+        }
+        seen = seen.saturating_add(1);
+        let hit_now = exact > prev_exact;
+        prev_exact = exact;
+        if seen > warmup_n {
+            tail_q = tail_q.saturating_add(1);
+            if hit_now {
+                tail_hits = tail_hits.saturating_add(1);
+            }
+        }
+        let phase = usize::from(ev.phase.min(2));
+        phase_queries[phase] = phase_queries[phase].saturating_add(1);
+        if hit_now {
+            phase_hits[phase] = phase_hits[phase].saturating_add(1);
+        }
+        if pressure.series_every > 0 && seen.is_multiple_of(pressure.series_every) {
+            series.push((seen, exact as f64 / seen as f64));
         }
         if mutations {
             seen_clusters.push(ev.cluster);
@@ -853,6 +1050,24 @@ fn run_sweep(
     let c = ceiling as f64 / q as f64;
     let mean = model.t_lookup_ms + (1.0 - h) * model.saved_per_hit_ms();
     let no_cache = model.t_lookup_ms + model.saved_per_hit_ms();
+    let evict = store.eviction_stats();
+    let mut hot_set_retained = 0usize;
+    for q in &pressure.hot_queries {
+        if store.contains(q) {
+            hot_set_retained = hot_set_retained.saturating_add(1);
+        }
+    }
+    let mut hot_set_current_retained = 0usize;
+    for q in &pressure.hot_queries_current {
+        if store.contains(q) {
+            hot_set_current_retained = hot_set_current_retained.saturating_add(1);
+        }
+    }
+    let tail_hit_rate = if tail_q == 0 {
+        0.0
+    } else {
+        tail_hits as f64 / tail_q as f64
+    };
     SweepPoint {
         cache_size,
         ttl_secs: ttl.map(|t| t.as_secs()),
@@ -868,6 +1083,25 @@ fn run_sweep(
         mean_latency_no_cache_ms: no_cache,
         latency_saved_pct: 100.0 * (no_cache - mean) / no_cache,
         usd_saved_per_1k_queries: h * model.usd_per_1k_hits(),
+        max_memory_bytes,
+        payload_min,
+        payload_max,
+        small_evictions: evict.small_evictions,
+        main_evictions: evict.main_evictions,
+        promotions: evict.promotions,
+        ghost_hits: evict.ghost_hits,
+        live_entries: store.len(),
+        live_memory_bytes: store.memory_usage(),
+        tail_queries: tail_q,
+        tail_hits,
+        tail_hit_rate,
+        hot_set_n: pressure.hot_queries.len(),
+        hot_set_retained,
+        hot_set_current_n: pressure.hot_queries_current.len(),
+        hot_set_current_retained,
+        phase_queries,
+        phase_hits,
+        series,
     }
 }
 
@@ -1059,6 +1293,18 @@ struct Args {
     live_docs: Option<usize>,
     live_mutate: Option<f64>,
     live_evict: bool,
+    /// Byte cap. 0 / unset = none.
+    max_memory_bytes: Option<usize>,
+    /// Fixed result content length. None = default short literal.
+    payload_bytes: Option<usize>,
+    /// If set, per-query content length in [64, N] (heavy-tail). Overrides payload_bytes.
+    payload_zipf_max: Option<usize>,
+    warmup_frac: Option<f64>,
+    series_every: Option<usize>,
+    hot_set: Option<usize>,
+    elephants: bool,
+    elephant_bytes: Option<usize>,
+    scan_n: Option<usize>,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -1162,6 +1408,34 @@ fn parse_args() -> Result<Args, String> {
                 args.live_mutate = Some(parse_num(&take("--live-mutate")?, "--live-mutate")?);
             }
             "--live-evict" => args.live_evict = true,
+            "--max-memory-bytes" => {
+                args.max_memory_bytes = Some(parse_num(
+                    &take("--max-memory-bytes")?,
+                    "--max-memory-bytes",
+                )?);
+            }
+            "--payload-bytes" => {
+                args.payload_bytes = Some(parse_num(&take("--payload-bytes")?, "--payload-bytes")?);
+            }
+            "--payload-zipf-max" => {
+                args.payload_zipf_max = Some(parse_num(
+                    &take("--payload-zipf-max")?,
+                    "--payload-zipf-max",
+                )?);
+            }
+            "--warmup-frac" => {
+                args.warmup_frac = Some(parse_num(&take("--warmup-frac")?, "--warmup-frac")?);
+            }
+            "--series-every" => {
+                args.series_every = Some(parse_num(&take("--series-every")?, "--series-every")?);
+            }
+            "--hot-set" => args.hot_set = Some(parse_num(&take("--hot-set")?, "--hot-set")?),
+            "--elephants" => args.elephants = true,
+            "--elephant-bytes" => {
+                args.elephant_bytes =
+                    Some(parse_num(&take("--elephant-bytes")?, "--elephant-bytes")?);
+            }
+            "--scan-n" => args.scan_n = Some(parse_num(&take("--scan-n")?, "--scan-n")?),
             "--no-fail" => args.no_fail = true,
             "--probe" => args.probe = true,
             "--results-dir" => args.results_dir = Some(PathBuf::from(take("--results-dir")?)),
@@ -1188,7 +1462,8 @@ fn print_help() {
          hitrate_bench [OPTIONS]\n\
          \n\
          WORKLOAD:\n  \
-         --workload zipf|agentic|replay|suite   (default suite = zipf + agentic)\n  \
+         --workload zipf|agentic|replay|suite|scan|flip\n  \
+                              (default suite = zipf + agentic)\n  \
          --queries N          zipf: total queries          (default 100000)\n  \
          --unique N           zipf: unique queries         (default 10000)\n  \
          --zipf-s S           zipf: exponent               (default 1.0)\n  \
@@ -1208,7 +1483,16 @@ fn print_help() {
          \n\
          CACHE / MODEL:\n  \
          --cache-size N       repeatable; default 100, 1000, 10000\n  \
-         --ttl SECS           repeatable exact-tier TTL (virtual time); default infinite\n  \
+          --max-memory-bytes N byte cap (omit = none). Count cap still applies.\n  \
+          --payload-bytes N    fixed result content length (default: short literal)\n  \
+          --payload-zipf-max N per-query content length in [64, N]\n  \
+          --warmup-frac F      tail HR ignores first F of events (default 0)\n  \
+          --series-every N     record HR every N events (default off)\n  \
+          --hot-set N          retain top-N Zipf keys at end (default 0)\n  \
+          --elephants          1% of keys get --elephant-bytes payload\n  \
+          --elephant-bytes N   elephant payload size (default 65536)\n  \
+          --scan-n N           one-shot keys in --workload scan (default 8000)\n  \
+          --ttl SECS           repeatable exact-tier TTL (virtual time); default infinite\n  \
          --virtual-qps F      virtual arrival rate for TTL clock (default 10.0)\n  \
          --t-lookup-ms F      (default 1)   --t-embed-ms F    (default 30)\n  \
          --t-backend-ms F     (default 20)  --tokens-per-query F (default 15)\n  \
@@ -1324,9 +1608,9 @@ fn summary_md(
             sep.push_str("---|");
         }
         header.push_str(
-            " semantic ceiling | mean ms (no cache) | mean ms | lat saved | $/1k saved |",
+            " semantic ceiling | mean ms (no cache) | mean ms | lat saved | $/1k saved | small evict | main evict | entries | mem | tail HR | hot-set |",
         );
-        sep.push_str("---|---|---|---|---|");
+        sep.push_str("---|---|---|---|---|---|---|---|---|---|---|");
         let _ = writeln!(md, "{header}");
         let _ = writeln!(md, "{sep}");
         for p in &r.sweep {
@@ -1353,13 +1637,55 @@ fn summary_md(
                 row.push_str(&format!(" {} |", p.cdc_healed));
             }
             row.push_str(&format!(
-                " {:.1}% | {:.1} | {:.2} | {:.1}% | ${:.4} |",
+                " {:.1}% | {:.1} | {:.2} | {:.1}% | ${:.4} | {} | {} | {} | {} | {:.1}% | {}/{} |",
                 p.semantic_ceiling_rate * 100.0,
                 p.mean_latency_no_cache_ms,
                 p.mean_latency_ms,
                 p.latency_saved_pct,
-                p.usd_saved_per_1k_queries
+                p.usd_saved_per_1k_queries,
+                p.small_evictions,
+                p.main_evictions,
+                p.live_entries,
+                p.live_memory_bytes,
+                p.tail_hit_rate * 100.0,
+                p.hot_set_retained,
+                p.hot_set_n
             ));
+            if p.phase_queries.iter().any(|&q| q > 0) && p.phase_queries[1] > 0 {
+                let _ = writeln!(
+                    md,
+                    "phases: {}",
+                    (0..3)
+                        .filter(|&i| p.phase_queries[i] > 0)
+                        .map(|i| {
+                            let hr = if p.phase_queries[i] == 0 {
+                                0.0
+                            } else {
+                                p.phase_hits[i] as f64 / p.phase_queries[i] as f64 * 100.0
+                            };
+                            format!("p{i}={hr:.1}% (n={})", p.phase_queries[i])
+                        })
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                );
+            }
+            if p.hot_set_current_n > 0 && p.hot_set_current_n != p.hot_set_n
+                || p.hot_set_current_retained != p.hot_set_retained
+            {
+                let _ = writeln!(
+                    md,
+                    "hot-set current (post-flip ranks): {}/{}",
+                    p.hot_set_current_retained, p.hot_set_current_n
+                );
+            }
+            if !p.series.is_empty() {
+                let pts: Vec<String> = p
+                    .series
+                    .iter()
+                    .map(|(at, hr)| format!("{at}: {:.1}%", hr * 100.0))
+                    .collect();
+                let _ = writeln!(md, "series: {}", pts.join(" → "));
+            }
             let _ = writeln!(md, "{row}");
         }
         md.push('\n');
@@ -1419,7 +1745,10 @@ fn summary_md(
          artificially dense for real embedders — interpret false-hit with workload\n  \
          realism in mind (--queries-file with real query logs is the de-risking path).\n\
          - TTL: virtual clock (see --virtual-qps). Stale: cluster mutated after insert\n  \
-         (see --mutation-rate); stale entry heals only at TTL expiry — no-CDC worst case.\n"
+         (see --mutation-rate); stale entry heals only at TTL expiry — no-CDC worst case.\n\
+         - small/main evict: S3-FIFO queue that dropped the value. entries/mem: live\n  \
+         occupancy at end of replay. mem cap via --max-memory-bytes; mixed sizes via\n  \
+          --payload-zipf-max (mixed sizes under --max-memory-bytes).\n"
     );
     md
 }
@@ -1499,6 +1828,25 @@ fn summary_json(
                         "mean_latency_no_cache_ms": p.mean_latency_no_cache_ms,
                         "latency_saved_pct": p.latency_saved_pct,
                         "usd_saved_per_1k_queries": p.usd_saved_per_1k_queries,
+                        "max_memory_bytes": p.max_memory_bytes,
+                        "payload_min": p.payload_min,
+                        "payload_max": p.payload_max,
+                        "small_evictions": p.small_evictions,
+                        "main_evictions": p.main_evictions,
+                        "promotions": p.promotions,
+                        "ghost_hits": p.ghost_hits,
+                        "live_entries": p.live_entries,
+                        "live_memory_bytes": p.live_memory_bytes,
+                        "tail_queries": p.tail_queries,
+                        "tail_hits": p.tail_hits,
+                        "tail_hit_rate": p.tail_hit_rate,
+                        "hot_set_n": p.hot_set_n,
+                        "hot_set_retained": p.hot_set_retained,
+                        "hot_set_current_n": p.hot_set_current_n,
+                        "hot_set_current_retained": p.hot_set_current_retained,
+                        "phase_queries": p.phase_queries,
+                        "phase_hits": p.phase_hits,
+                        "series": p.series.iter().map(|(at, hr)| serde_json::json!({"at": at, "hr": hr})).collect::<Vec<_>>(),
                     })
                 })
                 .collect();
@@ -2041,6 +2389,23 @@ fn main() -> ExitCode {
     } else {
         args.cache_sizes.clone()
     };
+    let (payload_min, payload_max) = if let Some(max) = args.payload_zipf_max {
+        (args.payload_bytes.unwrap_or(64), max)
+    } else if let Some(n) = args.payload_bytes {
+        (n, n)
+    } else {
+        (0, 0)
+    };
+    if payload_max > 0 && payload_min > payload_max {
+        eprintln!("error: --payload-bytes must be <= --payload-zipf-max");
+        return ExitCode::from(1);
+    }
+    let warmup_frac = args.warmup_frac.unwrap_or(0.0);
+    if !(0.0..1.0).contains(&warmup_frac) {
+        eprintln!("error: --warmup-frac must be in [0, 1)");
+        return ExitCode::from(1);
+    }
+    let hot_n = args.hot_set.unwrap_or(0);
     // TTL grid: no --ttl flags → single infinite-TTL run per cache size
     // (preserves v1/v2 behavior). Otherwise cache_size × ttl cross-product.
     let ttls: Vec<Option<Duration>> = if args.ttl_values.is_empty() {
@@ -2088,6 +2453,31 @@ fn main() -> ExitCode {
         None => None,
     };
     let pool_ref = pool_texts.as_deref();
+    let unique_for_hot = args.unique.unwrap_or(10_000);
+    let pressure = PressureCfg {
+        warmup_frac,
+        series_every: args.series_every.unwrap_or(0),
+        hot_queries: if hot_n == 0 {
+            Vec::new()
+        } else {
+            zipf_hot_queries(hot_n, pool_ref)
+        },
+        hot_queries_current: if hot_n == 0 {
+            Vec::new()
+        } else {
+            (0..hot_n)
+                .map(|i| {
+                    let rank = unique_for_hot.saturating_sub(1).saturating_sub(i);
+                    match pool_ref {
+                        Some(p) => p[rank % p.len()].clone(),
+                        None => id_text(rank as u64),
+                    }
+                })
+                .collect()
+        },
+        elephants: args.elephants,
+        elephant_bytes: args.elephant_bytes.unwrap_or(65_536),
+    };
     let mutation_rate = args.mutation_rate.unwrap_or(0.0);
     if args.semantic && mutation_rate > 0.0 {
         eprintln!(
@@ -2131,7 +2521,7 @@ fn main() -> ExitCode {
             }
         }
         "agentic" => {}
-        "replay" => {}
+        "replay" | "scan" | "flip" => {}
         other => {
             eprintln!("error: unknown workload {other:?}");
             return ExitCode::from(1);
@@ -2182,6 +2572,43 @@ fn main() -> ExitCode {
                 }
             }
         }
+        "scan" => {
+            let unique = args.unique.unwrap_or(10_000);
+            let events = gen_scan_storm(
+                &mut rng,
+                unique,
+                args.zipf_s.unwrap_or(1.0),
+                args.queries.unwrap_or(40_000),
+                args.scan_n.unwrap_or(8_000),
+                args.paraphrase_rate.unwrap_or(0.0),
+                pool_ref,
+            );
+            specs.push((
+                "scan".to_string(),
+                format!(
+                    "Zipf → {} one-shots → Zipf, {} unique",
+                    args.scan_n.unwrap_or(8_000),
+                    unique
+                ),
+                events,
+            ));
+        }
+        "flip" => {
+            let unique = args.unique.unwrap_or(10_000);
+            let events = gen_zipf_flip(
+                &mut rng,
+                unique,
+                args.zipf_s.unwrap_or(1.0),
+                args.queries.unwrap_or(80_000),
+                args.paraphrase_rate.unwrap_or(0.0),
+                pool_ref,
+            );
+            specs.push((
+                "flip".to_string(),
+                format!("Zipf then inverted ranks, {unique} unique"),
+                events,
+            ));
+        }
         _ => {}
     }
 
@@ -2215,6 +2642,10 @@ fn main() -> ExitCode {
                     args.cdc_delay,
                     &mut sweep_rng,
                     &model,
+                    args.max_memory_bytes.unwrap_or(0),
+                    payload_min,
+                    payload_max,
+                    &pressure,
                 ));
             }
         }
