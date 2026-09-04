@@ -741,7 +741,7 @@ dependencies = [
 
 [[package]]
 name = "conproxy"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -812,7 +812,7 @@ dependencies = [
 
 [[package]]
 name = "conproxy-python"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "conproxy",
  "conproxy-sdk",
@@ -824,7 +824,7 @@ dependencies = [
 
 [[package]]
 name = "conproxy-sdk"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "dirs",
  "prost",
