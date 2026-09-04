@@ -18,7 +18,7 @@ Thanks for your interest in conproxy! This guide covers building, testing, and c
 - **Security:** `cargo-audit`, `cargo-deny`, `cargo-tarpaulin`, `cargo-cyclonedx`, `cargo-geiger`, `cargo-mutants`, `cargo-fuzz` (nightly)
 - **Eval:** Ollama running locally, OR Claude API key
 - **Profiling (Linux):** `bpftrace`, `perf`
-- **Python SDK:** Python 3.9+, `maturin`
+- **Python SDK:** Python 3.10+, `maturin`
 
 Install cargo tools:
 
