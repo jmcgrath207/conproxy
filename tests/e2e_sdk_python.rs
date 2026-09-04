@@ -6,7 +6,7 @@
 //! Run with: `cargo test --test e2e_sdk_python --features e2e -- --ignored --nocapture`
 //!
 //! Prerequisites:
-//!   - Python 3.9+ with `pip` available
+//!   - Python 3.10+ with `pip` available
 //!   - `maturin` installed (`pip install maturin`)
 //!   - Running proxy on 127.0.0.1:8080 (for client tests)
 
@@ -94,7 +94,7 @@ fn run_python(script: &str) -> (bool, String, String) {
 }
 
 #[test]
-#[ignore = "E2E: requires Python 3.9+ and maturin (no running proxy needed; client ops skip gracefully)"]
+#[ignore = "E2E: requires Python 3.10+ and maturin (no running proxy needed; client ops skip gracefully)"]
 fn python_sdk_import_test() {
     eprintln!();
     eprintln!("\x1b[1mPython SDK E2E Tests\x1b[0m");
