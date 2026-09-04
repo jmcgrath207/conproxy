@@ -133,3 +133,4 @@ models/
 # One .conproxy/ tree per checkout; never commit contents.
 /.conproxy/
 /docs/superpowers/
+/docs/superpowers/
