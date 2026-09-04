@@ -1,0 +1,477 @@
+syntax = "proto3";
+
+package conproxy.v1;
+
+// =============================================================================
+// SearchService — Query, batch, federated search
+// =============================================================================
+
+service SearchService {
+  // Execute a single cached search query.
+  rpc Query(QueryRequest) returns (QueryResponse);
+  // Execute multiple queries in a single request.
+  rpc BatchQuery(BatchQueryRequest) returns (BatchQueryResponse);
+  // Execute federated search combining local and remote results.
+  rpc FederatedQuery(FederatedQueryRequest) returns (FederatedQueryResponse);
+  // Stream results as they arrive from upstream (server-streaming).
+  rpc QueryStream(QueryRequest) returns (stream QueryResponse);
+}
+
+// =============================================================================
+// AdminService — Reload, pause, resume, cache ops, agent CRUD
+// =============================================================================
+
+service AdminService {
+  // Hot-reload configuration from disk.
+  rpc Reload(ReloadRequest) returns (ReloadResponse);
+  // Pause the proxy (reject new queries, drain in-flight).
+  rpc Pause(PauseRequest) returns (PauseResponse);
+  // Resume accepting queries.
+  rpc Resume(ResumeRequest) returns (ResumeResponse);
+  // Clear all cache entries.
+  rpc CacheClear(CacheClearRequest) returns (CacheClearResponse);
+  // Pre-fetch queries to populate cache.
+  rpc CacheWarmup(CacheWarmupRequest) returns (CacheWarmupResponse);
+  // Selectively evict cache entries.
+  rpc CacheEvict(CacheEvictRequest) returns (CacheEvictResponse);
+  // Verify cache entry integrity.
+  rpc CacheIntegrity(CacheIntegrityRequest) returns (CacheIntegrityResponse);
+  // Reset all metrics counters.
+  rpc MetricsReset(MetricsResetRequest) returns (MetricsResetResponse);
+  // List all registered agents.
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  // Register a new agent.
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  // Remove an agent.
+  rpc DeleteAgent(DeleteAgentRequest) returns (DeleteAgentResponse);
+  // Rotate an agent's API key.
+  rpc RotateKey(RotateKeyRequest) returns (RotateKeyResponse);
+}
+
+// =============================================================================
+// ContextService — Multi-context management
+// =============================================================================
+
+service ContextService {
+  // List all available contexts.
+  rpc ListContexts(ListContextsRequest) returns (ListContextsResponse);
+  // Get current context metadata.
+  rpc GetCurrentContext(GetCurrentContextRequest) returns (ContextInfo);
+  // Switch to a different context.
+  rpc SwitchContext(SwitchContextRequest) returns (SwitchContextResponse);
+  // Create a new context.
+  rpc CreateContext(CreateContextRequest) returns (CreateContextResponse);
+  // Get per-context cache statistics.
+  rpc GetContextStats(GetContextStatsRequest) returns (ContextStats);
+}
+
+// =============================================================================
+// ObservabilityService — Stats, audit, circuit, queue, clients, pool
+// =============================================================================
+
+service ObservabilityService {
+  // Get server and cache statistics.
+  rpc GetStats(GetStatsRequest) returns (StatsResponse);
+  // Get query access statistics and hot queries.
+  rpc GetQueryStats(GetQueryStatsRequest) returns (QueryStatsResponse);
+  // Get recent request audit log.
+  rpc GetAudit(GetAuditRequest) returns (AuditResponse);
+  // Get circuit breaker status.
+  rpc GetCircuitStatus(GetCircuitStatusRequest) returns (CircuitStatusResponse);
+  // Get request queue status.
+  rpc GetQueueStats(GetQueueStatsRequest) returns (QueueStatsResponse);
+  // Get active client connections.
+  rpc GetClients(GetClientsRequest) returns (ClientsResponse);
+  // Get upstream pool status.
+  rpc GetPoolStatus(GetPoolStatusRequest) returns (PoolStatusResponse);
+  // Get cache statistics by upstream.
+  rpc GetCacheUpstreams(GetCacheUpstreamsRequest) returns (CacheUpstreamsResponse);
+  // Stream cache entries for offline dump (server-streaming).
+  rpc GetCacheDistill(DistillRequest) returns (stream DistillEntry);
+}
+
+// =============================================================================
+// Search Messages
+// =============================================================================
+
+message QueryRequest {
+  // The search query string.
+  string query = 1;
+  // Maximum number of results to return.
+  uint32 top_k = 2;
+  // Request priority (0=low, 1=normal, 2=high, 3=critical).
+  uint32 priority = 3;
+  // Target a specific upstream by ID.
+  string upstream_id = 4;
+  // Prefer upstreams of this type.
+  string upstream_type = 5;
+  // Context identifier (replaces X-Context header).
+  string context = 6;
+  // Request ID for tracing (replaces X-Request-Id header).
+  string request_id = 7;
+}
+
+message QueryResponse {
+  // The search results.
+  repeated SearchResult results = 1;
+  // Cache status for this response.
+  CacheStatus cache_status = 2;
+  // Time taken in milliseconds.
+  uint64 took_ms = 3;
+  // Timestamp when the response was generated (Unix epoch millis).
+  uint64 generated_at = 4;
+}
+
+message SearchResult {
+  // Document or chunk identifier.
+  string id = 1;
+  // Relevance score (higher is better).
+  float score = 2;
+  // The content text.
+  string content = 3;
+  // Optional JSON-encoded metadata (avoids google.protobuf.Struct complexity).
+  bytes metadata_json = 4;
+  // Which upstream produced this result.
+  string upstream_id = 5;
+}
+
+enum CacheStatus {
+  CACHE_STATUS_UNSPECIFIED = 0;
+  CACHE_STATUS_HIT = 1;
+  CACHE_STATUS_MISS = 2;
+  CACHE_STATUS_STALE = 3;
+  CACHE_STATUS_FROZEN = 4;
+}
+
+// Batch query
+message BatchQueryRequest {
+  // Queries to execute.
+  repeated string queries = 1;
+  // Stop on first error.
+  bool fail_fast = 2;
+  // Context identifier.
+  string context = 3;
+}
+
+message BatchQueryResponse {
+  // Results keyed by query string.
+  map<string, QueryResponse> results = 1;
+  // Total time in milliseconds.
+  uint64 took_ms = 2;
+  // Successful queries.
+  uint32 success_count = 3;
+  // Failed queries.
+  uint32 error_count = 4;
+  // All completed.
+  bool complete = 5;
+}
+
+// Federated search
+message FederatedQueryRequest {
+  // The query text.
+  string query = 1;
+  // Local search results (if already computed).
+  repeated SearchResult local_results = 2;
+  // Number of results to return.
+  uint32 top_k = 3;
+  // Context identifier.
+  string context = 4;
+}
+
+message FederatedQueryResponse {
+  // Combined results.
+  repeated SearchResult results = 1;
+  // Cache status.
+  CacheStatus cache_status = 2;
+  // Total time in milliseconds.
+  uint64 took_ms = 3;
+  // Federated search statistics.
+  FederatedStats stats = 4;
+}
+
+message FederatedStats {
+  uint32 local_count = 1;
+  uint32 remote_count = 2;
+  uint32 merged_count = 3;
+  uint64 local_latency_ms = 4;
+  uint64 remote_latency_ms = 5;
+  string fallback_reason = 6;
+}
+
+// =============================================================================
+// Admin Messages
+// =============================================================================
+
+message ReloadRequest {}
+message ReloadResponse {
+  bool success = 1;
+  repeated string reloaded = 2;
+  string error = 3;
+  string message = 4;
+  // Sections that were read but require a process restart to take effect.
+  repeated string restart_required = 5;
+}
+
+message PauseRequest {}
+message PauseResponse {
+  string status = 1;
+  uint32 active_requests = 2;
+  string message = 3;
+}
+
+message ResumeRequest {}
+message ResumeResponse {
+  string status = 1;
+  string message = 2;
+}
+
+message CacheClearRequest {}
+message CacheClearResponse {
+  uint64 cleared_entries = 1;
+  string message = 2;
+}
+
+message CacheWarmupRequest {
+  repeated string queries = 1;
+  bool fetch_from_upstream = 2;
+}
+message CacheWarmupResponse {
+  uint32 warmed = 1;
+  uint32 failed = 2;
+  uint64 took_ms = 3;
+}
+
+message CacheEvictRequest {
+  string upstream_id = 1;
+  uint32 max_entries = 2;
+  bool expired_only = 3;
+}
+message CacheEvictResponse {
+  uint64 evicted = 1;
+  uint64 remaining = 2;
+}
+
+message CacheIntegrityRequest {}
+message CacheIntegrityResponse {
+  uint64 total = 1;
+  uint64 valid = 2;
+  uint64 invalid = 3;
+  uint64 no_hash = 4;
+}
+
+message MetricsResetRequest {}
+message MetricsResetResponse {
+  string status = 1;
+  string message = 2;
+}
+
+message ListAgentsRequest {}
+message ListAgentsResponse {
+  repeated AgentInfo agents = 1;
+  uint32 total = 2;
+}
+
+message AgentInfo {
+  string id = 1;
+  string default_context = 2;
+  repeated string allowed_contexts = 3;
+  uint32 priority_class = 4;
+  uint32 rate_limit_rps = 5;
+  bool enabled = 6;
+}
+
+message CreateAgentRequest {
+  string id = 1;
+  string api_key = 2;
+  repeated string allowed_contexts = 3;
+  uint32 priority_class = 4;
+  uint32 rate_limit_rps = 5;
+}
+message CreateAgentResponse {
+  string status = 1;
+  string agent_id = 2;
+}
+
+message DeleteAgentRequest {
+  string agent_id = 1;
+}
+message DeleteAgentResponse {
+  string status = 1;
+  string agent_id = 2;
+}
+
+message RotateKeyRequest {
+  string agent_id = 1;
+  string new_api_key = 2;
+}
+message RotateKeyResponse {
+  string status = 1;
+  string agent_id = 2;
+}
+
+// =============================================================================
+// Context Messages
+// =============================================================================
+
+message ListContextsRequest {}
+message ListContextsResponse {
+  repeated ContextInfo contexts = 1;
+  string current = 2;
+}
+
+message GetCurrentContextRequest {}
+
+message ContextInfo {
+  string id = 1;
+  uint64 created_at_ms = 2;
+  uint64 last_accessed_ms = 3;
+  uint64 hits = 4;
+  uint64 misses = 5;
+}
+
+message SwitchContextRequest {
+  string context_id = 1;
+}
+message SwitchContextResponse {
+  string previous = 1;
+  string current = 2;
+  string message = 3;
+}
+
+message CreateContextRequest {
+  string context_id = 1;
+}
+message CreateContextResponse {
+  string context_id = 1;
+  string message = 2;
+}
+
+message GetContextStatsRequest {
+  string context_id = 1;
+}
+message ContextStats {
+  string context_id = 1;
+  uint64 cache_entries = 2;
+  uint64 hits = 3;
+  uint64 misses = 4;
+  double hit_rate = 5;
+}
+
+// =============================================================================
+// Observability Messages
+// =============================================================================
+
+message GetStatsRequest {}
+message StatsResponse {
+  uint64 uptime_secs = 1;
+  uint64 cache_entries = 2;
+  uint64 total_hits = 3;
+  uint64 total_misses = 4;
+  double hit_rate = 5;
+  uint64 upstream_requests = 6;
+  uint64 upstream_failures = 7;
+  double upstream_error_rate = 8;
+  string degradation_level = 9;
+  bool paused = 10;
+}
+
+message GetQueryStatsRequest {}
+message QueryStatsResponse {
+  // JSON-encoded query stats (complex nested data).
+  bytes stats_json = 1;
+}
+
+message GetAuditRequest {}
+message AuditResponse {
+  // JSON-encoded audit entries.
+  bytes entries_json = 1;
+}
+
+message GetCircuitStatusRequest {}
+message CircuitStatusResponse {
+  string state = 1;
+  uint64 failure_count = 2;
+  uint64 success_count = 3;
+  uint64 consecutive_failures = 4;
+}
+
+message GetQueueStatsRequest {}
+message QueueStatsResponse {
+  uint64 pending = 1;
+  uint64 capacity = 2;
+  double utilization = 3;
+}
+
+message GetClientsRequest {}
+message ClientsResponse {
+  repeated ClientInfo clients = 1;
+  uint64 total_completed = 2;
+  uint64 total_rejected = 3;
+}
+
+message ClientInfo {
+  string request_id = 1;
+  uint64 started_at_ms = 2;
+  string query = 3;
+  string source = 4;
+}
+
+message GetPoolStatusRequest {}
+message PoolStatusResponse {
+  uint32 total_upstreams = 1;
+  uint32 healthy_upstreams = 2;
+  uint32 degraded_upstreams = 3;
+  uint32 offline_upstreams = 4;
+  repeated UpstreamInfo upstreams = 5;
+}
+
+message UpstreamInfo {
+  string id = 1;
+  string url = 2;
+  string health_status = 3;
+  uint32 weight = 4;
+  uint32 priority = 5;
+}
+
+message GetCacheUpstreamsRequest {}
+message CacheUpstreamsResponse {
+  map<string, UpstreamCacheStats> upstreams = 1;
+}
+
+message UpstreamCacheStats {
+  uint64 total = 1;
+  uint64 fresh = 2;
+  uint64 stale = 3;
+  uint64 expired = 4;
+  uint64 memory_bytes = 5;
+}
+
+message DistillRequest {
+  // Filter to a specific context ID; empty = all contexts.
+  string context = 1;
+  // Which cache tier to include. 0=primary, 1=semantic, 2=both. Default 0.
+  uint32 tier = 2;
+  // Maximum number of entries to return; 0 = unlimited.
+  uint32 limit = 3;
+  // If false, entries older than `stale_duration` are filtered out.
+  bool include_stale = 4;
+}
+
+message DistillEntry {
+  // Original query text (empty for legacy entries without recorded query).
+  string query = 1;
+  // Context ID the entry belongs to. "default" for pre-distill entries.
+  string context_id = 2;
+  // Upstream that produced the cached response.
+  string upstream_id = 3;
+  // Insertion time in Unix epoch milliseconds.
+  uint64 cached_at_ms = 4;
+  // Number of TTL extensions applied to the entry.
+  uint32 extended_count = 5;
+  // JSON-encoded QueryResponse payload.
+  bytes response_json = 6;
+  // blake3 query hash as 64-char lowercase hex.
+  string hash_hex = 7;
+  // Embedding vector (semantic tier only); empty for primary tier.
+  repeated float embedding = 8;
+}
