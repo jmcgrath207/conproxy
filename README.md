@@ -17,7 +17,7 @@ conproxy sits in front of your search backends. LLM caches skip re-generating an
 
 **When *not* to use**
 
-- Single small backend where an in-process cache suffices
+- A one-off script with no TTL / semantic / multi-backend needs — the in-process [`Engine`](docs/engine.md) is the lightweight path
 - LLM-response caching (that's GPTCache or RedisVL SemanticCache territory)
 - Cross-org mTLS peer replication (not planned; use a mesh sidecar)
 
@@ -86,9 +86,48 @@ Works with Elasticsearch, OpenSearch, Qdrant, pgvector, Meilisearch, Pinecone, M
 
 Five ways in. One copy-paste each; [docs](#documentation) for the rest.
 
+### Python Engine
+
+In-process query core — no daemon, no gRPC. Same request path as the daemon. [docs/engine.md](docs/engine.md) · [docs/sdk-python.md](docs/sdk-python.md).
+
+```bash
+pip install conproxy
+```
+
+```python
+from conproxy import Engine
+
+engine = Engine(config="conproxy.toml")
+result = await engine.query("how does X work", top_k=10)
+# result.cache_status: 1=hit, 2=miss, 3=stale, 4=frozen
+```
+
+Always `await query()`. Talk to a running daemon instead: `ConproxyClient(grpc_url="http://localhost:9999")`.
+
+### Rust Engine
+
+Same Engine, in-process. [docs/engine.md](docs/engine.md).
+
+```bash
+cargo add conproxy
+```
+
+```rust
+use conproxy::{Engine, QueryOpts};
+
+let engine = Engine::builder()
+    .config_toml("conproxy.toml")
+    .build()?;
+let result = engine
+    .query("how does X work", QueryOpts { top_k: Some(10), ..Default::default() })
+    .await?;
+```
+
+gRPC client crate: `cargo add conproxy-sdk`.
+
 ### Docker daemon
 
-Shared cache in front of a backend. [Full walkthrough](docs/quickstart.md).
+Shared cache in front of a backend — the default when multiple agents share one cache. [Full walkthrough](docs/quickstart.md).
 
 ```bash
 docker pull ghcr.io/jmcgrath207/conproxy:0.1.0
@@ -114,45 +153,6 @@ Compose (proxy + Meilisearch): `examples/docker-compose/` · [docs/docker-compos
 Helm: `helm install conproxy oci://ghcr.io/jmcgrath207/charts/conproxy --version 0.1.0`
 
 `release` = `mcp` + `persistence` + `embed-api` + `pgvector`. Flags: [docs/feature-flags.md](docs/feature-flags.md).
-
-### Python SDK
-
-In-process Engine — no daemon. [docs/sdk-python.md](docs/sdk-python.md) · [docs/engine.md](docs/engine.md).
-
-```bash
-pip install conproxy
-```
-
-```python
-from conproxy import Engine
-
-engine = Engine(config="conproxy.toml")
-result = await engine.query("how does X work", top_k=10)
-# result.cache_status: 1=hit, 2=miss, 3=stale, 4=frozen
-```
-
-Always `await query()`. Talk to a running daemon instead: `ConproxyClient(grpc_url="http://localhost:9999")`.
-
-### Rust SDK
-
-Same Engine, in-process. [docs/engine.md](docs/engine.md).
-
-```bash
-cargo add conproxy
-```
-
-```rust
-use conproxy::{Engine, QueryOpts};
-
-let engine = Engine::builder()
-    .config_toml("conproxy.toml")
-    .build()?;
-let result = engine
-    .query("how does X work", QueryOpts { top_k: Some(10), ..Default::default() })
-    .await?;
-```
-
-gRPC client crate: `cargo add conproxy-sdk`.
 
 ### MCP
 
@@ -181,6 +181,14 @@ curl -s http://127.0.0.1:10000/query \
 ```
 
 ## Features
+
+**In-process Engine**
+
+- Same `execute_query` path as the daemon — no gRPC, no peer, no daemon ([docs/engine.md](docs/engine.md))
+- `pip install conproxy` (Python) / `cargo add conproxy` (Rust); the wheel links the query core, not a thin client
+- Memory budget: `max_memory` / `memory_fraction` bounds the cache in-process
+- Optional read-only dashboard (`dashboard_listen`) — health, stats, metrics, cache, contexts
+- Use the daemon instead when multiple agents should share one cache
 
 **Agentic cache**
 
