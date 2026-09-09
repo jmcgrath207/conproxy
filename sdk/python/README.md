@@ -1,6 +1,6 @@
 # conproxy
 
-Retrieval-leg cache for **agentic RAG**. Native Rust bindings: in-process `Engine` or gRPC `ConproxyClient`.
+Retrieval cache for **agentic RAG**. Native Rust bindings: in-process `Engine` or gRPC `ConproxyClient`.
 
 Not an LLM-answer cache (that's GPTCache / RedisVL). Hits skip embed + upstream search when agents re-query.
 

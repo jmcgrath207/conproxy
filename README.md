@@ -1,13 +1,19 @@
 # conproxy
 
+[![CI](https://github.com/jmcgrath207/conproxy/actions/workflows/ci.yml/badge.svg)](https://github.com/jmcgrath207/conproxy/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/conproxy.svg)](https://crates.io/crates/conproxy)
+[![PyPI](https://img.shields.io/pypi/v/conproxy.svg)](https://pypi.org/project/conproxy/)
+[![GHCR](https://img.shields.io/badge/GHCR-conproxy-black?logo=github)](https://github.com/jmcgrath207/conproxy/pkgs/container/conproxy)
+[![Helm](https://img.shields.io/badge/Helm-OCI-0F1689?logo=helm)](https://github.com/jmcgrath207/conproxy/pkgs/container/charts%2Fconproxy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > Retrieval cache for agentic RAG — lower cost, faster search.
 
-conproxy sits in front of your search backends. LLM caches skip re-generating answers. conproxy skips re-running the search — embed, rerank, upstream — when agents hit the same (or near-same) query again.
+Agents re-query. You pay embed + vector search again. conproxy caches the retrieval leg — hits skip embed and upstream, so agentic loops (retries, fanout, tool-call storms) stop paying twice.
 
-**Why it pays**
+One MCP / HTTP / gRPC endpoint. Any backend. Measured hit rates, not vibes.
 
-- **Cost** — hits skip another embed call and managed-vector read
-- **Speed** — cache hits ~**138×** faster than miss path on the agentic live bench (hit p50 ~0.1 ms vs miss ~13.8 ms; ~89.5% exact hit rate) — [benchmarks](docs/benchmarks.md)
+**Proof** — ~89.5% exact hit rate on an 8 000-query agentic trace; hit p50 ~0.1 ms vs miss ~13.8 ms. [Benchmarks](docs/benchmarks.md) · reproduce with `make bench-hitrate`.
 
 **When to use**
 
@@ -21,24 +27,6 @@ conproxy sits in front of your search backends. LLM caches skip re-generating an
 - LLM-response caching (that's GPTCache or RedisVL SemanticCache territory)
 - Cross-org mTLS peer replication (not planned; use a mesh sidecar)
 
-**The problem**
-
-LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but agents still re-rerank, re-embed, and re-query the same corpora on retries, multi-agent fanout, and tool-call storms. Every repeated retrieval costs an embed call and a managed-vector read. conproxy caches the retrieval leg itself.
-
-**Consider conproxy if…**
-
-- [ ] Multiple agents or tool loops hit the same corpus
-- [ ] Embed or managed-vector $ is visible
-- [ ] You want one MCP/HTTP search façade over ES / Qdrant / pgvector / Meilisearch / Pinecone / Milvus
-- [ ] You need measured hit rate / false-hit gate, not vibes (`make bench-hitrate`)
-
-**Skip conproxy if…**
-
-- You only need an LLM-response cache → use GPTCache / RedisVL
-- A one-line memoize hash covers your duplicates (no TTL / semantic / upstreams)
-- You need write-path CDC / multi-region invalidation today (not shipped; track correctness doc)
-- One tiny backend, no agent loops, no cost pressure
-
 **vs alternatives**
 
 | Need | Prefer |
@@ -48,26 +36,6 @@ LLM caches (GPTCache, RedisVL SemanticCache) skip re-generating answers, but age
 | One process, no daemon, single MCP server | [`Engine`](docs/engine.md) (in-process query core) |
 | Multi-backend cascade / MCP tune / dry-run scope | **conproxy** |
 | LLM-side semantic cache for prompts | LangChain cache / provider-level caching |
-
-**At a glance**
-
-| | |
-|--|--|
-| **Category** | Retrieval-leg cache for agentic RAG |
-| **Not** | LLM answer cache (GPTCache / RedisVL) |
-| **Pays when** | Agents re-query — hits skip embed + upstream |
-| **Proof** | ~89.5% exact hit rate; hit p50 ~0.1 ms vs miss ~13.8 ms (~**138×**) — [benchmarks](docs/benchmarks.md) |
-| **Integrate** | MCP `conproxy mcp` · HTTP/gRPC · [Python SDK](docs/sdk-python.md) · [Engine](docs/engine.md) |
-
-**FAQ**
-
-- **What is conproxy?** A caching proxy in front of search backends. Caches retrieval results, not LLM tokens.
-- **How is it different from GPTCache / RedisVL SemanticCache?** Those cache LLM answers. conproxy caches embed + search results for agents re-querying the same corpora.
-- **When does it pay?** Retries, multi-agent fanout, tool-call storms. Cost + latency win on every hit.
-- **How do I try it?** See [Use it](#use-it) — Docker, Python, Rust, MCP, or a curl.
-- **How do I prove it on my data?** `make bench-hitrate` for synthetic traces; `make bench-hitrate-replay QUERIES=path/to/trace.txt` for your real query log.
-
-One MCP endpoint, any backend, cost + latency on hits, false-hit gated semantic tier. Benchmarks reproducible.
 
 ```
 agent ──► MCP / HTTP / gRPC ──► conproxy ──► backends
@@ -327,8 +295,6 @@ Meta-features: `release` = `mcp` + `persistence` + `embed-api` + `pgvector` (ONN
 See [Feature Flags](docs/feature-flags.md) for recommended combinations and build instructions.
 
 ---
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## License
 

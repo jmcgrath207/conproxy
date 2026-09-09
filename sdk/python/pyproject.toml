@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "conproxy"
-description = "Python SDK for conproxy — retrieval-leg cache for agentic RAG"
+description = "Python SDK for conproxy — retrieval cache for agentic RAG"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
