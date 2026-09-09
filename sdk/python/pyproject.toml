@@ -4,7 +4,9 @@ build-backend = "maturin"
 
 [project]
 name = "conproxy"
-description = "Python SDK for conproxy cache proxy (native Rust bindings)"
+description = "Python SDK for conproxy — retrieval-leg cache for agentic RAG"
+readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -14,6 +16,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
 ]
+
+[project.urls]
+Homepage = "https://github.com/jmcgrath207/conproxy"
+Documentation = "https://github.com/jmcgrath207/conproxy/blob/main/docs/sdk-python.md"
+Repository = "https://github.com/jmcgrath207/conproxy"
 
 [project.optional-dependencies]
 onnx = []

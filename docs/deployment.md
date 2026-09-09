@@ -67,7 +67,7 @@ Published multi-arch images (linux/amd64 + linux/arm64) are pushed to GHCR on ev
 
 ```bash
 # Latest tag
-docker pull ghcr.io/jmcgrath207/conproxy:0.2.0
+docker pull ghcr.io/jmcgrath207/conproxy:0.2.1
 
 # Floating
 docker pull ghcr.io/jmcgrath207/conproxy:latest
@@ -80,10 +80,10 @@ docker pull ghcr.io/jmcgrath207/conproxy:latest
 docker build -t conproxy:dev .
 
 # Versioned local build
-make docker-build VERSION=0.2.0
+make docker-build VERSION=0.2.1
 
 # Multi-arch smoke (requires buildx)
-make docker-buildx VERSION=0.2.0 PLATFORMS=linux/amd64,linux/arm64
+make docker-buildx VERSION=0.2.1 PLATFORMS=linux/amd64,linux/arm64
 ```
 
 ### Run
@@ -95,7 +95,7 @@ make docker-buildx VERSION=0.2.0 PLATFORMS=linux/amd64,linux/arm64
 docker run -d \
   -p 9999:9999 \
   -v $(pwd):/var/lib/conproxy:ro \
-  ghcr.io/jmcgrath207/conproxy:0.2.0 start --listen 0.0.0.0:9999
+  ghcr.io/jmcgrath207/conproxy:0.2.1 start --listen 0.0.0.0:9999
 ```
 
 ### Docker Compose
@@ -124,7 +124,7 @@ services:
     ports: ["7700:7700"]
 
   conproxy:
-    image: ghcr.io/jmcgrath207/conproxy:0.2.0
+    image: ghcr.io/jmcgrath207/conproxy:0.2.1
     depends_on:
       meilisearch: { condition: service_healthy }
     ports:
