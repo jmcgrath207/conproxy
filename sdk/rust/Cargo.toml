@@ -2,7 +2,7 @@
 name = "conproxy-sdk"
 version = "0.2.1"
 edition = "2021"
-description = "Rust SDK client for conproxy cache proxy"
+description = "Rust SDK client for conproxy — retrieval cache for agentic RAG"
 license = "MIT"
 repository = "https://github.com/jmcgrath207/conproxy"
 homepage = "https://github.com/jmcgrath207/conproxy"

@@ -1,6 +1,6 @@
 apiVersion: v2
 name: conproxy
-description: Cache proxy for heterogeneous RAG/vector search backends
+description: Retrieval cache for agentic RAG — skip embed + upstream search on hits
 type: application
 version: 0.2.1
 appVersion: "0.2.1"
